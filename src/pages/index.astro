@@ -1,11 +1,120 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Layout from "../layouts/Layout.astro";
+import { supabase } from "../lib/supabase";
+import { TrendingUp, Users, Trophy, BarChart3 } from "lucide-react";
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+
+let loggedIn = accessToken && refreshToken;
 ---
 
 <Layout>
-	<Welcome />
+	<div class="space-y-12">
+		<!-- Hero Section -->
+		<div class="text-center space-y-6">
+			<h1 class="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+				LEADTRADE
+			</h1>
+			<p class="text-xl text-muted-foreground max-w-2xl mx-auto">
+				The ultimate paper trading platform. Practice trading with real market data, compete with others, and master your skills risk-free.
+			</p>
+			<div class="flex flex-col sm:flex-row gap-4 justify-center">
+				<a href="/dashboard">
+					<Button size="lg" class="w-full sm:w-auto">
+						Start Trading
+					</Button>
+				</a>
+				<a href="/leaderboard">
+					<Button variant="outline" size="lg" class="w-full sm:w-auto">
+						View Leaderboard
+					</Button>
+				</a>
+			</div>
+		</div>
+
+		<!-- Features Grid -->
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+			<Card class="text-center">
+				<CardHeader>
+					<div class="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mb-4">
+						<TrendingUp class="h-6 w-6 text-blue-600 dark:text-blue-400" />
+					</div>
+					<CardTitle>Real Market Data</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<CardDescription>
+						Trade with live market data from Alpaca Markets. Experience real market conditions without the risk.
+					</CardDescription>
+				</CardContent>
+			</Card>
+
+			<Card class="text-center">
+				<CardHeader>
+					<div class="mx-auto w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mb-4">
+						<Users class="h-6 w-6 text-green-600 dark:text-green-400" />
+					</div>
+					<CardTitle>Compete & Learn</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<CardDescription>
+						Join a community of traders. Learn from others, share strategies, and improve your trading skills.
+					</CardDescription>
+				</CardContent>
+			</Card>
+
+			<Card class="text-center">
+				<CardHeader>
+					<div class="mx-auto w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mb-4">
+						<Trophy class="h-6 w-6 text-purple-600 dark:text-purple-400" />
+					</div>
+					<CardTitle>Leaderboards</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<CardDescription>
+						Track your performance and compete for the top spot. See how you rank against other traders.
+					</CardDescription>
+				</CardContent>
+			</Card>
+
+			<Card class="text-center">
+				<CardHeader>
+					<div class="mx-auto w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center mb-4">
+						<BarChart3 class="h-6 w-6 text-orange-600 dark:text-orange-400" />
+					</div>
+					<CardTitle>Analytics</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<CardDescription>
+						Detailed portfolio analytics and performance tracking to help you understand your trading patterns.
+					</CardDescription>
+				</CardContent>
+			</Card>
+		</div>
+
+		<!-- CTA Section -->
+		<Card class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border-none">
+			<CardContent class="p-8 text-center">
+				<h2 class="text-2xl font-bold mb-4">Ready to Start Trading?</h2>
+				<p class="text-muted-foreground mb-6 max-w-2xl mx-auto">
+					Join thousands of traders who are improving their skills with our paper trading platform. 
+					No risk, real learning.
+				</p>
+				<div class="flex flex-col sm:flex-row gap-4 justify-center">
+					<a href="/signup">
+						<Button size="lg" class="w-full sm:w-auto">
+							Create Account
+						</Button>
+					</a>
+					<a href="/signin">
+						<Button variant="outline" size="lg" class="w-full sm:w-auto">
+							Sign In
+						</Button>
+					</a>
+				</div>
+			</CardContent>
+		</Card>
+	</div>
 </Layout>
