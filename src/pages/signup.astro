@@ -1,0 +1,56 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+---
+
+<Layout>
+  <div class="flex items-center justify-center min-h-[60vh]">
+    <Card class="w-full max-w-md">
+      <CardHeader>
+        <CardTitle>Create Account</CardTitle>
+        <CardDescription
+          >Sign up to start your paper trading journey</CardDescription
+        >
+      </CardHeader>
+      <CardContent>
+        <form action="/api/auth/register" method="post" class="space-y-4">
+          <div class="space-y-2">
+            <label for="email" class="text-sm font-medium">Email</label>
+            <Input
+              type="email"
+              name="email"
+              id="email"
+              placeholder="Enter your email"
+              required
+            />
+          </div>
+          <div class="space-y-2">
+            <label for="password" class="text-sm font-medium">Password</label>
+            <Input
+              type="password"
+              name="password"
+              id="password"
+              placeholder="Create a password"
+              required
+            />
+          </div>
+          <Button type="submit" class="w-full"> Create Account </Button>
+          <div class="text-center text-sm">
+            Already have an account? <a
+              href="/signin"
+              class="text-primary hover:underline">Sign in</a
+            >
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  </div>
+</Layout>

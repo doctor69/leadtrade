@@ -1,0 +1,13 @@
+---
+import OpenAlpacaAccount from "@/components/ui/trade/open-account";
+import Layout from "@/layouts/Layout.astro";
+import '../../../styles/global.css'
+---
+
+<!-- hava form to fill up to open an account with Alpaca --><!-- for now I am hardcoding the form -->
+<Layout>
+    <div>
+        <h1>Open an Account</h1>
+        <OpenAlpacaAccount client:only />
+    </div>
+</Layout>
