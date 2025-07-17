@@ -4,58 +4,44 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, DollarSign, Activity } from 'lucide-react';
 import PortfolioChart from './PortfolioChart';
+import { apiService, type AccountData, type Position } from '@/lib/apiService';
 
-interface Position {
-    symbol: string;
-    qty: number;
-    market_value: number;
-    unrealized_pl: number;
-    unrealized_plpc: number;
-}
 
-interface AccountData {
-    buying_power: number;
-    portfolio_value: number;
-    equity: number;
-    cash: number;
-}
 
 export default function TradingDashboard() {
     const [accountData, setAccountData] = useState<AccountData | null>(null);
     const [positions, setPositions] = useState<Position[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Mock data for now - you can replace with actual API calls
+    // Fetch real data from Alpaca API
     useEffect(() => {
-        // Simulate API call
-        setTimeout(() => {
-            setAccountData({
-                buying_power: 25000,
-                portfolio_value: 32500,
-                equity: 32500,
-                cash: 7500
-            });
-
-            setPositions([
-                {
-                    symbol: 'AAPL',
-                    qty: 10,
-                    market_value: 1850,
-                    unrealized_pl: 150,
-                    unrealized_plpc: 0.088
-                },
-                {
-                    symbol: 'TSLA',
-                    qty: 5,
-                    market_value: 1200,
-                    unrealized_pl: -50,
-                    unrealized_plpc: -0.04
-                }
-            ]);
-
-            setLoading(false);
-        }, 1000);
+        fetchAccountData();
+        fetchPositions();
     }, []);
+
+    const fetchAccountData = async () => {
+        try {
+            const result = await apiService.getAccount();
+            if (result.success && result.data) {
+                setAccountData(result.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch account data:', error);
+        }
+    };
+
+    const fetchPositions = async () => {
+        try {
+            const result = await apiService.getPositions();
+            if (result.success && result.data) {
+                setPositions(result.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch positions:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     if (loading) {
         return (

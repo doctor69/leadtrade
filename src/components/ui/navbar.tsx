@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Sun, Moon, TrendingUp, Menu, X } from "lucide-react";
+import { TrendingUp, Menu, X } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function NavigationBar() {
-    const [isDark, setIsDark] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     const menu = [
         { name: 'Dashboard', href: '/dashboard' },
@@ -13,28 +14,24 @@ export default function NavigationBar() {
         { name: 'Leaderboard', href: '/leaderboard' }
     ];
 
-    // Initialize theme on mount
+    // Initialize and check login status on mount
     useEffect(() => {
         setMounted(true);
         
-        // Get current theme from DOM (set by the script in layout)
-        const isDarkMode = document.documentElement.classList.contains('dark');
-        setIsDark(isDarkMode);
+        // Check if user is logged in by checking localStorage tokens
+        const checkLoginStatus = () => {
+            if (typeof window !== 'undefined') {
+                const accessToken = localStorage.getItem('sb-access-token');
+                setIsLoggedIn(!!accessToken);
+            }
+        };
+        
+        checkLoginStatus();
+        
+        // Listen for storage changes to update login status
+        window.addEventListener('storage', checkLoginStatus);
+        return () => window.removeEventListener('storage', checkLoginStatus);
     }, []);
-
-    const toggleTheme = () => {
-        const newTheme = !isDark;
-        const root = document.documentElement;
-        
-        if (newTheme) {
-            root.classList.add('dark');
-        } else {
-            root.classList.remove('dark');
-        }
-        
-        setIsDark(newTheme);
-        localStorage.setItem('theme', newTheme ? 'dark' : 'light');
-    };
 
     if (!mounted) {
         return null; // Prevent hydration mismatch
@@ -55,12 +52,10 @@ export default function NavigationBar() {
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center space-x-1">
                         {menu.map((item) => (
-                            <a
-                                key={item.name}
-                                href={item.href}
-                                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
-                            >
-                                {item.name}
+                            <a key={item.name} href={item.href}>
+                                <Button variant="outline" size="sm">
+                                    {item.name}
+                                </Button>
                             </a>
                         ))}
                     </div>
@@ -68,37 +63,35 @@ export default function NavigationBar() {
                     {/* Right side - Theme toggle and Auth buttons */}
                     <div className="flex items-center space-x-2">
                         {/* Simple Theme Toggle */}
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={toggleTheme}
-                            className="h-9 w-9 px-0"
-                        >
-                            {isDark ? (
-                                <Sun className="h-4 w-4" />
-                            ) : (
-                                <Moon className="h-4 w-4" />
-                            )}
-                            <span className="sr-only">Toggle theme</span>
-                        </Button>
+                        <SimpleThemeToggle />
 
                         {/* Auth Buttons - Desktop */}
                         <div className="hidden md:flex items-center space-x-2">
-                            <a href="/signin">
-                                <Button variant="ghost" size="sm">
-                                    Sign In
-                                </Button>
-                            </a>
-                            <a href="/signup">
-                                <Button size="sm">
-                                    Sign Up
-                                </Button>
-                            </a>
+                            {!isLoggedIn ? (
+                                <>
+                                    <a href="/signin">
+                                        <Button variant="outline" size="sm">
+                                            Sign In
+                                        </Button>
+                                    </a>
+                                    <a href="/signup">
+                                        <Button variant="outline" size="sm">
+                                            Sign Up
+                                        </Button>
+                                    </a>
+                                </>
+                            ) : (
+                                <a href="/api/auth/signout">
+                                    <Button variant="outline" size="sm">
+                                        Sign Out
+                                    </Button>
+                                </a>
+                            )}
                         </div>
 
                         {/* Mobile Menu Button */}
                         <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
                             className="md:hidden h-9 w-9 px-0"
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -118,26 +111,33 @@ export default function NavigationBar() {
                     <div className="md:hidden border-t py-4">
                         <div className="flex flex-col space-y-2">
                             {menu.map((item) => (
-                                <a
-                                    key={item.name}
-                                    href={item.href}
-                                    className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
-                                    onClick={() => setMobileMenuOpen(false)}
-                                >
-                                    {item.name}
+                                <a key={item.name} href={item.href} onClick={() => setMobileMenuOpen(false)}>
+                                    <Button variant="outline" size="sm" className="w-full justify-start">
+                                        {item.name}
+                                    </Button>
                                 </a>
                             ))}
                             <div className="flex flex-col space-y-2 pt-2 border-t">
-                                <a href="/signin" onClick={() => setMobileMenuOpen(false)}>
-                                    <Button variant="ghost" size="sm" className="w-full justify-start">
-                                        Sign In
-                                    </Button>
-                                </a>
-                                <a href="/signup" onClick={() => setMobileMenuOpen(false)}>
-                                    <Button size="sm" className="w-full">
-                                        Sign Up
-                                    </Button>
-                                </a>
+                                {!isLoggedIn ? (
+                                    <>
+                                        <a href="/signin" onClick={() => setMobileMenuOpen(false)}>
+                                            <Button variant="outline" size="sm" className="w-full justify-start">
+                                                Sign In
+                                            </Button>
+                                        </a>
+                                        <a href="/signup" onClick={() => setMobileMenuOpen(false)}>
+                                            <Button variant="outline" size="sm" className="w-full justify-start">
+                                                Sign Up
+                                            </Button>
+                                        </a>
+                                    </>
+                                ) : (
+                                    <a href="/api/auth/signout" onClick={() => setMobileMenuOpen(false)}>
+                                        <Button variant="outline" size="sm" className="w-full justify-start">
+                                            Sign Out
+                                        </Button>
+                                    </a>
+                                )}
                             </div>
                         </div>
                     </div>

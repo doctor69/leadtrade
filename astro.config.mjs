@@ -5,21 +5,18 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   integrations: [react()],
+
   vite: {
-    plugins: [tailwindcss()],
-    css: {
-      preprocessorOptions: {
-        css: {
-          charset: false
-        }
-      }
-    }
+    plugins: [tailwindcss()]
   },
+
   build: {
     inlineStylesheets: 'auto'
   },
+
   server: {
     host: true
   },
+
   output: 'static'
 });
