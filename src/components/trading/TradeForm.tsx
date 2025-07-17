@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
+import { apiService } from '@/lib/apiService';
 
 interface TradeFormProps {
   selectedStock?: {
@@ -33,25 +34,31 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
 
     setLoading(true);
     
-    // Mock order submission - replace with actual Alpaca API call
-    const orderData = {
-      symbol: selectedStock.symbol,
-      qty: parseInt(quantity),
-      side,
-      type: orderType,
-      time_in_force: 'day',
-      ...(orderType === 'limit' && { limit_price: parseFloat(limitPrice) })
-    };
+    try {
+      const orderData = {
+        symbol: selectedStock.symbol,
+        qty: parseInt(quantity),
+        side,
+        type: orderType,
+        time_in_force: 'day' as const,
+        ...(orderType === 'limit' && { limit_price: parseFloat(limitPrice) })
+      };
 
-    console.log('Submitting order:', orderData);
-    
-    // Simulate API call
-    setTimeout(() => {
-      alert(`${side.toUpperCase()} order for ${quantity} shares of ${selectedStock.symbol} submitted!`);
-      setQuantity('');
-      setLimitPrice('');
+      const result = await apiService.placeOrder(orderData);
+
+      if (result.success) {
+        alert(`${side.toUpperCase()} order for ${quantity} shares of ${selectedStock.symbol} submitted successfully!`);
+        setQuantity('');
+        setLimitPrice('');
+      } else {
+        alert(`Failed to place order: ${result.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Order submission error:', error);
+      alert('Failed to place order. Please try again.');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const estimatedCost = selectedStock && quantity ? 

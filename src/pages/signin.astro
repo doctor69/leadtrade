@@ -1,44 +1,15 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import SignInForm from "@/components/SignInForm";
 
-const { cookies, redirect } = Astro;
+const { url } = Astro;
 
-const accessToken = cookies.get("sb-access-token");
-const refreshToken = cookies.get("sb-refresh-token");
-
-if (accessToken && refreshToken) {
-  return redirect("/dashboard");
-}
+// Get return URL from query params
+const returnUrl = url.searchParams.get("returnUrl") || "/dashboard";
 ---
 
 <Layout>
   <div class="flex items-center justify-center min-h-[60vh]">
-    <Card class="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Sign In</CardTitle>
-        <CardDescription>Enter your credentials to access your account</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form action="/api/auth/signin" method="post" class="space-y-4">
-          <div class="space-y-2">
-            <label for="email" class="text-sm font-medium">Email</label>
-            <Input type="email" name="email" id="email" placeholder="Enter your email" required />
-          </div>
-          <div class="space-y-2">
-            <label for="password" class="text-sm font-medium">Password</label>
-            <Input type="password" name="password" id="password" placeholder="Enter your password" required />
-          </div>
-          <Button type="submit" class="w-full">
-            Sign In
-          </Button>
-          <div class="text-center text-sm">
-            New here? <a href="/signup" class="text-primary hover:underline">Create an account</a>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+    <SignInForm client:load returnUrl={returnUrl} />
   </div>
 </Layout>

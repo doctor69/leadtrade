@@ -145,58 +145,30 @@
   background-color: hsl(var(--background));
 }
 
-/* Ensure proper text colors without breaking button text */
-.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+/* Ensure proper text colors without breaking button text - be more specific */
+.dark h1:not([class*="text-"]), 
+.dark h2:not([class*="text-"]), 
+.dark h3:not([class*="text-"]), 
+.dark h4:not([class*="text-"]), 
+.dark h5:not([class*="text-"]), 
+.dark h6:not([class*="text-"]) {
   color: hsl(var(--foreground));
 }
 
-.dark p {
+.dark p:not([class*="text-"]) {
   color: hsl(var(--foreground));
 }
 
-.dark span {
-  color: hsl(var(--foreground));
-}
-
-.dark div {
-  color: hsl(var(--foreground));
-}
-
-.dark label {
+.dark label:not([class*="text-"]) {
   color: hsl(var(--foreground));
 }
 
 /* Links should use primary color */
-.dark a {
+.dark a:not([class*="text-"]) {
   color: hsl(var(--primary));
 }
 
-/* Text size classes */
-.dark .text-xs,
-.dark .text-sm,
-.dark .text-base,
-.dark .text-lg,
-.dark .text-xl,
-.dark .text-2xl,
-.dark .text-3xl,
-.dark .text-4xl,
-.dark .text-5xl {
-  color: hsl(var(--foreground));
-}
-
-/* Font weight classes */
-.dark .font-normal,
-.dark .font-medium,
-.dark .font-semibold,
-.dark .font-bold {
-  color: hsl(var(--foreground));
-}
-
-/* Specific text color overrides */
-.dark .text-black {
-  color: hsl(var(--foreground)) !important;
-}
-
+/* Only override specific gray text colors that need adjustment */
 .dark .text-gray-900,
 .dark .text-gray-800,
 .dark .text-gray-700,
@@ -224,4 +196,100 @@
   background-color: hsl(var(--card));
   color: hsl(var(--card-foreground));
   border-color: hsl(var(--border));
+}
+
+/* Button state improvements for light mode */
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button:disabled:hover {
+  opacity: 0.5;
+}
+
+/* Light mode button states */
+.bg-secondary:hover:not(:disabled) {
+  background-color: hsl(0 0% 90%);
+}
+
+.bg-secondary:active:not(:disabled) {
+  background-color: hsl(0 0% 85%);
+}
+
+.bg-muted:hover:not(:disabled) {
+  background-color: hsl(0 0% 90%);
+}
+
+.bg-muted:active:not(:disabled) {
+  background-color: hsl(0 0% 85%);
+}
+
+/* Outline button states */
+button[class*="outline"]:hover:not(:disabled) {
+  background-color: hsl(0 0% 96%);
+}
+
+button[class*="outline"]:active:not(:disabled) {
+  background-color: hsl(0 0% 92%);
+}
+
+/* Ghost button states */
+button[class*="ghost"]:hover:not(:disabled) {
+  background-color: hsl(0 0% 96%);
+}
+
+button[class*="ghost"]:active:not(:disabled) {
+  background-color: hsl(0 0% 92%);
+}
+
+/* Primary button states */
+.bg-primary:hover:not(:disabled) {
+  background-color: hsl(0 72.2% 45%);
+}
+
+.bg-primary:active:not(:disabled) {
+  background-color: hsl(0 72.2% 40%);
+}
+
+/* Destructive button states */
+.bg-destructive:hover:not(:disabled) {
+  background-color: hsl(0 84.2% 55%);
+}
+
+.bg-destructive:active:not(:disabled) {
+  background-color: hsl(0 84.2% 50%);
+}
+
+/* Dark mode button state improvements */
+.dark .bg-secondary:hover:not(:disabled) {
+  background-color: hsl(0 0% 18%);
+}
+
+.dark .bg-secondary:active:not(:disabled) {
+  background-color: hsl(0 0% 22%);
+}
+
+.dark .bg-muted:hover:not(:disabled) {
+  background-color: hsl(0 0% 18%);
+}
+
+.dark .bg-muted:active:not(:disabled) {
+  background-color: hsl(0 0% 22%);
+}
+
+.dark button[class*="outline"]:hover:not(:disabled) {
+  background-color: hsl(0 0% 14.9%);
+}
+
+.dark button[class*="outline"]:active:not(:disabled) {
+  background-color: hsl(0 0% 18%);
+}
+
+.dark button[class*="ghost"]:hover:not(:disabled) {
+  background-color: hsl(0 0% 14.9%);
+}
+
+.dark button[class*="ghost"]:active:not(:disabled) {
+  background-color: hsl(0 0% 18%);
 }

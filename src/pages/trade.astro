@@ -1,13 +1,16 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import TradingInterface from "@/components/trading/TradingInterface";
+import ProtectedRoute from "@/components/ProtectedRoute";
 ---
 
 <Layout>
-    <div class="space-y-6">
-        <div class="flex items-center justify-between">
-            <h1 class="text-3xl font-bold">Trade Stocks</h1>
+    <ProtectedRoute client:load>
+        <div class="space-y-6">
+            <div class="flex items-center justify-between">
+                <h1 class="text-3xl font-bold">LEADTRADE Trading</h1>
+            </div>
+            <TradingInterface client:load />
         </div>
-        <TradingInterface client:load />
-    </div>
+    </ProtectedRoute>
 </Layout>

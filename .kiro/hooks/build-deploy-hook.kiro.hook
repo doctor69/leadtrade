@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Build and Deploy",
+  "description": "Listens to git commits and automatically runs build process, then deploys the dist folder contents to FTP server.",
+  "version": "1",
+  "when": {
+    "type": "gitCommit"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A git commit has been made. Please execute the following workflow: 1) Run 'npm run build' to build the project, 2) Once the build is successful, copy the contents of the dist folder to a dummy FTP location (placeholder for now - user will update FTP credentials later). Please handle any build errors gracefully and report the status of both the build and deployment steps."
+  }
+}

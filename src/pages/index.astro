@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Layout from "../layouts/Layout.astro";
 import { supabase } from "../lib/supabase";
+import SmartMarketData from "@/components/trading/SmartMarketData";
 import { TrendingUp, Users, Trophy, BarChart3 } from "lucide-react";
 
 const accessToken = Astro.cookies.get("sb-access-token");
@@ -33,6 +34,15 @@ let loggedIn = accessToken && refreshToken;
 					</Button>
 				</a>
 			</div>
+		</div>
+
+		<!-- Smart Market Data Section -->
+		<div class="space-y-4">
+			<div class="text-center">
+				<h2 class="text-2xl font-bold mb-2">Market Overview</h2>
+				<p class="text-muted-foreground">Live market data and portfolio tracking</p>
+			</div>
+			<SmartMarketData client:load />
 		</div>
 
 		<!-- Features Grid -->

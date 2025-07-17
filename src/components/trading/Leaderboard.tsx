@@ -3,81 +3,40 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Trophy, TrendingUp, TrendingDown, Medal, Award } from 'lucide-react';
+import { apiService, type LeaderboardEntry } from '@/lib/apiService';
 
-interface LeaderboardEntry {
-  id: string;
-  username: string;
-  totalReturn: number;
-  totalReturnPercent: number;
-  portfolioValue: number;
-  tradesCount: number;
-  winRate: number;
-  rank: number;
-}
+
 
 export default function Leaderboard() {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState<'daily' | 'weekly' | 'monthly' | 'all'>('weekly');
 
-  // Mock data - replace with actual Supabase queries
+  // Fetch real leaderboard data from Supabase
   useEffect(() => {
-    setTimeout(() => {
-      setLeaderboardData([
-        {
-          id: '1',
-          username: 'TradingPro',
-          totalReturn: 15420,
-          totalReturnPercent: 23.5,
-          portfolioValue: 81420,
-          tradesCount: 47,
-          winRate: 68.1,
-          rank: 1
-        },
-        {
-          id: '2',
-          username: 'StockMaster',
-          totalReturn: 12800,
-          totalReturnPercent: 19.2,
-          portfolioValue: 79300,
-          tradesCount: 52,
-          winRate: 63.5,
-          rank: 2
-        },
-        {
-          id: '3',
-          username: 'BullRunner',
-          totalReturn: 9650,
-          totalReturnPercent: 16.8,
-          portfolioValue: 67150,
-          tradesCount: 38,
-          winRate: 71.1,
-          rank: 3
-        },
-        {
-          id: '4',
-          username: 'MarketWiz',
-          totalReturn: 8200,
-          totalReturnPercent: 14.3,
-          portfolioValue: 65700,
-          tradesCount: 41,
-          winRate: 58.5,
-          rank: 4
-        },
-        {
-          id: '5',
-          username: 'InvestorAce',
-          totalReturn: 6890,
-          totalReturnPercent: 12.1,
-          portfolioValue: 63390,
-          tradesCount: 29,
-          winRate: 75.9,
-          rank: 5
-        }
-      ]);
-      setLoading(false);
-    }, 1000);
+    fetchLeaderboardData();
   }, [timeframe]);
+
+  const fetchLeaderboardData = async () => {
+    try {
+      setLoading(true);
+      const result = await apiService.getLeaderboard({
+        timeframe,
+        limit: 50
+      });
+      
+      if (result.success && result.data) {
+        setLeaderboardData(result.data);
+      } else {
+        setLeaderboardData([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch leaderboard data:', error);
+      setLeaderboardData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
