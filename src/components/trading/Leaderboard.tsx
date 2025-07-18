@@ -2,20 +2,80 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Trophy, TrendingUp, TrendingDown, Medal, Award } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Trophy, TrendingUp, TrendingDown, Medal, Award, Search, Filter, Eye, Users, BarChart3 } from 'lucide-react';
 import { apiService, type LeaderboardEntry } from '@/lib/apiService';
+import TraderProfileModal from './TraderProfileModal';
 
-
+type SortOption = 'return' | 'winRate' | 'trades' | 'portfolio';
+type FilterOption = 'all' | 'profitable' | 'highVolume' | 'consistent';
 
 export default function Leaderboard() {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
+  const [filteredData, setFilteredData] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState<'daily' | 'weekly' | 'monthly' | 'all'>('weekly');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('return');
+  const [filterBy, setFilterBy] = useState<FilterOption>('all');
+  const [selectedTrader, setSelectedTrader] = useState<LeaderboardEntry | null>(null);
 
   // Fetch real leaderboard data from Supabase
   useEffect(() => {
     fetchLeaderboardData();
   }, [timeframe]);
+
+  // Filter and sort data when dependencies change
+  useEffect(() => {
+    let filtered = [...leaderboardData];
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(trader =>
+        trader.username.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply category filter
+    switch (filterBy) {
+      case 'profitable':
+        filtered = filtered.filter(trader => trader.totalReturn > 0);
+        break;
+      case 'highVolume':
+        filtered = filtered.filter(trader => trader.tradesCount >= 20);
+        break;
+      case 'consistent':
+        filtered = filtered.filter(trader => trader.winRate >= 60);
+        break;
+      default:
+        break;
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'return':
+          return b.totalReturnPercent - a.totalReturnPercent;
+        case 'winRate':
+          return b.winRate - a.winRate;
+        case 'trades':
+          return b.tradesCount - a.tradesCount;
+        case 'portfolio':
+          return b.portfolioValue - a.portfolioValue;
+        default:
+          return a.rank - b.rank;
+      }
+    });
+
+    // Update ranks after filtering and sorting
+    filtered.forEach((trader, index) => {
+      trader.rank = index + 1;
+    });
+
+    setFilteredData(filtered);
+  }, [leaderboardData, searchTerm, sortBy, filterBy]);
 
   const fetchLeaderboardData = async () => {
     try {
@@ -72,117 +132,220 @@ export default function Leaderboard() {
             <Trophy className="h-6 w-6 text-yellow-500" />
             <span>Trading Leaderboard</span>
           </CardTitle>
-          <CardDescription>Top performing traders this week</CardDescription>
+          <CardDescription>
+            Discover and follow top performing traders • {filteredData.length} traders found
+          </CardDescription>
         </CardHeader>
       </Card>
 
-      {/* Timeframe Selector */}
-      <div className="flex space-x-2">
-        {(['daily', 'weekly', 'monthly', 'all'] as const).map((period) => (
-          <button
-            key={period}
-            onClick={() => setTimeframe(period)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              timeframe === period
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-            }`}
-          >
-            {period.charAt(0).toUpperCase() + period.slice(1)}
-          </button>
-        ))}
+      {/* Controls Section */}
+      <div className="space-y-4">
+        {/* Timeframe Selector */}
+        <div className="flex flex-wrap gap-2">
+          {(['daily', 'weekly', 'monthly', 'all'] as const).map((period) => (
+            <Button
+              key={period}
+              variant={timeframe === period ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setTimeframe(period)}
+            >
+              {period.charAt(0).toUpperCase() + period.slice(1)}
+            </Button>
+          ))}
+        </div>
+
+        {/* Search and Filters */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search traders..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          
+          <div className="flex gap-2">
+            <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
+              <SelectTrigger className="w-[140px]">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="return">Total Return</SelectItem>
+                <SelectItem value="winRate">Win Rate</SelectItem>
+                <SelectItem value="trades">Trade Count</SelectItem>
+                <SelectItem value="portfolio">Portfolio Size</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterBy} onValueChange={(value: FilterOption) => setFilterBy(value)}>
+              <SelectTrigger className="w-[130px]">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Traders</SelectItem>
+                <SelectItem value="profitable">Profitable</SelectItem>
+                <SelectItem value="highVolume">High Volume</SelectItem>
+                <SelectItem value="consistent">Consistent</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
       {/* Top 3 Podium */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {leaderboardData.slice(0, 3).map((trader) => (
-          <Card key={trader.id} className={`${trader.rank === 1 ? 'ring-2 ring-yellow-500' : ''}`}>
-            <CardContent className="p-6 text-center">
-              <div className="flex justify-center mb-4">
-                {getRankIcon(trader.rank)}
-              </div>
-              
-              <Avatar className="h-16 w-16 mx-auto mb-4">
-                <AvatarFallback className="text-lg font-bold">
-                  {getInitials(trader.username)}
-                </AvatarFallback>
-              </Avatar>
-              
-              <h3 className="font-semibold text-lg mb-2">{trader.username}</h3>
-              
-              <div className="space-y-2">
-                <div className="flex items-center justify-center space-x-2">
-                  {trader.totalReturn >= 0 ? (
-                    <TrendingUp className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <TrendingDown className="h-4 w-4 text-red-500" />
-                  )}
-                  <Badge variant={trader.totalReturn >= 0 ? "default" : "destructive"}>
-                    {trader.totalReturn >= 0 ? '+' : ''}${trader.totalReturn.toLocaleString()} ({trader.totalReturnPercent.toFixed(1)}%)
-                  </Badge>
+      {filteredData.length >= 3 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {filteredData.slice(0, 3).map((trader) => (
+            <Card 
+              key={trader.id} 
+              className={`cursor-pointer transition-all hover:shadow-lg ${
+                trader.rank === 1 ? 'ring-2 ring-yellow-500' : ''
+              }`}
+              onClick={() => setSelectedTrader(trader)}
+            >
+              <CardContent className="p-6 text-center">
+                <div className="flex justify-center mb-4">
+                  {getRankIcon(trader.rank)}
                 </div>
                 
-                <div className="text-sm text-muted-foreground">
-                  Portfolio: ${trader.portfolioValue.toLocaleString()}
-                </div>
+                <Avatar className="h-16 w-16 mx-auto mb-4">
+                  <AvatarFallback className="text-lg font-bold">
+                    {getInitials(trader.username)}
+                  </AvatarFallback>
+                </Avatar>
                 
-                <div className="text-sm text-muted-foreground">
-                  Win Rate: {trader.winRate.toFixed(1)}%
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Full Leaderboard */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Full Rankings</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {leaderboardData.map((trader) => (
-              <div key={trader.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center justify-center w-8">
-                    {trader.rank <= 3 ? getRankIcon(trader.rank) : (
-                      <span className="text-sm font-bold text-muted-foreground">#{trader.rank}</span>
-                    )}
-                  </div>
-                  
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback>{getInitials(trader.username)}</AvatarFallback>
-                  </Avatar>
-                  
-                  <div>
-                    <h4 className="font-semibold">{trader.username}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {trader.tradesCount} trades • {trader.winRate.toFixed(1)}% win rate
-                    </p>
-                  </div>
-                </div>
+                <h3 className="font-semibold text-lg mb-2">{trader.username}</h3>
                 
-                <div className="text-right">
-                  <div className="flex items-center space-x-2 mb-1">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-center space-x-2">
                     {trader.totalReturn >= 0 ? (
                       <TrendingUp className="h-4 w-4 text-green-500" />
                     ) : (
                       <TrendingDown className="h-4 w-4 text-red-500" />
                     )}
                     <Badge variant={trader.totalReturn >= 0 ? "default" : "destructive"}>
-                      {trader.totalReturn >= 0 ? '+' : ''}${trader.totalReturn.toLocaleString()}
+                      {trader.totalReturn >= 0 ? '+' : ''}${trader.totalReturn.toLocaleString()} ({trader.totalReturnPercent.toFixed(1)}%)
                     </Badge>
                   </div>
+                  
+                  {trader.showAssetAmounts && (
+                    <div className="text-sm text-muted-foreground">
+                      Portfolio: ${trader.portfolioValue.toLocaleString()}
+                    </div>
+                  )}
+                  {!trader.showAssetAmounts && (
+                    <div className="text-sm text-muted-foreground">
+                      Portfolio: Hidden
+                    </div>
+                  )}
+                  
                   <div className="text-sm text-muted-foreground">
-                    ${trader.portfolioValue.toLocaleString()}
+                    Win Rate: {trader.winRate.toFixed(1)}%
+                  </div>
+
+                  <Button size="sm" className="mt-2">
+                    <Eye className="h-4 w-4 mr-2" />
+                    View Profile
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Full Leaderboard */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>All Traders</span>
+            <Badge variant="secondary">{filteredData.length} results</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {filteredData.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">No traders found matching your criteria</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => {
+                  setSearchTerm('');
+                  setFilterBy('all');
+                }}
+              >
+                Clear Filters
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredData.map((trader) => (
+                <div 
+                  key={trader.id} 
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                  onClick={() => setSelectedTrader(trader)}
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center justify-center w-8">
+                      {trader.rank <= 3 ? getRankIcon(trader.rank) : (
+                        <span className="text-sm font-bold text-muted-foreground">#{trader.rank}</span>
+                      )}
+                    </div>
+                    
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback>{getInitials(trader.username)}</AvatarFallback>
+                    </Avatar>
+                    
+                    <div className="flex-1">
+                      <h4 className="font-semibold">{trader.username}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {trader.tradesCount} trades • {trader.winRate.toFixed(1)}% win rate
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <div className="flex items-center space-x-2 mb-1">
+                        {trader.totalReturn >= 0 ? (
+                          <TrendingUp className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <TrendingDown className="h-4 w-4 text-red-500" />
+                        )}
+                        <Badge variant={trader.totalReturn >= 0 ? "default" : "destructive"}>
+                          {trader.totalReturn >= 0 ? '+' : ''}${trader.totalReturn.toLocaleString()}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {trader.showAssetAmounts ? `$${trader.portfolioValue.toLocaleString()}` : 'Portfolio Hidden'}
+                      </div>
+                    </div>
+                    
+                    <Button size="sm" variant="outline">
+                      <Eye className="h-4 w-4 mr-2" />
+                      View
+                    </Button>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Trader Profile Modal/Detail View */}
+      {selectedTrader && (
+        <TraderProfileModal 
+          trader={selectedTrader} 
+          onClose={() => setSelectedTrader(null)} 
+        />
+      )}
     </div>
   );
 }

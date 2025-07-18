@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { createClient } from '@supabase/supabase-js';
 import { Separator } from '@/components/ui/separator';
+import { checkOAuthUserStatus } from '@/lib/oauth-handler';
+import OAuthSetupForm from '@/components/ui/trade/OAuthSetupForm';
 
 interface SignInFormProps {
   returnUrl?: string;
@@ -14,11 +16,30 @@ export default function SignInForm({ returnUrl = '/dashboard' }: SignInFormProps
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [oauthSetupData, setOauthSetupData] = useState<any>(null);
+  const [showOauthSetup, setShowOauthSetup] = useState(false);
 
   const supabase = createClient(
     import.meta.env.PUBLIC_SUPABASE_URL,
     import.meta.env.PUBLIC_SUPABASE_ANON_KEY
   );
+
+  // Check if OAuth user needs additional setup
+  useEffect(() => {
+    const checkOAuthStatus = async () => {
+      try {
+        const status = await checkOAuthUserStatus();
+        if (status.needsSetup && status.userData) {
+          setOauthSetupData(status.userData);
+          setShowOauthSetup(true);
+        }
+      } catch (error) {
+        console.error('Error checking OAuth status:', error);
+      }
+    };
+
+    checkOAuthStatus();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +90,19 @@ export default function SignInForm({ returnUrl = '/dashboard' }: SignInFormProps
       console.error('Social login error:', err);
     }
   };
+
+  // Show OAuth setup form if needed
+  if (showOauthSetup && oauthSetupData) {
+    return (
+      <OAuthSetupForm 
+        userData={oauthSetupData} 
+        onComplete={() => {
+          setShowOauthSetup(false);
+          window.location.href = returnUrl;
+        }} 
+      />
+    );
+  }
 
   return (
     <Card className="w-full max-w-md">

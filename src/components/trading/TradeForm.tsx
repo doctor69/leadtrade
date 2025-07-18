@@ -4,8 +4,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TrendingUp, TrendingDown, AlertCircle, BarChart3 } from 'lucide-react';
 import { apiService } from '@/lib/apiService';
+import OptionsSelector from './OptionsSelector';
+import type { OptionDetails } from '@/types/trading';
 
 interface TradeFormProps {
   selectedStock?: {
@@ -18,22 +21,29 @@ interface TradeFormProps {
 }
 
 export default function TradeForm({ selectedStock }: TradeFormProps) {
+  const [tradeType, setTradeType] = useState<'stock' | 'option'>('stock');
   const [orderType, setOrderType] = useState<'market' | 'limit'>('market');
   const [side, setSide] = useState<'buy' | 'sell'>('buy');
   const [quantity, setQuantity] = useState('');
   const [limitPrice, setLimitPrice] = useState('');
+  const [selectedOption, setSelectedOption] = useState<OptionDetails | undefined>();
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedStock || !quantity) {
       alert('Please select a stock and enter quantity');
       return;
     }
 
+    if (tradeType === 'option' && !selectedOption) {
+      alert('Please select an option contract');
+      return;
+    }
+
     setLoading(true);
-    
+
     try {
       const orderData = {
         symbol: selectedStock.symbol,
@@ -41,15 +51,21 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
         side,
         type: orderType,
         time_in_force: 'day' as const,
-        ...(orderType === 'limit' && { limit_price: parseFloat(limitPrice) })
+        trade_type: tradeType,
+        ...(orderType === 'limit' && { limit_price: parseFloat(limitPrice) }),
+        ...(tradeType === 'option' && selectedOption && { option_details: selectedOption })
       };
 
       const result = await apiService.placeOrder(orderData);
 
       if (result.success) {
-        alert(`${side.toUpperCase()} order for ${quantity} shares of ${selectedStock.symbol} submitted successfully!`);
+        const assetType = tradeType === 'option' ? 'option contracts' : 'shares';
+        alert(`${side.toUpperCase()} order for ${quantity} ${assetType} of ${selectedStock.symbol} submitted successfully!`);
         setQuantity('');
         setLimitPrice('');
+        if (tradeType === 'option') {
+          setSelectedOption(undefined);
+        }
       } else {
         alert(`Failed to place order: ${result.error || 'Unknown error'}`);
       }
@@ -61,8 +77,28 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
     }
   };
 
-  const estimatedCost = selectedStock && quantity ? 
-    (parseFloat(quantity) * (orderType === 'limit' && limitPrice ? parseFloat(limitPrice) : selectedStock.price)) : 0;
+  const handleOptionSelect = (optionDetails: OptionDetails) => {
+    setSelectedOption(optionDetails);
+  };
+
+  const getEstimatedCost = () => {
+    if (!selectedStock || !quantity) return 0;
+
+    const qty = parseFloat(quantity);
+
+    if (tradeType === 'stock') {
+      const price = orderType === 'limit' && limitPrice ? parseFloat(limitPrice) : selectedStock.price;
+      return qty * price;
+    } else if (tradeType === 'option' && selectedOption) {
+      const premium = selectedOption.premium || 0;
+      const contractSize = selectedOption.contract_size || 100;
+      return qty * premium * contractSize;
+    }
+
+    return 0;
+  };
+
+  const estimatedCost = getEstimatedCost();
 
   return (
     <div className="space-y-6">
@@ -101,6 +137,20 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Trade Type Selection */}
+            <Tabs value={tradeType} onValueChange={(value) => setTradeType(value as 'stock' | 'option')}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="stock" className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Stocks
+                </TabsTrigger>
+                <TabsTrigger value="option" className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Options
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+
             {/* Buy/Sell Toggle */}
             <div className="flex space-x-2">
               <Button
@@ -109,7 +159,7 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
                 onClick={() => setSide('buy')}
                 className="flex-1"
               >
-                Buy
+                {tradeType === 'option' ? 'Buy to Open' : 'Buy'}
               </Button>
               <Button
                 type="button"
@@ -117,7 +167,7 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
                 onClick={() => setSide('sell')}
                 className="flex-1"
               >
-                Sell
+                {tradeType === 'option' ? 'Sell to Open' : 'Sell'}
               </Button>
             </div>
 
@@ -135,17 +185,31 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
               </Select>
             </div>
 
+            {/* Options Selector (for options trading) */}
+            {tradeType === 'option' && selectedStock && (
+              <OptionsSelector
+                symbol={selectedStock.symbol}
+                onOptionSelect={handleOptionSelect}
+                selectedOption={selectedOption}
+              />
+            )}
+
             {/* Quantity */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Quantity</label>
               <Input
                 type="number"
-                placeholder="Number of shares"
+                placeholder={tradeType === 'option' ? 'Number of contracts' : 'Number of shares'}
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 min="1"
                 required
               />
+              {tradeType === 'option' && (
+                <p className="text-xs text-muted-foreground">
+                  Each option contract typically represents 100 shares
+                </p>
+              )}
             </div>
 
             {/* Limit Price (if limit order) */}
@@ -154,7 +218,7 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
                 <label className="text-sm font-medium">Limit Price</label>
                 <Input
                   type="number"
-                  placeholder="Price per share"
+                  placeholder={tradeType === 'option' ? 'Premium per contract' : 'Price per share'}
                   value={limitPrice}
                   onChange={(e) => setLimitPrice(e.target.value)}
                   step="0.01"
@@ -165,38 +229,66 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
             )}
 
             {/* Order Summary */}
-            {selectedStock && quantity && (
+            {selectedStock && quantity && (tradeType === 'stock' || selectedOption) && (
               <div className="p-4 bg-muted rounded-lg space-y-2">
                 <h4 className="font-medium">Order Summary</h4>
                 <div className="flex justify-between text-sm">
                   <span>Symbol:</span>
                   <span>{selectedStock.symbol}</span>
                 </div>
+                {tradeType === 'option' && selectedOption && (
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span>Option Type:</span>
+                      <span>{selectedOption.option_type.toUpperCase()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Strike Price:</span>
+                      <span>${selectedOption.strike}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Expiration:</span>
+                      <span>{new Date(selectedOption.expiration).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Premium:</span>
+                      <span>${selectedOption.premium?.toFixed(2) || 'N/A'}</span>
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-between text-sm">
                   <span>Quantity:</span>
-                  <span>{quantity} shares</span>
+                  <span>{quantity} {tradeType === 'option' ? 'contracts' : 'shares'}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Price:</span>
                   <span>
-                    {orderType === 'market' ? 'Market Price' : `$${limitPrice || '0.00'}`}
+                    {tradeType === 'option'
+                      ? `$${selectedOption?.premium?.toFixed(2) || 'N/A'} per contract`
+                      : orderType === 'market' ? 'Market Price' : `$${limitPrice || '0.00'}`
+                    }
                   </span>
                 </div>
                 <div className="flex justify-between text-sm font-medium border-t pt-2">
                   <span>Estimated {side === 'buy' ? 'Cost' : 'Proceeds'}:</span>
                   <span>${estimatedCost.toFixed(2)}</span>
                 </div>
+                {tradeType === 'option' && (
+                  <div className="text-xs text-muted-foreground">
+                    * Options cost = Contracts × Premium × 100 shares per contract
+                  </div>
+                )}
               </div>
             )}
 
             {/* Submit Button */}
-            <Button 
-              type="submit" 
-              disabled={!selectedStock || !quantity || loading}
+            <Button
+              type="submit"
+              disabled={!selectedStock || !quantity || loading || (tradeType === 'option' && !selectedOption)}
               className="w-full"
               variant={side === 'buy' ? 'default' : 'destructive'}
             >
-              {loading ? 'Placing Order...' : `${side === 'buy' ? 'Buy' : 'Sell'} ${selectedStock?.symbol || 'Stock'}`}
+              {loading ? 'Placing Order...' : `${side === 'buy' ? 'Buy' : 'Sell'} ${selectedStock?.symbol || (tradeType === 'option' ? 'Option' : 'Stock')}`}
             </Button>
 
             {/* Warning */}
@@ -204,7 +296,12 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
               <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
               <div className="text-xs text-yellow-700 dark:text-yellow-300">
                 <p className="font-medium">Trading involves risk</p>
-                <p>Make sure you understand the risks before placing orders. This is a demo environment.</p>
+                <p>
+                  {tradeType === 'option'
+                    ? 'Options trading involves significant risk and may not be suitable for all investors. Options can expire worthless.'
+                    : 'Make sure you understand the risks before placing orders. This is a demo environment.'
+                  }
+                </p>
               </div>
             </div>
           </form>

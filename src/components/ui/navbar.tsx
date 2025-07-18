@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Menu, X } from "lucide-react";
-import ThemeToggle from "@/components/ThemeToggle";
+import SimpleThemeToggle from "@/components/SimpleThemeToggle";
 
 export default function NavigationBar() {
     const [mounted, setMounted] = useState(false);
@@ -11,7 +11,8 @@ export default function NavigationBar() {
     const menu = [
         { name: 'Dashboard', href: '/dashboard' },
         { name: 'Trade', href: '/trade' },
-        { name: 'Leaderboard', href: '/leaderboard' }
+        { name: 'Leaderboard', href: '/leaderboard' },
+        { name: 'Settings', href: '/settings' }
     ];
 
     // Initialize and check login status on mount
