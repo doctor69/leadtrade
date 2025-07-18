@@ -2,14 +2,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Layout from "../layouts/Layout.astro";
-import { supabase } from "../lib/supabase";
 import SmartMarketData from "@/components/trading/SmartMarketData";
 import { TrendingUp, Users, Trophy, BarChart3 } from "lucide-react";
-
-const accessToken = Astro.cookies.get("sb-access-token");
-const refreshToken = Astro.cookies.get("sb-refresh-token");
-
-let loggedIn = accessToken && refreshToken;
 ---
 
 <Layout>

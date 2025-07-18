@@ -14,5 +14,10 @@ export default defineConfig({
     host: true
   },
 
-  output: 'static'
+  output: 'static',
+  
+  // Prerender all pages for static deployment
+  experimental: {
+    prerender: true
+  }
 });

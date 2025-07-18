@@ -1,18 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import AccountCreationForm from "@/components/ui/trade/AccountCreationForm";
-
-const { cookies, redirect, url } = Astro;
-
-const accessToken = cookies.get("sb-access-token");
-const refreshToken = cookies.get("sb-refresh-token");
-
-// Get return URL from query params
-const returnUrl = url.searchParams.get("returnUrl") || "/dashboard";
-
-if (accessToken && refreshToken) {
-  return redirect(returnUrl);
-}
 ---
 
 <Layout>
@@ -22,7 +10,7 @@ if (accessToken && refreshToken) {
         <h1 class="text-3xl font-bold mb-2">Join LEADTRADE</h1>
         <p class="text-muted-foreground">Create your account and start paper trading with real market data</p>
       </div>
-      <AccountCreationForm client:load returnUrl={returnUrl} />
+      <AccountCreationForm client:load returnUrl="/dashboard" />
     </div>
   </div>
 </Layout>
