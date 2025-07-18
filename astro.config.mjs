@@ -3,6 +3,8 @@ import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import tailwind from '@astrojs/tailwind';
 
+import netlify from '@astrojs/netlify';
+
 export default defineConfig({
   integrations: [react(), tailwind()],
 
@@ -16,15 +18,16 @@ export default defineConfig({
   },
 
   output: 'static',
-  
+
   // Ensure all pages are prerendered for static deployment
-  adapter: netlify(),
-  
+
   vite: {
     build: {
       rollupOptions: {
         external: []
       }
     }
-  }
+  },
+
+  adapter: netlify()
 });
