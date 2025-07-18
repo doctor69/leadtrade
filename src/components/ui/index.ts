@@ -30,6 +30,7 @@ export {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem 
 } from './dropdown-menu';
+export { Popover, PopoverContent, PopoverTrigger } from './popover';
 export { 
   Table, 
   TableBody, 
