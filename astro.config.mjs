@@ -18,7 +18,7 @@ export default defineConfig({
   output: 'static',
   
   // Ensure all pages are prerendered for static deployment
-  adapter: undefined,
+  adapter: netlify(),
   
   vite: {
     build: {
