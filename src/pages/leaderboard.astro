@@ -1,6 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro"
-import Leaderboard from "@/components/trading/Leaderboard"
+import LeaderboardComponent from "@/components/trading/Leaderboard"
 import ProtectedRoute from "@/components/ProtectedRoute"
 ---
 
@@ -10,7 +10,7 @@ import ProtectedRoute from "@/components/ProtectedRoute"
             <div class="flex items-center justify-between">
                 <h1 class="text-3xl font-bold">LEADTRADE Leaderboard</h1>
             </div>
-            <Leaderboard client:load />
+            <LeaderboardComponent client:load />
         </div>
     </ProtectedRoute>
 </Layout>

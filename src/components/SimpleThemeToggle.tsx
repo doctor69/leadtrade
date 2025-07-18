@@ -9,41 +9,40 @@ export default function SimpleThemeToggle() {
   useEffect(() => {
     setMounted(true);
     
-    // Check current theme from DOM
-    const currentTheme = document.documentElement.classList.contains('dark');
-    setIsDark(currentTheme);
+    // Get theme from localStorage or default to light
+    const savedTheme = localStorage.getItem('leadtrade-ui-theme');
+    const shouldBeDark = savedTheme === 'dark';
     
-    // If no theme is set, default to light
-    if (!localStorage.getItem('leadtrade-ui-theme')) {
+    // Apply theme immediately
+    const root = document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(shouldBeDark ? 'dark' : 'light');
+    
+    setIsDark(shouldBeDark);
+    
+    // Save to localStorage if not set
+    if (!savedTheme) {
       localStorage.setItem('leadtrade-ui-theme', 'light');
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
-      setIsDark(false);
     }
   }, []);
 
   const toggleTheme = () => {
-    const newTheme = !isDark;
+    const newIsDark = !isDark;
     const root = document.documentElement;
     
     // Remove both classes first
     root.classList.remove('light', 'dark');
     
     // Add the new theme class
-    if (newTheme) {
-      root.classList.add('dark');
-      localStorage.setItem('leadtrade-ui-theme', 'dark');
-    } else {
-      root.classList.add('light');
-      localStorage.setItem('leadtrade-ui-theme', 'light');
-    }
+    root.classList.add(newIsDark ? 'dark' : 'light');
     
-    setIsDark(newTheme);
+    // Save to localStorage
+    localStorage.setItem('leadtrade-ui-theme', newIsDark ? 'dark' : 'light');
     
-    // Force a re-render of the page to update components
-    setTimeout(() => {
-      window.dispatchEvent(new Event('storage'));
-    }, 0);
+    // Update state
+    setIsDark(newIsDark);
+    
+    console.log('Theme toggled to:', newIsDark ? 'dark' : 'light');
   };
 
   if (!mounted) {

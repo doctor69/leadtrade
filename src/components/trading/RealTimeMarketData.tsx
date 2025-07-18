@@ -9,7 +9,16 @@ import { useAlpacaWebSocket } from '@/hooks/useAlpacaWebSocket';
 const POPULAR_SYMBOLS = ['AAPL', 'TSLA', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'NFLX'];
 
 export default function RealTimeMarketData() {
-  const { marketData, isConnected, error, connect, disconnect } = useAlpacaWebSocket(POPULAR_SYMBOLS);
+  const { 
+    marketData, 
+    isConnected, 
+    isAuthenticated,
+    connectionStatus,
+    error, 
+    connect, 
+    disconnect,
+    reconnect 
+  } = useAlpacaWebSocket(POPULAR_SYMBOLS);
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
   useEffect(() => {
@@ -61,13 +70,25 @@ export default function RealTimeMarketData() {
             </div>
             
             <div className="flex items-center space-x-2">
-              <Badge variant={isConnected ? "default" : "destructive"}>
-                {isConnected ? 'Connected' : 'Disconnected'}
+              <Badge variant={
+                connectionStatus === 'authenticated' ? "default" : 
+                connectionStatus === 'connected' ? "secondary" :
+                connectionStatus === 'connecting' ? "outline" : "destructive"
+              }>
+                {connectionStatus === 'authenticated' ? 'Authenticated' :
+                 connectionStatus === 'connected' ? 'Connected' :
+                 connectionStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
               </Badge>
+              {isAuthenticated && (
+                <Badge variant="outline" className="text-xs">
+                  Real-time Data
+                </Badge>
+              )}
               <Button
                 variant="outline"
                 size="sm"
-                onClick={isConnected ? disconnect : connect}
+                onClick={isConnected ? disconnect : reconnect}
+                disabled={connectionStatus === 'connecting'}
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 {isConnected ? 'Disconnect' : 'Reconnect'}

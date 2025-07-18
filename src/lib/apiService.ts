@@ -120,6 +120,12 @@ export interface LeaderboardEntry {
   tradesCount: number;
   winRate: number;
   rank: number;
+  showAssetAmounts: boolean;
+  followers?: number;
+  avgHoldTime?: number;
+  riskLevel?: 'low' | 'medium' | 'high';
+  tradingStyle?: 'conservative' | 'moderate' | 'active';
+  lastActive?: string;
 }
 
 export interface UserProfile {
@@ -217,6 +223,14 @@ class ApiService {
     limit_price?: number;
     stop_price?: number;
     extended_hours?: boolean;
+    trade_type?: 'stock' | 'option';
+    option_details?: {
+      strike: number;
+      expiration: string;
+      option_type: 'call' | 'put';
+      contract_size?: number;
+      premium?: number;
+    };
   }): Promise<ApiResponse<Order>> {
     try {
       // Check authentication first
