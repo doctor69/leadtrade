@@ -7,7 +7,8 @@ export default defineConfig({
   integrations: [react(), tailwind()],
 
   build: {
-    inlineStylesheets: 'auto'
+    inlineStylesheets: 'auto',
+    assets: '_astro'
   },
 
   server: {
@@ -16,8 +17,14 @@ export default defineConfig({
 
   output: 'static',
   
-  // Prerender all pages for static deployment
-  experimental: {
-    prerender: true
+  // Ensure all pages are prerendered for static deployment
+  adapter: undefined,
+  
+  vite: {
+    build: {
+      rollupOptions: {
+        external: []
+      }
+    }
   }
 });
