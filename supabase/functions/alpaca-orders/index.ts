@@ -1,0 +1,360 @@
+// Add Deno types reference
+/// <reference lib="deno.ns" />
+
+import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts'
+import { 
+  withAuth, 
+  processRequest, 
+  createSuccessResponse, 
+  createErrorResponse,
+  AlpacaClient,
+  corsHeaders,
+  withRateLimit,
+  getRateLimitConfig,
+  createLogger,
+  logApiRequest,
+  logApiResponse
+} from '../_shared/index.ts'
+import type { AuthContext } from '../_shared/auth.ts'
+
+// Schema for options details
+const optionDetailsSchema = z.object({
+  strike: z.number().positive('Strike price must be positive'),
+  expiration: z.string().min(1, 'Expiration date is required'),
+  option_type: z.enum(['call', 'put'], { required_error: 'Option type must be call or put' }),
+  contract_size: z.number().positive().default(100),
+  premium: z.number().positive().optional(),
+});
+
+// Schema for creating orders
+const createOrderSchema = z.object({
+  symbol: z.string().min(1, 'Symbol is required'),
+  qty: z.number().positive('Quantity must be positive'),
+  side: z.enum(['buy', 'sell'], { required_error: 'Side must be buy or sell' }),
+  type: z.enum(['market', 'limit', 'stop', 'stop_limit'], { required_error: 'Order type is required' }),
+  time_in_force: z.enum(['day', 'gtc', 'ioc', 'fok']).default('day'),
+  limit_price: z.number().positive().optional(),
+  stop_price: z.number().positive().optional(),
+  trail_price: z.number().positive().optional(),
+  trail_percent: z.number().positive().optional(),
+  extended_hours: z.boolean().default(false),
+  client_order_id: z.string().optional(),
+  trade_type: z.enum(['stock', 'option']).default('stock'),
+  option_details: optionDetailsSchema.optional(),
+});
+
+// Schema for query parameters
+const ordersQuerySchema = z.object({
+  status: z.enum(['open', 'closed', 'all']).default('open'),
+  limit: z.coerce.number().min(1).max(500).default(50),
+  after: z.string().optional(),
+  until: z.string().optional(),
+  direction: z.enum(['asc', 'desc']).default('desc'),
+  nested: z.coerce.boolean().default(true),
+  symbols: z.string().optional(), // comma-separated symbols
+});
+
+// Helper function to construct option symbol in OCC format
+function constructOptionSymbol(underlyingSymbol: string, optionDetails: {
+  strike: number;
+  expiration: string;
+  option_type: 'call' | 'put';
+}): string {
+  // Parse expiration date
+  const expirationDate = new Date(optionDetails.expiration);
+  const year = expirationDate.getFullYear().toString().slice(-2);
+  const month = (expirationDate.getMonth() + 1).toString().padStart(2, '0');
+  const day = expirationDate.getDate().toString().padStart(2, '0');
+  
+  // Format strike price (multiply by 1000 and pad to 8 digits)
+  const strikeFormatted = Math.round(optionDetails.strike * 1000).toString().padStart(8, '0');
+  
+  // Option type (C for call, P for put)
+  const optionType = optionDetails.option_type.toUpperCase().charAt(0);
+  
+  return `${underlyingSymbol}${year}${month}${day}${optionType}${strikeFormatted}`;
+}
+
+/**
+ * Edge Function handler for Alpaca orders
+ * 
+ * GET: Retrieves orders with filtering options
+ * POST: Places a new order
+ * DELETE: Cancels an existing order
+ * 
+ * Requirements: 1.1, 1.2, 5.2
+ */
+serve(async (req: Request) => {
+  return processRequest(req, async () => {
+    // Handle CORS preflight requests
+    if (req.method === 'OPTIONS') {
+      return new Response('ok', { headers: corsHeaders })
+    }
+
+    // Only allow GET, POST, and DELETE requests
+    if (!['GET', 'POST', 'DELETE'].includes(req.method)) {
+      return createErrorResponse(
+        {
+          code: 'METHOD_NOT_ALLOWED',
+          message: 'Method not allowed. Only GET, POST, and DELETE requests are supported.'
+        },
+        405
+      )
+    }
+
+    return withAuth(req, async (authContext: AuthContext) => {
+      // Apply rate limiting
+      const rateLimitConfig = getRateLimitConfig('orders');
+      
+      return withRateLimit(req, rateLimitConfig, authContext.userId, async () => {
+        try {
+          // Create logger with context
+          const logger = createLogger('alpaca-orders', authContext.userId, {
+            tradingMode: authContext.tradingMode,
+            alpacaAccountId: authContext.alpacaAccountId
+          });
+          
+          logger.info(`Processing orders request in ${authContext.tradingMode} mode`);
+          
+          // Create Alpaca client with auth context
+          const alpacaClient = new AlpacaClient(authContext, (message, data) => {
+            logger.debug(message, data);
+          });
+          
+          // Get account ID from auth context or fetch from database
+          let accountId = authContext.alpacaAccountId
+          if (!accountId) {
+            const accountsResponse = await alpacaClient.getAccounts()
+            if (!accountsResponse.success || !accountsResponse.data || accountsResponse.data.length === 0) {
+              return createErrorResponse(
+                {
+                  code: 'NO_ALPACA_ACCOUNT',
+                  message: 'No Alpaca account found for this user'
+                },
+                404
+              )
+            }
+            accountId = accountsResponse.data[0].id
+          }
+        
+        // Handle GET request (list orders)
+        if (req.method === 'GET') {
+          // Parse URL and extract query parameters
+          const url = new URL(req.url)
+          const queryParams = Object.fromEntries(url.searchParams)
+          
+          // Validate query parameters
+          try {
+            const validatedQuery = ordersQuerySchema.parse(queryParams)
+            
+            // Build query parameters for Alpaca API
+            const params: Record<string, string> = {
+              status: validatedQuery.status,
+              limit: validatedQuery.limit.toString(),
+              direction: validatedQuery.direction,
+              nested: validatedQuery.nested.toString()
+            }
+            
+            if (validatedQuery.after) params.after = validatedQuery.after
+            if (validatedQuery.until) params.until = validatedQuery.until
+            if (validatedQuery.symbols) params.symbols = validatedQuery.symbols
+            
+            // Make request to Alpaca Broker API
+            const response = await alpacaClient.getOrders(accountId, {
+              status: validatedQuery.status,
+              limit: validatedQuery.limit,
+              after: validatedQuery.after,
+              until: validatedQuery.until,
+              direction: validatedQuery.direction,
+              nested: validatedQuery.nested,
+              symbols: validatedQuery.symbols
+            })
+            
+            if (!response.success) {
+              console.error('Failed to fetch orders:', response.error)
+              return createErrorResponse(
+                {
+                  code: response.error?.code || 'ALPACA_API_ERROR',
+                  message: response.error?.message || 'Failed to fetch orders',
+                  details: response.error?.details
+                },
+                response.error?.status || 400
+              )
+            }
+            
+            return createSuccessResponse(response.data)
+          } catch (error) {
+            const validationError = error as Error;
+            if (validationError instanceof z.ZodError) {
+              return createErrorResponse(
+                {
+                  code: 'INVALID_REQUEST',
+                  message: 'Invalid query parameters',
+                  details: validationError.errors
+                },
+                400
+              )
+            }
+            throw validationError
+          }
+        }
+        
+        // Handle POST request (create order)
+        if (req.method === 'POST') {
+          try {
+            const body = await req.json()
+            const validatedOrder = createOrderSchema.parse(body)
+            
+            // Validate limit price for limit orders
+            if (validatedOrder.type === 'limit' && !validatedOrder.limit_price) {
+              return createErrorResponse(
+                {
+                  code: 'VALIDATION_ERROR',
+                  message: 'Limit price required for limit orders',
+                  details: 'Please provide a limit price for your limit order.'
+                },
+                400
+              )
+            }
+            
+            // Validate stop price for stop orders
+            if ((validatedOrder.type === 'stop' || validatedOrder.type === 'stop_limit') && !validatedOrder.stop_price) {
+              return createErrorResponse(
+                {
+                  code: 'VALIDATION_ERROR',
+                  message: 'Stop price required for stop orders',
+                  details: 'Please provide a stop price for your stop order.'
+                },
+                400
+              )
+            }
+            
+            // Validate options trading requirements
+            if (validatedOrder.trade_type === 'option') {
+              if (!validatedOrder.option_details) {
+                return createErrorResponse(
+                  {
+                    code: 'VALIDATION_ERROR',
+                    message: 'Option details required for options trading',
+                    details: 'Please provide complete option details including strike price, expiration, and option type.'
+                  },
+                  400
+                )
+              }
+              
+              // Construct option symbol in OCC format for Alpaca
+              const optionSymbol = constructOptionSymbol(validatedOrder.symbol, validatedOrder.option_details)
+              validatedOrder.symbol = optionSymbol
+            }
+            
+            // Prepare order payload for Alpaca API
+            let orderPayload: any = {
+              symbol: validatedOrder.symbol,
+              qty: validatedOrder.qty,
+              side: validatedOrder.side,
+              type: validatedOrder.type,
+              time_in_force: validatedOrder.time_in_force,
+              extended_hours: validatedOrder.extended_hours
+            }
+            
+            // Add optional fields
+            if (validatedOrder.limit_price) orderPayload.limit_price = validatedOrder.limit_price
+            if (validatedOrder.stop_price) orderPayload.stop_price = validatedOrder.stop_price
+            if (validatedOrder.trail_price) orderPayload.trail_price = validatedOrder.trail_price
+            if (validatedOrder.trail_percent) orderPayload.trail_percent = validatedOrder.trail_percent
+            if (validatedOrder.client_order_id) orderPayload.client_order_id = validatedOrder.client_order_id
+            
+            // Add options-specific fields
+            if (validatedOrder.trade_type === 'option') {
+              orderPayload.class = 'option'
+            }
+            
+            // Make request to Alpaca Broker API
+            const response = await alpacaClient.createOrder(accountId, orderPayload)
+            
+            if (!response.success) {
+              console.error('Failed to create order:', response.error)
+              return createErrorResponse(
+                {
+                  code: response.error?.code || 'ALPACA_API_ERROR',
+                  message: response.error?.message || 'Failed to create order',
+                  details: response.error?.details
+                },
+                response.error?.status || 400
+              )
+            }
+            
+            return createSuccessResponse(response.data, 201)
+          } catch (error) {
+            const validationError = error as Error;
+            if (validationError instanceof z.ZodError) {
+              return createErrorResponse(
+                {
+                  code: 'VALIDATION_ERROR',
+                  message: 'Invalid order parameters',
+                  details: validationError.errors
+                },
+                400
+              )
+            }
+            throw validationError
+          }
+        }
+        
+        // Handle DELETE request (cancel order)
+        if (req.method === 'DELETE') {
+          const url = new URL(req.url)
+          const orderId = url.searchParams.get('orderId')
+          
+          if (!orderId) {
+            return createErrorResponse(
+              {
+                code: 'INVALID_REQUEST',
+                message: 'Order ID is required',
+                details: 'Please provide an order ID to cancel'
+              },
+              400
+            )
+          }
+          
+          // Make request to Alpaca Broker API
+          const response = await alpacaClient.cancelOrder(accountId, orderId)
+          
+          if (!response.success) {
+            console.error(`Failed to cancel order ${orderId}:`, response.error)
+            return createErrorResponse(
+              {
+                code: response.error?.code || 'ALPACA_API_ERROR',
+                message: response.error?.message || 'Failed to cancel order',
+                details: response.error?.details
+              },
+              response.error?.status || 400
+            )
+          }
+          
+          return createSuccessResponse({ message: `Order ${orderId} cancelled successfully` })
+        }
+        
+          // This should never happen due to the method check above
+          return createErrorResponse(
+            {
+              code: 'METHOD_NOT_ALLOWED',
+              message: 'Method not allowed'
+            },
+            405
+          )
+        } catch (error) {
+          logger.error('Unexpected error in orders endpoint', error instanceof Error ? error : undefined);
+          return createErrorResponse(
+            {
+              code: 'INTERNAL_ERROR',
+              message: error instanceof Error ? error.message : 'An unexpected error occurred'
+            },
+            500
+          )
+        }
+      });
+    })
+  })
+})

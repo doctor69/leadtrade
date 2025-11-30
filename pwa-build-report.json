@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-08-09T18:26:21.290Z",
+  "manifest": {
+    "name": "LEADTRADE - Trading Platform for Leaders",
+    "shortName": "LEADTRADE",
+    "startUrl": "/",
+    "display": "standalone",
+    "iconsCount": 8,
+    "shortcutsCount": 3
+  },
+  "serviceWorker": {
+    "size": 35070,
+    "sizeKB": 34,
+    "lastModified": "2025-08-06T01:06:37.723Z"
+  },
+  "build": {
+    "nodeEnv": "production",
+    "timestamp": "2025-08-09T18:26:21.291Z",
+    "success": true
+  }
+}

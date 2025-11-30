@@ -5,27 +5,41 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TrendingUp, TrendingDown, Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { useAlpacaWebSocket } from '@/hooks/useAlpacaWebSocket';
+import { DataTable } from '@/components/ui/datatable';
+import type { ColumnDef } from '@tanstack/react-table';
 
-const POPULAR_SYMBOLS = ['AAPL', 'TSLA', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'NFLX'];
+const COLUMNS: ColumnDef<any>[] = [
+  { accessorKey: 'symbol', header: 'Symbol', cell: info => info.getValue() },
+  { accessorKey: 'price', header: 'Price', cell: info => `$${Number(info.getValue()).toFixed(2)}` },
+  { accessorKey: 'bid', header: 'Bid', cell: info => `$${Number(info.getValue()).toFixed(2)}` },
+  { accessorKey: 'ask', header: 'Ask', cell: info => `$${Number(info.getValue()).toFixed(2)}` },
+  { accessorKey: 'change', header: 'Change', cell: info => Number(info.getValue()) > 0 ? `+${Number(info.getValue()).toFixed(2)}` : Number(info.getValue()).toFixed(2) },
+  { accessorKey: 'changePercent', header: 'Change %', cell: info => `${Number(info.getValue()).toFixed(2)}%` },
+  { accessorKey: 'volume', header: 'Volume', cell: info => Number(info.getValue()).toLocaleString() },
+  { accessorKey: 'lastUpdate', header: 'Last Update', cell: info => new Date(String(info.getValue())).toLocaleTimeString() },
+];
 
-export default function RealTimeMarketData() {
-  const { 
-    marketData, 
-    isConnected, 
-    isAuthenticated,
-    connectionStatus,
-    error, 
-    connect, 
-    disconnect,
-    reconnect 
-  } = useAlpacaWebSocket(POPULAR_SYMBOLS);
+// Dow Jones 30 symbols
+const DOW_30_SYMBOLS = [
+  'AAPL', 'AMGN', 'AXP', 'BA', 'CAT', 'CRM', 'CSCO', 'CVX', 'DIS', 'DOW',
+  'GS', 'HD', 'HON', 'IBM', 'INTC', 'JNJ', 'JPM', 'KO', 'MCD', 'MMM',
+  'MRK', 'MSFT', 'NKE', 'PG', 'TRV', 'UNH', 'V', 'VZ', 'WBA', 'WMT'
+];
+
+interface RealTimeMarketDataProps {
+  symbols?: string[];
+}
+
+export { COLUMNS };
+export default function RealTimeMarketData({ symbols }: RealTimeMarketDataProps) {
+  const useSymbols = symbols && symbols.length > 0 ? symbols : DOW_30_SYMBOLS;
+  const { marketData, isConnected, connectionStatus, connect, disconnect } = useAlpacaWebSocket(useSymbols);
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
   useEffect(() => {
     const interval = setInterval(() => {
       setLastUpdate(new Date());
     }, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -57,7 +71,7 @@ export default function RealTimeMarketData() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center space-x-2">
-                <span>Real-Time Market Data</span>
+                <span>Top Trading Securities</span>
                 {isConnected ? (
                   <Wifi className="h-5 w-5 text-green-500" />
                 ) : (
@@ -65,10 +79,9 @@ export default function RealTimeMarketData() {
                 )}
               </CardTitle>
               <CardDescription>
-                Live stock prices via Alpaca WebSocket API
+                Live market data for top ETFs and securities via Alpaca WebSocket API
               </CardDescription>
             </div>
-            
             <div className="flex items-center space-x-2">
               <Badge variant={
                 connectionStatus === 'authenticated' ? "default" : 
@@ -79,119 +92,34 @@ export default function RealTimeMarketData() {
                  connectionStatus === 'connected' ? 'Connected' :
                  connectionStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
               </Badge>
-              {isAuthenticated && (
-                <Badge variant="outline" className="text-xs">
-                  Real-time Data
-                </Badge>
-              )}
               <Button
                 variant="outline"
                 size="sm"
-                onClick={isConnected ? disconnect : reconnect}
+                onClick={isConnected ? disconnect : connect}
                 disabled={connectionStatus === 'connecting'}
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
-                {isConnected ? 'Disconnect' : 'Reconnect'}
+                {isConnected ? 'Disconnect' : 'Connect'}
               </Button>
             </div>
           </div>
-          
-          {error && (
-            <div className="text-sm text-red-600 dark:text-red-400 mt-2">
-              Error: {error}
-            </div>
-          )}
-          
           <div className="text-xs text-muted-foreground">
             Last updated: {lastUpdate.toLocaleTimeString()}
           </div>
         </CardHeader>
       </Card>
 
-      {/* Market Data Table */}
+      {/* Market Data Table with Pagination */}
       <Card>
         <CardHeader>
-          <CardTitle>Live Stock Prices</CardTitle>
-          <CardDescription>Real-time quotes and trades</CardDescription>
+          <CardTitle>Top Trading Securities</CardTitle>
+          <CardDescription>Real-time quotes and trades for major ETFs and securities</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Symbol</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
-                  <TableHead className="text-right">Bid</TableHead>
-                  <TableHead className="text-right">Ask</TableHead>
-                  <TableHead className="text-right">Change</TableHead>
-                  <TableHead className="text-right">Change %</TableHead>
-                  <TableHead className="text-right">Volume</TableHead>
-                  <TableHead className="text-right">Last Update</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {marketData.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center">
-                      {isConnected ? 'Waiting for market data...' : 'Not connected to market data feed'}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  marketData.map((stock) => (
-                    <TableRow key={stock.symbol} className="hover:bg-muted/50">
-                      <TableCell className="font-medium">
-                        <div className="flex items-center space-x-2">
-                          <span>{stock.symbol}</span>
-                          {stock.change !== 0 && (
-                            <div className="flex items-center">
-                              {stock.change > 0 ? (
-                                <TrendingUp className="h-3 w-3 text-green-500" />
-                              ) : (
-                                <TrendingDown className="h-3 w-3 text-red-500" />
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      
-                      <TableCell className="text-right font-mono">
-                        {formatPrice(stock.price)}
-                      </TableCell>
-                      
-                      <TableCell className="text-right font-mono text-sm text-muted-foreground">
-                        {formatPrice(stock.bid)}
-                      </TableCell>
-                      
-                      <TableCell className="text-right font-mono text-sm text-muted-foreground">
-                        {formatPrice(stock.ask)}
-                      </TableCell>
-                      
-                      <TableCell className={`text-right font-mono ${getChangeColor(stock.change)}`}>
-                        {stock.change !== 0 ? `${stock.change >= 0 ? '+' : ''}${stock.change.toFixed(2)}` : '--'}
-                      </TableCell>
-                      
-                      <TableCell className={`text-right font-mono ${getChangeColor(stock.change)}`}>
-                        {formatPercent(stock.changePercent)}
-                      </TableCell>
-                      
-                      <TableCell className="text-right font-mono text-sm text-muted-foreground">
-                        {stock.volume > 0 ? stock.volume.toLocaleString() : '--'}
-                      </TableCell>
-                      
-                      <TableCell className="text-right text-xs text-muted-foreground">
-                        {formatTime(stock.lastUpdate)}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-          
-          {/* Footer Info */}
+          <DataTable columns={COLUMNS} data={marketData} />
           <div className="mt-4 text-xs text-muted-foreground space-y-1">
-            <p>• Data provided by Alpaca Markets via WebSocket connection</p>
-            <p>• Prices update in real-time during market hours</p>
+            <p>• Live data shown from Alpaca WebSocket API</p>
+            <p>• Shows top ETFs and securities by trading volume and market cap</p>
             <p>• Bid/Ask spreads and volume data included</p>
           </div>
         </CardContent>

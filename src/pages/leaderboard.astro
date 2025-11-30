@@ -1,16 +1,32 @@
 ---
 import Layout from "@/layouts/Layout.astro"
+import AppShell from "@/components/AppShell"
 import LeaderboardComponent from "@/components/trading/Leaderboard"
 import ProtectedRoute from "@/components/ProtectedRoute"
+
+// Social media metadata for leaderboard page
+const pageTitle = "Top Traders Leaderboard - LEADTRADE";
+const pageDescription = "Discover the best performing traders on LEADTRADE. Follow top traders, copy their strategies, and compete for the top spot on our leaderboard.";
+const pageImage = "/social/leaderboard-thumbnail.svg";
+const pageKeywords = "trading leaderboard, top traders, copy trading, social trading, trading competition, trader rankings, follow traders";
 ---
 
-<Layout>
-    <ProtectedRoute client:load>
-        <div class="space-y-6">
-            <div class="flex items-center justify-between">
-                <h1 class="text-3xl font-bold">LEADTRADE Leaderboard</h1>
+<Layout 
+    title={pageTitle}
+    description={pageDescription}
+    image={pageImage}
+    keywords={pageKeywords}
+    type="website"
+
+>
+    <AppShell client:only="react">
+        <ProtectedRoute client:load>
+            <div class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-3xl font-bold">LEADTRADE Leaderboard</h1>
+                </div>
+                <LeaderboardComponent client:load />
             </div>
-            <LeaderboardComponent client:load />
-        </div>
-    </ProtectedRoute>
+        </ProtectedRoute>
+    </AppShell>
 </Layout>

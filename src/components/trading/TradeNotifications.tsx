@@ -157,7 +157,7 @@ export default function TradeNotifications({
           </div>
         ) : (
           <div className="space-y-4">
-            <ScrollArea style={{ maxHeight }}>
+            <ScrollArea className="max-h-96">
               <div className="space-y-3">
                 {displayedNotifications.map((notification) => (
                   <div

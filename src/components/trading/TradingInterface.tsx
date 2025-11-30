@@ -14,13 +14,15 @@ import {
   BarChart3,
   Wallet,
   History,
-  Search
+  Search,
+  Info
 } from 'lucide-react';
 import StockSearch from './StockSearch';
 import TradeForm from './TradeForm';
 import AccountPositions from './AccountPositions';
 import OrderHistory from './OrderHistory';
 import PortfolioChart from './PortfolioChart';
+import AssetChart from '@/components/dashboard/AssetChart';
 import { apiService, type AccountData } from '@/lib/apiService';
 
 interface StockData {
@@ -37,10 +39,31 @@ export default function TradingInterface() {
   const [accountData, setAccountData] = useState<AccountData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    fetchAccountData();
+    setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    
+    fetchAccountData();
+    // Check for URL parameters to pre-fill stock/option
+    checkUrlParameters();
+  }, [mounted]);
+
+  const checkUrlParameters = () => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const symbol = urlParams.get('symbol');
+      
+      if (symbol) {
+        // Fetch real stock data from API
+        fetchStockData(symbol.toUpperCase());
+      }
+    }
+  };
 
   const fetchAccountData = async () => {
     try {
@@ -60,16 +83,79 @@ export default function TradingInterface() {
     }
   };
 
+  const fetchStockData = async (symbol: string) => {
+    try {
+      // Fetch real stock data from Alpaca API using apiService
+      const result = await apiService.getQuotes(symbol);
+      
+      if (result.success && result.data) {
+        // Handle the Edge Function response format
+        // The data structure may vary, so we need to handle both possible formats
+        let quote;
+        
+        // Check if data has the symbol as a key (quotes object format)
+        if (result.data[symbol]) {
+          quote = result.data[symbol];
+        } 
+        // Check if data has a quotes property (nested format)
+        else if (result.data.quotes && result.data.quotes[symbol]) {
+          quote = result.data.quotes[symbol];
+        }
+        // Check if data is an array with the first element being the quote
+        else if (Array.isArray(result.data) && result.data.length > 0) {
+          quote = result.data[0];
+        }
+        // Otherwise use the data directly
+        else {
+          quote = result.data;
+        }
+
+        if (quote) {
+          // Map the quote data to our StockData format
+          // Handle various possible field names from Alpaca API
+          const stockData: StockData = {
+            symbol: symbol,
+            name: `${symbol} Inc.`, // In production, get from assets API
+            price: quote.latestPrice || quote.ap || quote.askPrice || quote.price || 0,
+            change: quote.change || quote.dailyChange || 0,
+            changePercent: quote.changePercent || quote.dailyChangePercent || 0,
+            volume: quote.volume || quote.v || 0,
+          };
+          setSelectedStock(stockData);
+        } else {
+          console.error('No quote data found for symbol:', symbol);
+        }
+      } else {
+        console.error('Failed to fetch stock data:', result.error);
+      }
+    } catch (error) {
+      console.error('Failed to fetch stock data:', error);
+    }
+  };
+
   const handleStockSelect = (stock: StockData) => {
     setSelectedStock(stock);
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | string | undefined | null) => {
+    // Handle undefined, null, or invalid values
+    if (amount === undefined || amount === null) {
+      return '$0.00';
+    }
+    
+    // Convert string to number if needed
+    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    
+    // Check if it's a valid number
+    if (isNaN(numAmount)) {
+      return '$0.00';
+    }
+    
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2,
-    }).format(amount);
+    }).format(numAmount);
   };
 
   if (loading) {
@@ -108,7 +194,7 @@ export default function TradingInterface() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(accountData.portfolio_value)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(accountData.portfolio_value || 0)}</div>
               <p className="text-xs text-muted-foreground">
                 Total account value
               </p>
@@ -121,7 +207,7 @@ export default function TradingInterface() {
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(accountData.buying_power)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(accountData.buying_power || 0)}</div>
               <p className="text-xs text-muted-foreground">
                 Available to trade
               </p>
@@ -134,7 +220,7 @@ export default function TradingInterface() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(accountData.cash)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(accountData.cash || 0)}</div>
               <p className="text-xs text-muted-foreground">
                 Cash balance
               </p>
@@ -182,8 +268,48 @@ export default function TradingInterface() {
         </TabsList>
 
         <TabsContent value="trade" className="space-y-4">
+          {/* Security Details Section */}
+          {selectedStock && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Info className="h-5 w-5" />
+                  <span>Security Details</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <div className="text-sm text-muted-foreground">Symbol</div>
+                    <div className="text-lg font-semibold">{selectedStock.symbol}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-muted-foreground">Current Price</div>
+                    <div className="text-lg font-semibold">${selectedStock.price.toFixed(2)}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-muted-foreground">Change</div>
+                    <div className={`text-lg font-semibold flex items-center space-x-1 ${
+                      selectedStock.change >= 0 ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {selectedStock.change >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                      <span>
+                        {selectedStock.change >= 0 ? '+' : ''}${selectedStock.change.toFixed(2)} 
+                        ({selectedStock.change >= 0 ? '+' : ''}{selectedStock.changePercent.toFixed(2)}%)
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-muted-foreground">Volume</div>
+                    <div className="text-lg font-semibold">{selectedStock.volume.toLocaleString()}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
+            <div className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Search & Select Stock</CardTitle>
@@ -193,9 +319,16 @@ export default function TradingInterface() {
                   <StockSearch onSelectStock={handleStockSelect} />
                 </CardContent>
               </Card>
+              
+              {selectedStock && (
+                <AssetChart 
+                  symbol={selectedStock.symbol} 
+                  name={selectedStock.name}
+                />
+              )}
             </div>
             <div>
-              <TradeForm selectedStock={selectedStock} />
+              {selectedStock && <TradeForm selectedStock={selectedStock} />}
             </div>
           </div>
         </TabsContent>
@@ -221,7 +354,7 @@ export default function TradingInterface() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-muted-foreground">Equity:</span>
-                        <span className="text-sm font-medium">{formatCurrency(accountData.equity)}</span>
+                        <span className="text-sm font-medium">{formatCurrency(accountData.equity || 0)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-muted-foreground">Multiplier:</span>

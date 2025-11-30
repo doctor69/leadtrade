@@ -112,7 +112,7 @@ export interface UserProfile {
   avatar_url?: string;
   alpaca_access_token?: string;
   alpaca_refresh_token?: string;
-  is_paper_trading: boolean;
+  trading_mode: 'paper' | 'live';
   share_trades: boolean;
   show_asset_amounts: boolean;
   theme_color: string;
@@ -203,6 +203,29 @@ export interface OptionContract {
   vega?: number;
 }
 
+// Alpaca Option Contract (from Alpaca API)
+export interface AlpacaOptionContract {
+  id: string;
+  symbol: string;
+  name: string;
+  status: 'active' | 'inactive';
+  tradable: boolean;
+  expiration_date: string;
+  underlying_symbol: string;
+  underlying_asset_id: string;
+  type: 'call' | 'put';
+  style: 'american' | 'european';
+  strike_price: string;
+  multiplier: string;
+  size: string;
+  open_interest?: string;
+  open_interest_date?: string;
+  close_price?: string;
+  close_price_date?: string;
+  root_symbol: string;
+  deliverable?: string;
+}
+
 export interface LeaderboardData {
   user_id: string;
   username: string;
@@ -273,4 +296,158 @@ export interface AlpacaBar {
   v: number; // volume
   n: number; // trade count
   vw: number; // volume weighted average price
+}
+
+// Account Management Types
+export interface AccountUpdateRequest {
+  contact?: {
+    email_address?: string;
+    phone_number?: string;
+    street_address?: string[];
+    city?: string;
+    state?: string;
+    postal_code?: string;
+  };
+  identity?: {
+    given_name?: string;
+    family_name?: string;
+    date_of_birth?: string;
+    country_of_citizenship?: string;
+    funding_source?: string[];
+  };
+  disclosures?: {
+    is_control_person?: boolean;
+    is_affiliated_exchange_or_finra?: boolean;
+    is_politically_exposed?: boolean;
+    immediate_family_exposed?: boolean;
+  };
+  trusted_contact?: {
+    given_name?: string;
+    family_name?: string;
+    email_address?: string;
+  };
+}
+
+export interface OptionsApprovalRequest {
+  level: number; // 0-3
+}
+
+export interface OptionsApprovalResponse {
+  status: string;
+  level: number;
+}
+
+export interface AccountActivity {
+  id: string;
+  account_id: string;
+  activity_type: string;
+  date: string;
+  net_amount: string;
+  description: string;
+  status: string;
+}
+// 
+Trading Configuration Types
+export interface TradingConfiguration {
+  dtbp_check: 'entry' | 'exit' | 'both'
+  trade_confirm_email: 'all' | 'none'
+  suspend_trade: boolean
+  no_shorting: boolean
+  fractional_trading: boolean
+  max_margin_multiplier: string
+  pdt_check: 'entry' | 'exit' | 'both'
+  ptp_no_exception_entry: boolean
+  max_options_trading_level: number
+}
+
+export interface TradingConfigUpdate {
+  dtbp_check?: 'entry' | 'exit' | 'both'
+  trade_confirm_email?: 'all' | 'none'
+  suspend_trade?: boolean
+  no_shorting?: boolean
+  fractional_trading?: boolean
+  max_margin_multiplier?: string
+  pdt_check?: 'entry' | 'exit' | 'both'
+  ptp_no_exception_entry?: boolean
+  max_options_trading_level?: number
+}
+
+// Rebalancing API Types
+export interface RebalancingPortfolio {
+  id: string;
+  name: string;
+  description?: string;
+  weights: Record<string, number>; // symbol -> weight (0-1)
+  cooldown_days: number;
+  rebalance_conditions?: {
+    drift_threshold?: number; // Percentage drift to trigger rebalance
+    min_days_between?: number;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateRebalancingPortfolioRequest {
+  name: string;
+  description?: string;
+  weights: Record<string, number>;
+  cooldown_days: number;
+  rebalance_conditions?: {
+    drift_threshold?: number;
+    min_days_between?: number;
+  };
+}
+
+export interface RebalancingSubscription {
+  id: string;
+  portfolio_id: string;
+  account_id: string;
+  allocation_percentage: number; // Percentage of account to allocate to this portfolio
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateRebalancingSubscriptionRequest {
+  account_id: string;
+  allocation_percentage: number;
+}
+
+export interface RebalancingRun {
+  id: string;
+  portfolio_id: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'failed' | 'canceled';
+  type: 'manual' | 'automatic' | 'scheduled';
+  orders: RebalancingOrder[];
+  failed_orders: RebalancingOrder[];
+  skipped_orders: RebalancingOrder[];
+  total_accounts: number;
+  completed_accounts: number;
+  failed_accounts: number;
+  created_at: string;
+  completed_at?: string;
+  error_message?: string;
+}
+
+export interface RebalancingOrder {
+  account_id: string;
+  symbol: string;
+  side: 'buy' | 'sell';
+  qty: number;
+  order_id?: string;
+  status: 'pending' | 'submitted' | 'filled' | 'failed' | 'skipped';
+  error_message?: string;
+}
+
+export interface CreateRebalancingRunRequest {
+  portfolio_id: string;
+  type?: 'manual' | 'automatic' | 'scheduled';
+  account_ids?: string[]; // Optional: specific accounts to rebalance
+}
+
+export interface ListRebalancingRunsParams {
+  portfolio_id?: string;
+  status?: string;
+  limit?: number;
+  offset?: number;
 }

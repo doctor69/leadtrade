@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
 import { Switch } from './switch';
 import { Button } from './button';
-import { Badge } from './badge';
-import { AlertCircle, CheckCircle, Settings } from 'lucide-react';
+import { AlertCircle, User, Shield, Palette } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { debugTradingConfig, validateAllTradingModes, type TradingMode } from '../../lib/trading-config';
+import { ThemeCustomizer } from './ThemeCustomizer';
 
 interface UserProfile {
   id: string;
-  is_paper_trading: boolean;
+  email: string;
+  full_name: string;
+  username: string;
   share_trades: boolean;
   show_asset_amounts: boolean;
-  theme_color: string;
 }
 
 interface UserSettingsProps {
@@ -25,15 +25,10 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [configStatus, setConfigStatus] = useState<{
-    paper: { valid: boolean; missing: string[] };
-    live: { valid: boolean; missing: string[] };
-  } | null>(null);
 
-  // Load user profile and validate trading configurations
+  // Load user profile
   useEffect(() => {
     loadUserProfile();
-    validateConfigurations();
   }, [userId]);
 
   const loadUserProfile = async () => {
@@ -50,7 +45,7 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
 
       const { data, error: profileError } = await supabase
         .from('profiles')
-        .select('id, is_paper_trading, share_trades, show_asset_amounts, theme_color')
+        .select('id, email, full_name, username, share_trades, show_asset_amounts')
         .eq('id', currentUserId)
         .single();
 
@@ -64,18 +59,6 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
       setError(err instanceof Error ? err.message : 'Failed to load profile');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const validateConfigurations = () => {
-    try {
-      const validation = validateAllTradingModes();
-      setConfigStatus(validation);
-      
-      // Debug log configuration status
-      debugTradingConfig();
-    } catch (err) {
-      console.error('Error validating trading configurations:', err);
     }
   };
 
@@ -97,7 +80,7 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
 
       const updatedProfile = { ...profile, ...updates };
       setProfile(updatedProfile);
-      
+
       // Notify parent component of changes
       onSettingsChange?.(updates);
 
@@ -110,18 +93,6 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
     }
   };
 
-  const handleTradingModeToggle = async (isPaperTrading: boolean) => {
-    const mode: TradingMode = isPaperTrading ? 'paper' : 'live';
-    
-    // Check if the selected mode is properly configured
-    if (configStatus && !configStatus[mode].valid) {
-      setError(`${mode.charAt(0).toUpperCase() + mode.slice(1)} trading is not properly configured. Missing: ${configStatus[mode].missing.join(', ')}`);
-      return;
-    }
-
-    await updateProfile({ is_paper_trading: isPaperTrading });
-  };
-
   const handlePrivacyToggle = async (field: 'share_trades' | 'show_asset_amounts', value: boolean) => {
     await updateProfile({ [field]: value });
   };
@@ -131,13 +102,13 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            User Settings
+            <User className="h-5 w-5" />
+            Account Settings
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         </CardContent>
       </Card>
@@ -148,13 +119,13 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-red-600">
+          <CardTitle className="flex items-center gap-2 text-destructive">
             <AlertCircle className="h-5 w-5" />
             Error Loading Settings
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-red-600">{error}</p>
+          <p className="text-destructive">{error}</p>
           <Button onClick={loadUserProfile} className="mt-4">
             Retry
           </Button>
@@ -165,97 +136,58 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
 
   return (
     <div className="space-y-6">
-      {/* Trading Mode Configuration */}
+      {/* Account Information */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Trading Mode
+            <User className="h-5 w-5" />
+            Account Information
           </CardTitle>
           <CardDescription>
-            Choose between paper trading (practice) and live trading (real money)
+            Your basic account details and profile information
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Configuration Status */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div>
-                <div className="font-medium">Paper Trading</div>
-                <div className="text-sm text-gray-600">Practice with virtual money</div>
-              </div>
-              <div className="flex items-center gap-2">
-                {configStatus?.paper.valid ? (
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    Ready
-                  </Badge>
-                ) : (
-                  <Badge variant="destructive">
-                    <AlertCircle className="h-3 w-3 mr-1" />
-                    Not Configured
-                  </Badge>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div>
-                <div className="font-medium">Live Trading</div>
-                <div className="text-sm text-gray-600">Trade with real money</div>
-              </div>
-              <div className="flex items-center gap-2">
-                {configStatus?.live.valid ? (
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    Ready
-                  </Badge>
-                ) : (
-                  <Badge variant="destructive">
-                    <AlertCircle className="h-3 w-3 mr-1" />
-                    Not Configured
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Trading Mode Toggle */}
-          <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
             <div>
-              <div className="font-medium">
-                Current Mode: {profile?.is_paper_trading ? 'Paper Trading' : 'Live Trading'}
-              </div>
-              <div className="text-sm text-gray-600">
-                {profile?.is_paper_trading 
-                  ? 'You are currently in practice mode with virtual money'
-                  : 'You are currently trading with real money'
-                }
-              </div>
+              <label className="text-sm font-medium text-muted-foreground">Email</label>
+              <div className="text-sm font-medium">{profile?.email}</div>
             </div>
-            <Switch
-              checked={profile?.is_paper_trading || false}
-              onCheckedChange={handleTradingModeToggle}
-              disabled={saving}
-            />
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Username</label>
+              <div className="text-sm font-medium">{profile?.username || 'Not set'}</div>
+            </div>
           </div>
-
-          {/* Error Display */}
-          {error && (
-            <div className="p-3 border border-red-200 rounded-lg bg-red-50">
-              <div className="flex items-center gap-2 text-red-800">
-                <AlertCircle className="h-4 w-4" />
-                <span className="text-sm">{error}</span>
-              </div>
-            </div>
-          )}
+          <div>
+            <label className="text-sm font-medium text-muted-foreground">Full Name</label>
+            <div className="text-sm font-medium">{profile?.full_name || 'Not set'}</div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Privacy Controls */}
+      {/* Theme Customization */}
       <Card>
         <CardHeader>
-          <CardTitle>Privacy & Sharing</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Palette className="h-5 w-5" />
+            Theme & Appearance
+          </CardTitle>
+          <CardDescription>
+            Customize the look and feel of your trading interface
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ThemeCustomizer />
+        </CardContent>
+      </Card>
+
+      {/* Privacy & Sharing Controls */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Privacy & Sharing
+          </CardTitle>
           <CardDescription>
             Control how your trading information is shared with other users
           </CardDescription>
@@ -264,8 +196,8 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
           <div className="flex items-center justify-between p-4 border rounded-lg">
             <div>
               <div className="font-medium">Share Trades</div>
-              <div className="text-sm text-gray-600">
-                Allow other users to see and copy your trades
+              <div className="text-sm text-muted-foreground">
+                Allow other users to see and copy your trades on the leaderboard
               </div>
             </div>
             <Switch
@@ -277,9 +209,9 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
 
           <div className="flex items-center justify-between p-4 border rounded-lg">
             <div>
-              <div className="font-medium">Show Asset Amounts</div>
-              <div className="text-sm text-gray-600">
-                Display your portfolio values to potential followers
+              <div className="font-medium">Show Portfolio Values</div>
+              <div className="text-sm text-muted-foreground">
+                Display your actual portfolio amounts to potential followers
               </div>
             </div>
             <Switch
@@ -290,18 +222,37 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
           </div>
 
           {!profile?.share_trades && (
-            <div className="text-sm text-gray-500 italic">
-              Enable "Share Trades" to control asset amount visibility
+            <div className="text-sm text-muted-foreground italic">
+              Enable "Share Trades" to control portfolio value visibility
             </div>
           )}
+
+          <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="text-sm text-blue-800 dark:text-blue-200">
+              <strong>Privacy Note:</strong> When sharing is enabled, other users can see your trading activity and performance. 
+              You can disable portfolio value visibility while still allowing trade copying.
+            </div>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Error Display */}
+      {error && (
+        <Card className="border-destructive">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-sm">{error}</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Save Status */}
       {saving && (
         <div className="flex items-center justify-center py-2">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-          <span className="text-sm text-gray-600">Saving changes...</span>
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+          <span className="text-sm text-muted-foreground">Saving changes...</span>
         </div>
       )}
     </div>
