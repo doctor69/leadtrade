@@ -15,19 +15,17 @@ import {
 // Mock environment variables
 vi.mock('../env', () => ({
   env: {
-    PUBLIC_ALPACA_PAPER_BROKER_API_KEY: 'paper_broker_key',
-    PUBLIC_ALPACA_PAPER_BROKER_API_SECRET: 'paper_broker_secret',
-    PUBLIC_ALPACA_PAPER_BROKER_BASE_URL: 'https://broker-api.sandbox.alpaca.markets/v1',
-    PUBLIC_ALPACA_PAPER_DATA_API_KEY: 'paper_data_key',
-    PUBLIC_ALPACA_PAPER_DATA_API_SECRET: 'paper_data_secret',
-    PUBLIC_ALPACA_PAPER_DATA_BASE_URL: 'https://data.sandbox.alpaca.markets',
-    PUBLIC_ALPACA_PAPER_WS_URL: 'wss://stream.data.sandbox.alpaca.markets/v2',
-    PUBLIC_ALPACA_LIVE_BROKER_API_KEY: 'live_broker_key',
-    PUBLIC_ALPACA_LIVE_BROKER_API_SECRET: 'live_broker_secret',
-    PUBLIC_ALPACA_LIVE_BROKER_BASE_URL: 'https://broker-api.alpaca.markets/v1',
-    PUBLIC_ALPACA_LIVE_DATA_API_KEY: 'live_data_key',
-    PUBLIC_ALPACA_LIVE_DATA_API_SECRET: 'live_data_secret',
-    PUBLIC_ALPACA_LIVE_DATA_BASE_URL: 'https://data.alpaca.markets',
+    PUBLIC_ALPACA_PAPER_API_KEY: 'paper_broker_key',
+    PUBLIC_ALPACA_PAPER_API_SECRET: 'paper_broker_secret',
+    PUBLIC_ALPACA_PAPER_BASE_URL: 'https://paper-api.alpaca.markets',
+    PUBLIC_ALPACA_LIVE_API_KEY: 'live_broker_key',
+    PUBLIC_ALPACA_LIVE_API_SECRET: 'live_broker_secret',
+    PUBLIC_ALPACA_LIVE_BASE_URL: 'https://api.alpaca.markets',
+    PUBLIC_ALPACA_DATA_API_KEY: 'data_api_key',
+    PUBLIC_ALPACA_DATA_API_SECRET: 'data_api_secret',
+    PUBLIC_ALPACA_DATA_BASE_URL: 'https://data.alpaca.markets',
+    PUBLIC_ALPACA_PAPER_WS_URL: 'wss://paper-api.alpaca.markets/stream',
+    PUBLIC_ALPACA_LIVE_WS_URL: 'wss://api.alpaca.markets/stream',
     PUBLIC_ALPACA_LIVE_WS_URL: 'wss://stream.data.alpaca.markets/v2',
   },
 }));
@@ -44,11 +42,11 @@ describe('Trading Configuration System', () => {
       expect(config).toEqual({
         brokerApiKey: 'paper_broker_key',
         brokerApiSecret: 'paper_broker_secret',
-        brokerBaseUrl: 'https://broker-api.sandbox.alpaca.markets/v1',
-        dataApiKey: 'paper_data_key',
-        dataApiSecret: 'paper_data_secret',
-        dataBaseUrl: 'https://data.sandbox.alpaca.markets',
-        wsUrl: 'wss://stream.data.sandbox.alpaca.markets/v2',
+        brokerBaseUrl: 'https://paper-api.alpaca.markets',
+        dataApiKey: 'data_api_key',
+        dataApiSecret: 'data_api_secret',
+        dataBaseUrl: 'https://data.alpaca.markets',
+        wsUrl: 'wss://paper-api.alpaca.markets/stream',
       });
     });
 
@@ -58,11 +56,11 @@ describe('Trading Configuration System', () => {
       expect(config).toEqual({
         brokerApiKey: 'live_broker_key',
         brokerApiSecret: 'live_broker_secret',
-        brokerBaseUrl: 'https://broker-api.alpaca.markets/v1',
-        dataApiKey: 'live_data_key',
-        dataApiSecret: 'live_data_secret',
+        brokerBaseUrl: 'https://api.alpaca.markets',
+        dataApiKey: 'data_api_key',
+        dataApiSecret: 'data_api_secret',
         dataBaseUrl: 'https://data.alpaca.markets',
-        wsUrl: 'wss://stream.data.alpaca.markets/v2',
+        wsUrl: 'wss://api.alpaca.markets/stream',
       });
     });
 
@@ -88,14 +86,14 @@ describe('Trading Configuration System', () => {
 
     it('should create correct data auth header for paper trading', () => {
       const authHeader = getAlpacaDataAuthHeader('paper');
-      const expected = btoa('paper_data_key:paper_data_secret');
+      const expected = btoa('data_api_key:data_api_secret');
       
       expect(authHeader).toBe(expected);
     });
 
     it('should create correct data auth header for live trading', () => {
       const authHeader = getAlpacaDataAuthHeader('live');
-      const expected = btoa('live_data_key:live_data_secret');
+      const expected = btoa('data_api_key:data_api_secret');
       
       expect(authHeader).toBe(expected);
     });
@@ -115,7 +113,7 @@ describe('Trading Configuration System', () => {
       
       expect(headers.get('Accept')).toBe('application/json');
       expect(headers.get('Content-Type')).toBe('application/json');
-      expect(headers.get('Authorization')).toBe(`Basic ${btoa('live_data_key:live_data_secret')}`);
+      expect(headers.get('Authorization')).toBe(`Basic ${btoa('data_api_key:data_api_secret')}`);
     });
   });
 

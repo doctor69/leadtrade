@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Menu, X } from "lucide-react";
-import SimpleThemeToggle from "@/components/SimpleThemeToggle";
+import { TrendingUp, Menu, X, Palette, Settings } from "lucide-react";
+import { ThemeCustomizer } from "./ThemeCustomizer";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuTrigger
+} from "./dropdown-menu";
+import { safeNavigate } from "@/lib/navigation";
 
 export default function NavigationBar() {
     const [mounted, setMounted] = useState(false);
@@ -11,6 +17,7 @@ export default function NavigationBar() {
     const menu = [
         { name: 'Dashboard', href: '/dashboard' },
         { name: 'Trade', href: '/trade' },
+        { name: 'Funding', href: '/funding' },
         { name: 'Leaderboard', href: '/leaderboard' },
         { name: 'Settings', href: '/settings' }
     ];
@@ -18,21 +25,94 @@ export default function NavigationBar() {
     // Initialize and check login status on mount
     useEffect(() => {
         setMounted(true);
-        
-        // Check if user is logged in by checking localStorage tokens
-        const checkLoginStatus = () => {
+
+        // Check if user is logged in via Supabase
+        const checkLoginStatus = async () => {
             if (typeof window !== 'undefined') {
-                const accessToken = localStorage.getItem('sb-access-token');
-                setIsLoggedIn(!!accessToken);
+                try {
+                    const { supabase } = await import('@/lib/supabase');
+                    const { data: { session } } = await supabase.auth.getSession();
+
+                    if (session) {
+                        // Store tokens if we have a valid session
+                        localStorage.setItem('sb-access-token', session.access_token);
+                        localStorage.setItem('sb-refresh-token', session.refresh_token);
+                        localStorage.setItem('sb-token-expires-at', session.expires_at?.toString() || '');
+                        setIsLoggedIn(true);
+                    } else {
+                        // Fallback to checking stored tokens
+                        const accessToken = localStorage.getItem('sb-access-token');
+                        setIsLoggedIn(!!accessToken);
+                    }
+                } catch (error) {
+                    console.error('Session check error:', error);
+                    // Fallback to checking stored tokens
+                    const accessToken = localStorage.getItem('sb-access-token');
+                    setIsLoggedIn(!!accessToken);
+                }
             }
         };
-        
+
         checkLoginStatus();
-        
+
         // Listen for storage changes to update login status
         window.addEventListener('storage', checkLoginStatus);
         return () => window.removeEventListener('storage', checkLoginStatus);
     }, []);
+
+    // Handle swipe gestures for mobile menu
+    useEffect(() => {
+        if (!mobileMenuOpen) return;
+
+        let startY = 0;
+        let startX = 0;
+
+        const handleTouchStart = (e: TouchEvent) => {
+            startY = e.touches[0].clientY;
+            startX = e.touches[0].clientX;
+        };
+
+        const handleTouchMove = (e: TouchEvent) => {
+            if (!startY || !startX) return;
+
+            const currentY = e.touches[0].clientY;
+            const currentX = e.touches[0].clientX;
+            const diffY = startY - currentY;
+            const diffX = startX - currentX;
+
+            // Swipe up to close menu (more than 50px)
+            if (diffY > 50 && Math.abs(diffX) < 100) {
+                setMobileMenuOpen(false);
+            }
+        };
+
+        const handleTouchEnd = () => {
+            startY = 0;
+            startX = 0;
+        };
+
+        document.addEventListener('touchstart', handleTouchStart);
+        document.addEventListener('touchmove', handleTouchMove);
+        document.addEventListener('touchend', handleTouchEnd);
+
+        return () => {
+            document.removeEventListener('touchstart', handleTouchStart);
+            document.removeEventListener('touchmove', handleTouchMove);
+            document.removeEventListener('touchend', handleTouchEnd);
+        };
+    }, [mobileMenuOpen]);
+
+    // Close mobile menu on escape key
+    useEffect(() => {
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && mobileMenuOpen) {
+                setMobileMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('keydown', handleEscape);
+        return () => document.removeEventListener('keydown', handleEscape);
+    }, [mobileMenuOpen]);
 
     if (!mounted) {
         return null; // Prevent hydration mismatch
@@ -45,103 +125,185 @@ export default function NavigationBar() {
                     {/* Logo */}
                     <div className="flex items-center space-x-2">
                         <TrendingUp className="h-8 w-8 text-primary" />
-                        <a href="/" className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-                            LEADTRADE
-                        </a>
+                        <button
+                            onClick={() => safeNavigate('/')}
+                            className="text-2xl font-bold text-foreground hover:opacity-80 transition-opacity"
+                        >
+                            <span className="text-primary">LEAD</span>TRADE
+                        </button>
                     </div>
 
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center space-x-1">
-                        {menu.map((item) => (
-                            <a key={item.name} href={item.href}>
-                                <Button variant="outline" size="sm">
+                        {menu
+                            .filter(item => {
+                                // Show all items when logged in, only public items when not logged in
+                                if (isLoggedIn) {
+                                    return true; // Show all menu items
+                                } else {
+                                    return item.name === 'Leaderboard'; // Only show leaderboard for non-logged in users
+                                }
+                            })
+                            .map((item) => (
+                                <Button
+                                    key={`desktop-${item.name}`}
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => safeNavigate(item.href)}
+                                    className="cursor-pointer"
+                                >
                                     {item.name}
                                 </Button>
-                            </a>
-                        ))}
+                            ))}
                     </div>
 
-                    {/* Right side - Theme toggle and Auth buttons */}
+                    {/* Right side - Auth buttons, Theme Customizer, and Settings */}
                     <div className="flex items-center space-x-2">
-                        {/* Simple Theme Toggle */}
-                        <SimpleThemeToggle />
+                        {/* Auth buttons */}
+                        {isLoggedIn ? (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={async () => {
+                                    // Sign out from Supabase and clear tokens
+                                    try {
+                                        const { supabase } = await import('@/lib/supabase');
+                                        await supabase.auth.signOut();
+                                    } catch (error) {
+                                        console.error('Supabase sign out error:', error);
+                                    }
+                                    localStorage.removeItem('sb-access-token');
+                                    localStorage.removeItem('sb-refresh-token');
+                                    localStorage.removeItem('sb-token-expires-at');
+                                    localStorage.removeItem('sb-token-refreshed-at');
+                                    setIsLoggedIn(false);
+                                    safeNavigate('/');
+                                }}
+                            >
+                                Logout
+                            </Button>
+                        ) : (
+                            <div className="flex items-center space-x-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => safeNavigate('/signin')}
+                                >
+                                    Sign In
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    onClick={() => safeNavigate('/signup')}
+                                >
+                                    Sign Up
+                                </Button>
+                            </div>
+                        )}
 
-                        {/* Auth Buttons - Desktop */}
-                        <div className="hidden md:flex items-center space-x-2">
-                            {!isLoggedIn ? (
-                                <>
-                                    <a href="/signin">
-                                        <Button variant="outline" size="sm">
-                                            Sign In
-                                        </Button>
-                                    </a>
-                                    <a href="/signup">
-                                        <Button variant="outline" size="sm">
-                                            Sign Up
-                                        </Button>
-                                    </a>
-                                </>
-                            ) : (
-                                <a href="/api/auth/signout">
-                                    <Button variant="outline" size="sm">
-                                        Sign Out
-                                    </Button>
-                                </a>
-                            )}
-                        </div>
+                        {/* Theme Customizer Dropdown - icon only, modal-like dropdown */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="icon" className="hidden md:flex">
+                                    <Palette className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-96 max-h-[80vh] overflow-y-auto p-0">
+                                <div className="p-4">
+                                    <ThemeCustomizer />
+                                </div>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
 
-                        {/* Mobile Menu Button */}
+                        {/* Settings Button */}
                         <Button
                             variant="outline"
-                            size="sm"
-                            className="md:hidden h-9 w-9 px-0"
-                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            size="icon"
+                            className="hidden md:flex"
+                            onClick={() => safeNavigate('/settings')}
                         >
-                            {mobileMenuOpen ? (
-                                <X className="h-4 w-4" />
-                            ) : (
-                                <Menu className="h-4 w-4" />
-                            )}
-                            <span className="sr-only">Toggle menu</span>
+                            <Settings className="h-4 w-4" />
+                        </Button>
+
+                        {/* Mobile menu button */}
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="md:hidden min-h-[44px] min-w-[44px]"
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+                        >
+                            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                         </Button>
                     </div>
                 </div>
 
-                {/* Mobile Navigation */}
+                {/* Mobile menu overlay */}
                 {mobileMenuOpen && (
-                    <div className="md:hidden border-t py-4">
-                        <div className="flex flex-col space-y-2">
-                            {menu.map((item) => (
-                                <a key={item.name} href={item.href} onClick={() => setMobileMenuOpen(false)}>
-                                    <Button variant="outline" size="sm" className="w-full justify-start">
-                                        {item.name}
-                                    </Button>
-                                </a>
-                            ))}
-                            <div className="flex flex-col space-y-2 pt-2 border-t">
-                                {!isLoggedIn ? (
-                                    <>
-                                        <a href="/signin" onClick={() => setMobileMenuOpen(false)}>
-                                            <Button variant="outline" size="sm" className="w-full justify-start">
-                                                Sign In
+                    <>
+                        {/* Backdrop */}
+                        <div
+                            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
+                            onClick={() => setMobileMenuOpen(false)}
+                        />
+
+                        {/* Mobile menu panel */}
+                        <div className="fixed top-16 left-0 right-0 bg-background border-b shadow-lg z-50 md:hidden animate-in slide-in-from-top-2 duration-200">
+                            <div className="px-4 py-4 space-y-2 max-h-[calc(100vh-4rem)] overflow-y-auto">
+                                {menu
+                                    .filter(item => {
+                                        // Show all items when logged in, only public items when not logged in
+                                        if (isLoggedIn) {
+                                            return true; // Show all menu items
+                                        } else {
+                                            return item.name === 'Leaderboard'; // Only show leaderboard for non-logged in users
+                                        }
+                                    })
+                                    .map((item) => (
+                                        <button
+                                            key={`mobile-${item.name}`}
+                                            className="flex w-full items-center px-4 py-3 rounded-lg text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground active:bg-accent/80 transition-all duration-200 min-h-[44px]"
+                                            onClick={() => {
+                                                setMobileMenuOpen(false);
+                                                safeNavigate(item.href);
+                                            }}
+                                        >
+                                            {item.name}
+                                        </button>
+                                    ))}
+
+                                {/* Mobile Theme Customizer */}
+                                <div className="pt-2 border-t">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline" size="sm" className="w-full justify-start min-h-[44px]">
+                                                <Palette className="h-4 w-4 mr-2" />
+                                                Theme Customizer
                                             </Button>
-                                        </a>
-                                        <a href="/signup" onClick={() => setMobileMenuOpen(false)}>
-                                            <Button variant="outline" size="sm" className="w-full justify-start">
-                                                Sign Up
-                                            </Button>
-                                        </a>
-                                    </>
-                                ) : (
-                                    <a href="/api/auth/signout" onClick={() => setMobileMenuOpen(false)}>
-                                        <Button variant="outline" size="sm" className="w-full justify-start">
-                                            Sign Out
-                                        </Button>
-                                    </a>
-                                )}
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-80 max-h-[60vh] overflow-y-auto">
+                                            <div className="p-4">
+                                                <ThemeCustomizer />
+                                            </div>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+
+                                {/* Mobile Settings */}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full justify-start min-h-[44px]"
+                                    onClick={() => {
+                                        setMobileMenuOpen(false);
+                                        safeNavigate('/settings');
+                                    }}
+                                >
+                                    <Settings className="h-4 w-4 mr-2" />
+                                    Settings
+                                </Button>
                             </div>
                         </div>
-                    </div>
+                    </>
                 )}
             </div>
         </nav>

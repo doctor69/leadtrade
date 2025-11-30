@@ -69,9 +69,9 @@ export class WebSocketService {
         .on(
           'postgres_changes',
           {
-            event: 'INSERT',
+            event: '*',
             schema: 'public',
-            table: 'copied_trades',
+            table: 'copy_trading_subscriptions',
             filter: `follower_id=eq.${user.id}`,
           },
           (payload) => {
@@ -329,13 +329,13 @@ export class WebSocketService {
         return [];
       }
 
-      return (data || []).map((notification) => ({
+      return data?.map((notification) => ({
         id: notification.id,
         userId: notification.user_id,
         data: notification.data,
         timestamp: notification.created_at,
-        read: notification.read,
-      }));
+        read: notification.read || false,
+      })) || [];
     } catch (error) {
       console.error('Error in getRecentNotifications:', error);
       return [];

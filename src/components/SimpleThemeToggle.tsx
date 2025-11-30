@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sun, Moon } from 'lucide-react';
+import { ThemeCookieManager, ThemeApplicator } from '@/lib/theme-manager';
 
 export default function SimpleThemeToggle() {
   const [isDark, setIsDark] = useState(false);
@@ -9,46 +10,31 @@ export default function SimpleThemeToggle() {
   useEffect(() => {
     setMounted(true);
     
-    // Get theme from localStorage or default to light
-    const savedTheme = localStorage.getItem('leadtrade-ui-theme');
-    const shouldBeDark = savedTheme === 'dark';
-    
-    // Apply theme immediately
-    const root = document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(shouldBeDark ? 'dark' : 'light');
+    // Get theme from cookies with fallback
+    const savedTheme = ThemeCookieManager.loadTheme();
+    const shouldBeDark = savedTheme === 'dark' || (savedTheme === 'system' && ThemeApplicator.getSystemTheme() === 'dark');
     
     setIsDark(shouldBeDark);
-    
-    // Save to localStorage if not set
-    if (!savedTheme) {
-      localStorage.setItem('leadtrade-ui-theme', 'light');
-    }
   }, []);
 
   const toggleTheme = () => {
     const newIsDark = !isDark;
-    const root = document.documentElement;
+    const newTheme = newIsDark ? 'dark' : 'light';
     
-    // Remove both classes first
-    root.classList.remove('light', 'dark');
+    // Save to cookies
+    ThemeCookieManager.saveTheme(newTheme);
     
-    // Add the new theme class
-    root.classList.add(newIsDark ? 'dark' : 'light');
-    
-    // Save to localStorage
-    localStorage.setItem('leadtrade-ui-theme', newIsDark ? 'dark' : 'light');
+    // Apply theme immediately
+    ThemeApplicator.applyThemeImmediate(newTheme);
     
     // Update state
     setIsDark(newIsDark);
-    
-    console.log('Theme toggled to:', newIsDark ? 'dark' : 'light');
   };
 
   if (!mounted) {
     return (
       <Button variant="outline" size="sm" className="h-9 w-9 px-0" disabled>
-        <Sun className="h-4 w-4" />
+        <Sun className="h-4 w-4 opacity-50" />
       </Button>
     );
   }

@@ -1,5 +1,14 @@
-import { describe, it, expect, vi } from 'vitest';
-import { createAlpacaAccount, type AlpacaAccountData } from '../alpaca-account';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { 
+  createAlpacaAccount, 
+  updateAlpacaAccount,
+  closeAlpacaAccount,
+  requestOptionsApproval,
+  getAlpacaAccounts,
+  getAccountActivities,
+  type AlpacaAccountData,
+  type AccountUpdateRequest 
+} from '../alpaca-account';
 
 // Mock the trading config
 vi.mock('../trading-config', () => ({
@@ -132,5 +141,195 @@ describe('Alpaca Account Creation', () => {
         }),
       })
     );
+  });
+});
+
+
+describe('Account Management Enhancements', () => {
+  const mockAccountId = 'test-account-id';
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('updateAlpacaAccount', () => {
+    it('should update account contact information', async () => {
+      const updates: AccountUpdateRequest = {
+        contact: {
+          email_address: 'newemail@example.com',
+          phone_number: '5559876543',
+        },
+      };
+
+      const mockResponse = {
+        id: mockAccountId,
+        account_number: '123456789',
+        status: 'ACTIVE',
+      };
+
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const result = await updateAlpacaAccount(mockAccountId, updates, 'paper');
+
+      expect(result.success).toBe(true);
+      expect(result.account).toEqual(mockResponse);
+      expect(global.fetch).toHaveBeenCalledWith(
+        `https://broker-api.sandbox.alpaca.markets/v1/accounts/${mockAccountId}`,
+        expect.objectContaining({
+          method: 'PATCH',
+          body: JSON.stringify(updates),
+        })
+      );
+    });
+
+    it('should handle update failure', async () => {
+      const updates: AccountUpdateRequest = {
+        contact: { email_address: 'invalid' },
+      };
+
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        statusText: 'Bad Request',
+        text: async () => JSON.stringify({ message: 'Invalid email format' }),
+      });
+
+      const result = await updateAlpacaAccount(mockAccountId, updates, 'paper');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Invalid email format');
+    });
+  });
+
+  describe('closeAlpacaAccount', () => {
+    it('should close account successfully', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        status: 204,
+      });
+
+      const result = await closeAlpacaAccount(mockAccountId, 'paper');
+
+      expect(result.success).toBe(true);
+      expect(global.fetch).toHaveBeenCalledWith(
+        `https://broker-api.sandbox.alpaca.markets/v1/accounts/${mockAccountId}`,
+        expect.objectContaining({
+          method: 'DELETE',
+        })
+      );
+    });
+
+    it('should handle closure failure', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        statusText: 'Bad Request',
+        text: async () => JSON.stringify({ message: 'Account has open positions' }),
+      });
+
+      const result = await closeAlpacaAccount(mockAccountId, 'paper');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Account has open positions');
+    });
+  });
+
+  describe('requestOptionsApproval', () => {
+    it('should request options approval successfully', async () => {
+      const level = 2;
+      const mockResponse = {
+        status: 'pending',
+        level: 2,
+      };
+
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const result = await requestOptionsApproval(mockAccountId, level, 'paper');
+
+      expect(result.success).toBe(true);
+      expect(result.status).toBe('pending');
+      expect(result.level).toBe(2);
+      expect(global.fetch).toHaveBeenCalledWith(
+        `https://broker-api.sandbox.alpaca.markets/v1/accounts/${mockAccountId}/options_approval`,
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ level }),
+        })
+      );
+    });
+
+    it('should validate options approval level', async () => {
+      const result = await requestOptionsApproval(mockAccountId, 5, 'paper');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Options approval level must be between 0 and 3');
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getAlpacaAccounts', () => {
+    it('should retrieve all accounts with filtering', async () => {
+      const mockAccounts = [
+        { id: 'account-1', status: 'ACTIVE' },
+        { id: 'account-2', status: 'ACTIVE' },
+      ];
+
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockAccounts,
+      });
+
+      const result = await getAlpacaAccounts(
+        { status: 'ACTIVE', sort: 'created_at' },
+        'paper'
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.accounts).toEqual(mockAccounts);
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('status=ACTIVE'),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe('getAccountActivities', () => {
+    it('should retrieve account activities with pagination', async () => {
+      const mockActivities = [
+        {
+          id: 'activity-1',
+          account_id: mockAccountId,
+          activity_type: 'FILL',
+          date: '2024-01-01',
+          net_amount: '100.00',
+          description: 'Buy AAPL',
+          status: 'executed',
+        },
+      ];
+
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockActivities,
+      });
+
+      const result = await getAccountActivities(
+        mockAccountId,
+        { activity_types: 'FILL', page_size: 10 },
+        'paper'
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.activities).toEqual(mockActivities);
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('activity_types=FILL'),
+        expect.any(Object)
+      );
+    });
   });
 });
