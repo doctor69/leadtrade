@@ -1,4 +1,7 @@
 // Comprehensive API service for all endpoints
+import { edgeFunctionClient } from './edgeFunctionClient';
+import { marketDataCache, userDataCache, cacheKeys, cacheUtils } from './cache';
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -12,17 +15,17 @@ export interface AccountData {
   account_number: string;
   status: string;
   currency: string;
-  buying_power: number;
-  regt_buying_power: number;
-  daytrading_buying_power: number;
-  cash: number;
-  portfolio_value: number;
-  equity: number;
-  last_equity: number;
-  multiplier: number;
-  initial_margin: number;
-  maintenance_margin: number;
-  sma: number;
+  buying_power: number | string;
+  regt_buying_power: number | string;
+  daytrading_buying_power: number | string;
+  cash: number | string;
+  portfolio_value: number | string;
+  equity: number | string;
+  last_equity: number | string;
+  multiplier: number | string;
+  initial_margin: number | string;
+  maintenance_margin: number | string;
+  sma: number | string;
   daytrade_count: number;
 }
 
@@ -140,13 +143,22 @@ class ApiService {
   // Check if user is authenticated before making API calls
   private async checkAuthentication(): Promise<boolean> {
     if (typeof window === 'undefined') return false;
-    
-    // Check for auth cookies
-    const hasAccessToken = document.cookie.includes('sb-access-token');
-    const hasRefreshToken = document.cookie.includes('sb-refresh-token');
-    
-    return hasAccessToken && hasRefreshToken;
+
+    try {
+      // Import auth utilities
+      const { checkAuthStatus } = await import('./auth');
+
+      // Check Supabase auth status
+      const supabaseAuth = checkAuthStatus();
+      console.log('ApiService Supabase auth check:', supabaseAuth);
+      return supabaseAuth;
+    } catch (error) {
+      console.error('Authentication check error:', error);
+      return false;
+    }
   }
+
+
 
   // Account & Trading APIs
   async getAccount(): Promise<ApiResponse<AccountData>> {
@@ -154,16 +166,50 @@ class ApiService {
       // Check authentication first
       const isAuthenticated = await this.checkAuthentication();
       if (!isAuthenticated) {
-        return { 
-          success: false, 
-          error: 'Authentication required. Please sign in to access your account data.' 
+        return {
+          success: false,
+          error: 'Authentication required. Please sign in to access your account data.'
         };
       }
 
-      const response = await fetch('/api/alpaca/account');
-      return await response.json();
+      // Use caching for account data (1 minute TTL for account info)
+      const cachedData = await userDataCache.getOrSet(
+        'account:current',
+        async () => {
+          const response = await edgeFunctionClient.get<AccountData>('alpaca-account');
+          if (!response.success) {
+            throw new Error(response.error?.message || 'Failed to fetch account data');
+          }
+          
+          // Normalize account data - convert string numbers to actual numbers
+          const data = response.data;
+          if (data) {
+            return {
+              ...data,
+              buying_power: typeof data.buying_power === 'string' ? parseFloat(data.buying_power) : data.buying_power,
+              regt_buying_power: typeof data.regt_buying_power === 'string' ? parseFloat(data.regt_buying_power) : data.regt_buying_power,
+              daytrading_buying_power: typeof data.daytrading_buying_power === 'string' ? parseFloat(data.daytrading_buying_power) : data.daytrading_buying_power,
+              cash: typeof data.cash === 'string' ? parseFloat(data.cash) : data.cash,
+              portfolio_value: typeof data.portfolio_value === 'string' ? parseFloat(data.portfolio_value) : data.portfolio_value,
+              equity: typeof data.equity === 'string' ? parseFloat(data.equity) : data.equity,
+              last_equity: typeof data.last_equity === 'string' ? parseFloat(data.last_equity) : data.last_equity,
+              multiplier: typeof data.multiplier === 'string' ? parseFloat(data.multiplier) : data.multiplier,
+              initial_margin: typeof data.initial_margin === 'string' ? parseFloat(data.initial_margin) : data.initial_margin,
+              maintenance_margin: typeof data.maintenance_margin === 'string' ? parseFloat(data.maintenance_margin) : data.maintenance_margin,
+              sma: typeof data.sma === 'string' ? parseFloat(data.sma) : data.sma,
+            };
+          }
+          return data;
+        },
+        60 * 1000 // 1 minute cache
+      );
+
+      return { success: true, data: cachedData };
     } catch (error) {
-      return { success: false, error: 'Failed to fetch account data' };
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to fetch account data' 
+      };
     }
   }
 
@@ -172,17 +218,35 @@ class ApiService {
       // Check authentication first
       const isAuthenticated = await this.checkAuthentication();
       if (!isAuthenticated) {
-        return { 
-          success: false, 
-          error: 'Authentication required. Please sign in to view your positions.' 
+        return {
+          success: false,
+          error: 'Authentication required. Please sign in to view your positions.'
         };
       }
 
-      const url = symbol ? `/api/alpaca/positions?symbol=${symbol}` : '/api/alpaca/positions';
-      const response = await fetch(url);
-      return await response.json();
+      // Use caching for positions data (30 seconds TTL)
+      const cacheKey = symbol ? `positions:${symbol}` : 'positions:all';
+      const cachedData = await userDataCache.getOrSet(
+        cacheKey,
+        async () => {
+          const params: Record<string, string> = {};
+          if (symbol) params.symbol = symbol;
+
+          const response = await edgeFunctionClient.get<Position[]>('alpaca-positions', params);
+          if (!response.success) {
+            throw new Error(response.error?.message || 'Failed to fetch positions');
+          }
+          return response.data;
+        },
+        30 * 1000 // 30 seconds cache
+      );
+
+      return { success: true, data: cachedData };
     } catch (error) {
-      return { success: false, error: 'Failed to fetch positions' };
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to fetch positions' 
+      };
     }
   }
 
@@ -195,22 +259,39 @@ class ApiService {
       // Check authentication first
       const isAuthenticated = await this.checkAuthentication();
       if (!isAuthenticated) {
-        return { 
-          success: false, 
-          error: 'Authentication required. Please sign in to view your orders.' 
+        return {
+          success: false,
+          error: 'Authentication required. Please sign in to view your orders.'
         };
       }
 
-      const searchParams = new URLSearchParams();
-      if (params?.status) searchParams.append('status', params.status);
-      if (params?.limit) searchParams.append('limit', params.limit.toString());
-      if (params?.symbols) searchParams.append('symbols', params.symbols);
+      // Use caching for orders data (15 seconds TTL for open orders, 2 minutes for closed)
+      const cacheKey = `orders:${params?.status || 'all'}:${params?.symbols || 'all'}:${params?.limit || 50}`;
+      const cacheTTL = params?.status === 'open' ? 15 * 1000 : 2 * 60 * 1000;
       
-      const url = `/api/alpaca/orders${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-      const response = await fetch(url);
-      return await response.json();
+      const cachedData = await userDataCache.getOrSet(
+        cacheKey,
+        async () => {
+          const edgeParams: Record<string, string> = {};
+          if (params?.status) edgeParams.status = params.status;
+          if (params?.limit) edgeParams.limit = params.limit.toString();
+          if (params?.symbols) edgeParams.symbols = params.symbols;
+
+          const response = await edgeFunctionClient.get<Order[]>('alpaca-orders', edgeParams);
+          if (!response.success) {
+            throw new Error(response.error?.message || 'Failed to fetch orders');
+          }
+          return response.data;
+        },
+        cacheTTL
+      );
+
+      return { success: true, data: cachedData };
     } catch (error) {
-      return { success: false, error: 'Failed to fetch orders' };
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to fetch orders' 
+      };
     }
   }
 
@@ -236,18 +317,24 @@ class ApiService {
       // Check authentication first
       const isAuthenticated = await this.checkAuthentication();
       if (!isAuthenticated) {
-        return { 
-          success: false, 
-          error: 'Authentication required. Please sign in to place orders.' 
+        return {
+          success: false,
+          error: 'Authentication required. Please sign in to place orders.'
         };
       }
 
-      const response = await fetch('/api/alpaca/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData),
-      });
-      return await response.json();
+      const response = await edgeFunctionClient.post<Order>('alpaca-orders', orderData);
+
+      if (response.success) {
+        // Invalidate relevant caches after placing order
+        this.invalidateOrderCaches();
+        this.invalidatePositionCaches();
+        this.invalidateAccountCache();
+        
+        return { success: true, data: response.data };
+      } else {
+        return { success: false, error: response.error?.message || 'Failed to place order' };
+      }
     } catch (error) {
       return { success: false, error: 'Failed to place order' };
     }
@@ -255,18 +342,43 @@ class ApiService {
 
   async getAssets(params?: {
     status?: 'active' | 'inactive';
-    asset_class?: 'us_equity' | 'crypto';
+    asset_class?: 'us_equity' | 'crypto' | 'us_option';
     search?: string;
+    limit?: number;
   }): Promise<ApiResponse<Asset[]>> {
     try {
-      const searchParams = new URLSearchParams();
-      if (params?.status) searchParams.append('status', params.status);
-      if (params?.asset_class) searchParams.append('asset_class', params.asset_class);
-      if (params?.search) searchParams.append('search', params.search);
+      const edgeParams: Record<string, string> = {};
+      if (params?.status) edgeParams.status = params.status;
+      if (params?.asset_class) edgeParams.asset_class = params.asset_class;
+      if (params?.limit) edgeParams.limit = params.limit.toString();
+
+      let response;
       
-      const url = `/api/alpaca/assets${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-      const response = await fetch(url);
-      return await response.json();
+      // If search term is provided, use the search endpoint
+      if (params?.search && params.search.trim().length > 0) {
+        edgeParams.search = params.search;
+        edgeParams.tradable_only = 'true';
+        response = await edgeFunctionClient.get<{assets: Asset[]}>('alpaca-assets-search', edgeParams);
+        
+        // Extract assets from the search response format
+        if (response.success && response.data?.assets) {
+          return { success: true, data: response.data.assets };
+        }
+      } else {
+        // For general asset listing, use the securities endpoint
+        response = await edgeFunctionClient.get<{assets: Asset[]}>('alpaca-securities', edgeParams);
+        
+        // Extract assets from the securities response format
+        if (response.success && response.data?.assets) {
+          return { success: true, data: response.data.assets };
+        }
+      }
+
+      if (response.success) {
+        return { success: true, data: response.data };
+      } else {
+        return { success: false, error: response.error?.message || 'Failed to fetch assets' };
+      }
     } catch (error) {
       return { success: false, error: 'Failed to fetch assets' };
     }
@@ -280,123 +392,210 @@ class ApiService {
       // Check authentication first
       const isAuthenticated = await this.checkAuthentication();
       if (!isAuthenticated) {
-        return { 
-          success: false, 
-          error: 'Authentication required. Please sign in to view your portfolio history.' 
+        return {
+          success: false,
+          error: 'Authentication required. Please sign in to view your portfolio history.'
         };
       }
 
-      const searchParams = new URLSearchParams();
-      if (params?.period) searchParams.append('period', params.period);
-      if (params?.timeframe) searchParams.append('timeframe', params.timeframe);
+      // Use caching for portfolio history (5 minutes TTL for longer periods, 1 minute for intraday)
+      const period = params?.period || '1D';
+      const timeframe = params?.timeframe || '1D';
+      const cacheKey = `portfolio-history:${period}:${timeframe}`;
+      const cacheTTL = ['1D', '1Min', '5Min', '15Min', '1H'].includes(period) ? 60 * 1000 : 5 * 60 * 1000;
       
-      const url = `/api/alpaca/portfolio-history${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-      const response = await fetch(url);
-      return await response.json();
+      const cachedData = await userDataCache.getOrSet(
+        cacheKey,
+        async () => {
+          const edgeParams: Record<string, string> = {};
+          if (params?.period) edgeParams.period = params.period;
+          if (params?.timeframe) edgeParams.timeframe = params.timeframe;
+
+          const response = await edgeFunctionClient.get<PortfolioHistory>('alpaca-portfolio-history', edgeParams);
+          if (!response.success) {
+            throw new Error(response.error?.message || 'Failed to fetch portfolio history');
+          }
+          return response.data;
+        },
+        cacheTTL
+      );
+
+      return { success: true, data: cachedData };
     } catch (error) {
-      return { success: false, error: 'Failed to fetch portfolio history' };
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to fetch portfolio history' 
+      };
     }
   }
 
-  // Market Data APIs
+  // Note: Funding, Activities, Documents, Events, and Account Update APIs
+  // would be implemented as Edge Functions when needed
+
+  // Order Management APIs
+  async getOrder(orderId: string): Promise<ApiResponse<any>> {
+    try {
+      // Use consolidated alpaca-orders edge function with GET method
+      const response = await edgeFunctionClient.post<any>('alpaca-orders', {
+        method: 'GET',
+        orderId
+      });
+
+      if (response.success) {
+        return { success: true, data: response.data };
+      } else {
+        return { success: false, error: response.error?.message || 'Failed to fetch order' };
+      }
+    } catch (error) {
+      return { success: false, error: 'Failed to fetch order' };
+    }
+  }
+
+  async cancelOrder(orderId: string): Promise<ApiResponse<any>> {
+    try {
+      // Use consolidated alpaca-orders edge function with DELETE method
+      const response = await edgeFunctionClient.post<any>('alpaca-orders', {
+        method: 'DELETE',
+        orderId
+      });
+
+      if (response.success) {
+        // Invalidate relevant caches after canceling order
+        this.invalidateOrderCaches();
+        this.invalidateAccountCache();
+        
+        return { success: true, data: response.data };
+      } else {
+        return { success: false, error: response.error?.message || 'Failed to cancel order' };
+      }
+    } catch (error) {
+      return { success: false, error: 'Failed to cancel order' };
+    }
+  }
+
+  async modifyOrder(orderId: string, updateData: any): Promise<ApiResponse<any>> {
+    try {
+      // Use consolidated alpaca-orders edge function with PATCH method
+      const response = await edgeFunctionClient.post<any>('alpaca-orders', {
+        method: 'PATCH',
+        orderId,
+        ...updateData
+      });
+
+      if (response.success) {
+        // Invalidate relevant caches after modifying order
+        this.invalidateOrderCaches();
+        
+        return { success: true, data: response.data };
+      } else {
+        return { success: false, error: response.error?.message || 'Failed to modify order' };
+      }
+    } catch (error) {
+      return { success: false, error: 'Failed to modify order' };
+    }
+  }
+
+  // Note: Watchlist APIs would be implemented as Edge Functions when needed
+
+  // Market Data APIs - Using Edge Functions only
+  async getQuotes(symbolsOrParams: string | {
+    symbols: string;
+    start?: string;
+    end?: string;
+    limit?: number;
+    feed?: string;
+  }): Promise<ApiResponse<any>> {
+    try {
+      // Handle both string and object parameters for backward compatibility
+      const edgeParams: Record<string, string> = {};
+      let symbols: string;
+
+      if (typeof symbolsOrParams === 'string') {
+        symbols = symbolsOrParams;
+        edgeParams.symbols = symbolsOrParams;
+      } else {
+        symbols = symbolsOrParams.symbols;
+        edgeParams.symbols = symbolsOrParams.symbols;
+        if (symbolsOrParams.start) edgeParams.start = symbolsOrParams.start;
+        if (symbolsOrParams.end) edgeParams.end = symbolsOrParams.end;
+        if (symbolsOrParams.limit) edgeParams.limit = symbolsOrParams.limit.toString();
+        if (symbolsOrParams.feed) edgeParams.feed = symbolsOrParams.feed;
+      }
+
+      // Use market data caching (30 seconds TTL)
+      const cacheKey = `quotes:${symbols}:${JSON.stringify(edgeParams)}`;
+      const cachedData = await marketDataCache.getOrSet(
+        cacheKey,
+        async () => {
+          // Use alpaca-market-data-enhanced/quotes endpoint
+          const response = await edgeFunctionClient.get<MarketData>('alpaca-market-data-enhanced/quotes', edgeParams);
+          if (!response.success) {
+            throw new Error(response.error?.message || 'Failed to fetch quotes');
+          }
+          return response.data;
+        },
+        30 * 1000 // 30 seconds cache
+      );
+
+      return { success: true, data: cachedData };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to fetch quotes' 
+      };
+    }
+  }
+
   async getBars(params: {
     symbols: string;
     timeframe?: '1Min' | '5Min' | '15Min' | '30Min' | '1Hour' | '1Day' | '1Week' | '1Month';
     start?: string;
     end?: string;
     limit?: number;
-  }): Promise<ApiResponse<MarketData>> {
+    feed?: string;
+  }): Promise<ApiResponse<any>> {
     try {
-      const searchParams = new URLSearchParams();
-      searchParams.append('symbols', params.symbols);
-      if (params.timeframe) searchParams.append('timeframe', params.timeframe);
-      if (params.start) searchParams.append('start', params.start);
-      if (params.end) searchParams.append('end', params.end);
-      if (params.limit) searchParams.append('limit', params.limit.toString());
+      const edgeParams: Record<string, string> = {
+        symbols: params.symbols
+      };
+      if (params.timeframe) edgeParams.timeframe = params.timeframe;
+      if (params.start) edgeParams.start = params.start;
+      if (params.end) edgeParams.end = params.end;
+      if (params.limit) edgeParams.limit = params.limit.toString();
+      if (params.feed) edgeParams.feed = params.feed;
+
+      // Use market data caching with different TTLs based on timeframe
+      const timeframe = params.timeframe || '1Day';
+      const cacheKey = `bars:${params.symbols}:${JSON.stringify(edgeParams)}`;
       
-      const response = await fetch(`/api/alpaca/market-data/bars?${searchParams.toString()}`);
-      return await response.json();
-    } catch (error) {
-      return { success: false, error: 'Failed to fetch market data' };
-    }
-  }
-
-  async getQuotes(params: {
-    symbols: string;
-    start?: string;
-    end?: string;
-    limit?: number;
-  }): Promise<ApiResponse<MarketData>> {
-    try {
-      const searchParams = new URLSearchParams();
-      searchParams.append('symbols', params.symbols);
-      if (params.start) searchParams.append('start', params.start);
-      if (params.end) searchParams.append('end', params.end);
-      if (params.limit) searchParams.append('limit', params.limit.toString());
+      // Shorter cache for intraday data, longer for daily/weekly
+      const cacheTTL = ['1Min', '5Min', '15Min', '30Min'].includes(timeframe) 
+        ? 30 * 1000  // 30 seconds for intraday
+        : 5 * 60 * 1000; // 5 minutes for daily/weekly
       
-      const response = await fetch(`/api/alpaca/market-data/quotes?${searchParams.toString()}`);
-      return await response.json();
+      const cachedData = await marketDataCache.getOrSet(
+        cacheKey,
+        async () => {
+          // Use alpaca-market-data-enhanced/bars endpoint
+          const response = await edgeFunctionClient.get<MarketData>('alpaca-market-data-enhanced/bars', edgeParams);
+          if (!response.success) {
+            throw new Error(response.error?.message || 'Failed to fetch market data');
+          }
+          return response.data;
+        },
+        cacheTTL
+      );
+
+      return { success: true, data: cachedData };
     } catch (error) {
-      return { success: false, error: 'Failed to fetch quotes' };
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to fetch market data' 
+      };
     }
   }
 
-  // Leaderboard API
-  async getLeaderboard(params?: {
-    timeframe?: 'daily' | 'weekly' | 'monthly' | 'all';
-    limit?: number;
-  }): Promise<ApiResponse<LeaderboardEntry[]>> {
-    try {
-      const searchParams = new URLSearchParams();
-      if (params?.timeframe) searchParams.append('timeframe', params.timeframe);
-      if (params?.limit) searchParams.append('limit', params.limit.toString());
-      
-      const url = `/api/leaderboard${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-      const response = await fetch(url);
-      return await response.json();
-    } catch (error) {
-      return { success: false, error: 'Failed to fetch leaderboard' };
-    }
-  }
-
-  // Auth APIs
-  async signIn(email: string, password: string): Promise<Response> {
-    const formData = new FormData();
-    formData.append('email', email);
-    formData.append('password', password);
-    
-    return fetch('/api/auth/signin', {
-      method: 'POST',
-      body: formData,
-    });
-  }
-
-  async signUp(email: string, password: string): Promise<Response> {
-    const formData = new FormData();
-    formData.append('email', email);
-    formData.append('password', password);
-    
-    return fetch('/api/auth/signup', {
-      method: 'POST',
-      body: formData,
-    });
-  }
-
-  async signOut(): Promise<Response> {
-    return fetch('/api/auth/signout', {
-      method: 'POST',
-    });
-  }
-
-  // User Profile API
-  async getUserProfile(): Promise<ApiResponse<UserProfile>> {
-    try {
-      const response = await fetch('/api/user/profile');
-      return await response.json();
-    } catch (error) {
-      return { success: false, error: 'Failed to fetch user profile' };
-    }
-  }
+  // Note: Leaderboard, Auth, and User Profile APIs would be implemented as Edge Functions when needed
 
   // Utility methods
   formatCurrency(amount: number): string {
@@ -414,6 +613,63 @@ class ApiService {
 
   formatNumber(value: number): string {
     return new Intl.NumberFormat('en-US').format(value);
+  }
+
+  // Cache invalidation methods
+  private invalidateOrderCaches(): void {
+    // Clear all order-related cache entries
+    const orderKeys = ['orders:all', 'orders:open', 'orders:closed'];
+    orderKeys.forEach(key => {
+      userDataCache.delete(key);
+      // Also clear with different limits and symbols
+      for (let i = 1; i <= 5; i++) {
+        userDataCache.delete(`${key}:all:${i * 10}`);
+        userDataCache.delete(`${key}:all:${i * 50}`);
+      }
+    });
+  }
+
+  private invalidatePositionCaches(): void {
+    // Clear all position-related cache entries
+    userDataCache.delete('positions:all');
+    // Clear individual symbol position caches (we don't know which symbols, so clear all)
+    // This is handled by the cache's TTL, but we could implement a more sophisticated approach
+  }
+
+  private invalidateAccountCache(): void {
+    // Clear account-related cache entries
+    userDataCache.delete('account:current');
+  }
+
+  private invalidatePortfolioCaches(): void {
+    // Clear portfolio history caches
+    const periods = ['1D', '1W', '1M', '3M', '1A', '2A', '5A', 'all'];
+    const timeframes = ['1Min', '5Min', '15Min', '1H', '1D'];
+    
+    periods.forEach(period => {
+      timeframes.forEach(timeframe => {
+        userDataCache.delete(`portfolio-history:${period}:${timeframe}`);
+      });
+    });
+  }
+
+  // Public method to clear all user-related caches (useful after logout)
+  clearUserCaches(): void {
+    this.invalidateOrderCaches();
+    this.invalidatePositionCaches();
+    this.invalidateAccountCache();
+    this.invalidatePortfolioCaches();
+  }
+
+  // Public method to clear market data caches
+  clearMarketDataCaches(symbol?: string): void {
+    if (symbol) {
+      // Clear specific symbol caches
+      marketDataCache.delete(cacheKeys.marketData(symbol));
+    } else {
+      // Clear all market data
+      marketDataCache.clear();
+    }
   }
 }
 

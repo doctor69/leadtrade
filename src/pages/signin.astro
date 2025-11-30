@@ -6,9 +6,24 @@ const { url } = Astro;
 
 // Get return URL from query params
 const returnUrl = url.searchParams.get("returnUrl") || "/dashboard";
+
+// Social media metadata for sign in page
+const pageTitle = "Sign In - LEADTRADE";
+const pageDescription =
+  "Sign in to your LEADTRADE account to access your trading dashboard, portfolio, and start trading with real market data.";
+const pageImage = "/social/default-thumbnail.svg";
+const pageKeywords =
+  "sign in, login, trading account, LEADTRADE access, trading platform login";
 ---
 
-<Layout>
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  image={pageImage}
+  keywords={pageKeywords}
+  type="website"
+  showNavigation={true}
+>
   <div class="flex items-center justify-center min-h-[60vh]">
     <SignInForm client:load returnUrl={returnUrl} />
   </div>

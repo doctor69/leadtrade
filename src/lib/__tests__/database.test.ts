@@ -231,7 +231,7 @@ export const mockUserProfile = {
   id: '11111111-1111-1111-1111-111111111111',
   username: 'test_user',
   full_name: 'Test User',
-  is_paper_trading: true,
+  trading_mode: 'paper',
   share_trades: true,
   show_asset_amounts: false,
   theme_color: '#ef4444',

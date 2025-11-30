@@ -46,3 +46,4 @@ export {
   NavigationMenuList,
   navigationMenuTriggerStyle
 } from './navigation-menu';
+export { Popover, PopoverContent, PopoverTrigger } from './popover';

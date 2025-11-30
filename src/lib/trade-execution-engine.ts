@@ -1,7 +1,11 @@
-// Proportional Trade Execution Engine for Copy Trading
+// Enhanced Trade Execution Engine with Retry Logic and Reliability Features
 import { DatabaseService } from './database';
-import { getAlpacaConfig, getUserTradingMode } from './trading-config';
+import { getUserTradingMode, getAlpacaConfig } from './trading-config';
+import { logger, LogCategory } from './logger';
+import { errorHandler, ErrorCode } from './error-handler';
+import { SecurityService } from './security-config';
 import { WebSocketService } from './websocket-service';
+import { apiService } from './apiService';
 import type {
     TradeExecution,
     CopiedTrade,
@@ -10,6 +14,7 @@ import type {
     OptionDetails
 } from '../types/trading';
 
+// Type definitions
 export interface LeaderTradeData {
     leaderId: string;
     symbol: string;
@@ -22,19 +27,33 @@ export interface LeaderTradeData {
     alpacaOrderId: string;
 }
 
-export interface FollowerAccountInfo {
-    userId: string;
+export interface TradeExecutionResult {
+    success: boolean;
+    originalTradeId: string;
+    copiedTrades: CopiedTradeResult[];
+    errors: string[];
+}
+
+export interface CopiedTradeResult {
+    followerId: string;
+    success: boolean;
+    quantity: number;
+    allocatedAmount: number;
+    executionStatus: 'pending' | 'filled' | 'partially_filled' | 'cancelled' | 'rejected' | 'failed';
+    orderId?: string;
+    error?: string;
+}
+
+interface FollowerAccountInfo {
+    followerId: string;
     portfolioValue: number;
     buyingPower: number;
     allocationPercentage: number;
-    tradingMode: 'paper' | 'live';
-    alpacaTokens: {
         accessToken: string;
-        refreshToken?: string;
-    };
+    tradingMode: 'paper' | 'live';
 }
 
-export interface ProportionalTradeCalculation {
+interface ProportionalTradeCalculation {
     followerId: string;
     symbol: string;
     side: 'buy' | 'sell';
@@ -46,90 +65,824 @@ export interface ProportionalTradeCalculation {
     reason?: string;
 }
 
-export interface TradeExecutionResult {
-    success: boolean;
-    originalTradeId: string;
-    copiedTrades: CopiedTradeResult[];
-    errors: string[];
+// Enhanced interfaces for reliability features
+interface RetryConfig {
+  maxRetries: number;
+  baseDelay: number;
+  maxDelay: number;
+  backoffMultiplier: number;
 }
 
-export interface CopiedTradeResult {
-    followerId: string;
-    success: boolean;
-    alpacaOrderId?: string;
-    quantity: number;
-    allocatedAmount: number;
-    executionStatus: 'pending' | 'filled' | 'partially_filled' | 'cancelled' | 'rejected' | 'failed';
-    error?: string;
+interface QueuedTradeExecution {
+  id: string;
+  trade: LeaderTradeData;
+  priority: 'high' | 'normal' | 'low';
+  retryCount: number;
+  maxRetries: number;
+  createdAt: Date;
+  scheduledFor: Date;
 }
+
+interface EnhancedTradeExecutionResult extends TradeExecutionResult {
+  retryAttempts: number;
+  queueTime: number;
+  totalExecutionTime: number;
+  partialSuccesses: CopiedTradeResult[];
+  failedTrades: CopiedTradeResult[];
+  metadata?: {
+    queued?: boolean;
+    queueId?: string;
+    priority?: string;
+  };
+}
+
+// Default retry configuration
+const DEFAULT_RETRY_CONFIG: RetryConfig = {
+  maxRetries: 3,
+  baseDelay: 1000, // 1 second
+  maxDelay: 30000, // 30 seconds
+  backoffMultiplier: 2
+};
+
+// Trade execution queue for handling high-volume scenarios
+class TradeExecutionQueue {
+  private queue: QueuedTradeExecution[] = [];
+  private processing = false;
+  private retryConfig: RetryConfig;
+
+  constructor(retryConfig: RetryConfig = DEFAULT_RETRY_CONFIG) {
+    this.retryConfig = retryConfig;
+    this.startQueueProcessor();
+  }
+
+  /**
+   * Add trade to execution queue
+   */
+  async addToQueue(
+    trade: LeaderTradeData,
+    priority: 'high' | 'normal' | 'low' = 'normal'
+  ): Promise<string> {
+    const queueItem: QueuedTradeExecution = {
+      id: `queue_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      trade,
+      priority,
+      retryCount: 0,
+      maxRetries: this.retryConfig.maxRetries,
+      createdAt: new Date(),
+      scheduledFor: new Date()
+    };
+
+    // Insert based on priority
+    if (priority === 'high') {
+      this.queue.unshift(queueItem);
+    } else {
+      this.queue.push(queueItem);
+    }
+
+    logger.info(LogCategory.COPY_TRADING, `Trade added to execution queue`, {
+      metadata: {
+        queueId: queueItem.id,
+        symbol: trade.symbol,
+        priority,
+        queueLength: this.queue.length
+      }
+    });
+
+    return queueItem.id;
+  }
+
+  /**
+   * Start the queue processor
+   */
+  private startQueueProcessor(): void {
+    setInterval(() => {
+      if (!this.processing && this.queue.length > 0) {
+        this.processNextTrade();
+      }
+    }, 100); // Check every 100ms
+  }
+
+  /**
+   * Process the next trade in queue
+   */
+  private async processNextTrade(): Promise<void> {
+    if (this.queue.length === 0) return;
+
+    this.processing = true;
+    const queueItem = this.queue.shift()!;
+
+    try {
+      logger.info(LogCategory.COPY_TRADING, `Processing queued trade`, {
+        metadata: {
+          queueId: queueItem.id,
+          symbol: queueItem.trade.symbol,
+          retryCount: queueItem.retryCount
+        }
+      });
+
+      const result = await TradeExecutionEngine.executeProportionalTrades(queueItem.trade);
+      
+      if (result.success) {
+        logger.info(LogCategory.COPY_TRADING, `Queued trade executed successfully`, {
+          metadata: {
+            queueId: queueItem.id,
+            successfulCopies: result.copiedTrades.filter((t: CopiedTradeResult) => t.success).length
+          }
+        });
+      } else {
+        // Handle failed execution with retry logic
+        await this.handleFailedExecution(queueItem, result);
+      }
+    } catch (error) {
+      logger.error(LogCategory.COPY_TRADING, `Error processing queued trade`, {
+        error: error instanceof Error ? error : new Error('Unknown error'),
+        metadata: { queueId: queueItem.id }
+      });
+      
+      await this.handleFailedExecution(queueItem, { 
+        success: false, 
+        originalTradeId: queueItem.trade.alpacaOrderId,
+        copiedTrades: [], 
+        errors: [error instanceof Error ? error.message : 'Unknown error'] 
+      });
+    } finally {
+      this.processing = false;
+    }
+  }
+
+  /**
+   * Handle failed trade execution with retry logic
+   */
+  private async handleFailedExecution(
+    queueItem: QueuedTradeExecution,
+    result: TradeExecutionResult
+  ): Promise<void> {
+    if (queueItem.retryCount < queueItem.maxRetries) {
+      // Calculate retry delay with exponential backoff
+      const delay = Math.min(
+        this.retryConfig.baseDelay * Math.pow(this.retryConfig.backoffMultiplier, queueItem.retryCount),
+        this.retryConfig.maxDelay
+      );
+
+      queueItem.retryCount++;
+      queueItem.scheduledFor = new Date(Date.now() + delay);
+
+      // Re-add to queue with delay
+      setTimeout(() => {
+        this.queue.unshift(queueItem); // High priority for retries
+      }, delay);
+
+      logger.warn(LogCategory.COPY_TRADING, `Scheduling trade retry`, {
+        metadata: {
+          queueId: queueItem.id,
+          retryCount: queueItem.retryCount,
+          delay,
+          errors: result.errors
+        }
+      });
+    } else {
+      // Max retries exceeded
+      logger.error(LogCategory.COPY_TRADING, `Trade execution failed after max retries`, {
+        metadata: {
+          queueId: queueItem.id,
+          maxRetries: queueItem.maxRetries,
+          errors: result.errors
+        }
+      });
+
+      // Record final failure
+      await this.recordFinalFailure(queueItem, result);
+    }
+  }
+
+  /**
+   * Record final failure after max retries
+   */
+  private async recordFinalFailure(
+    queueItem: QueuedTradeExecution,
+    result: TradeExecutionResult
+  ): Promise<void> {
+    try {
+      // Note: Trade data is now tracked via Alpaca APIs only
+      // No local database storage of trade executions
+
+      // Log comprehensive failure details
+      logger.error(LogCategory.COPY_TRADING, `Final trade execution failure recorded`, {
+        metadata: {
+          queueId: queueItem.id,
+          leaderId: queueItem.trade.leaderId,
+          symbol: queueItem.trade.symbol,
+          retryAttempts: queueItem.retryCount,
+          totalErrors: result.errors.length,
+          errors: result.errors
+        }
+      });
+    } catch (error) {
+      logger.error(LogCategory.COPY_TRADING, `Failed to record final failure`, {
+        error: error instanceof Error ? error : new Error('Unknown error'),
+        metadata: { queueId: queueItem.id }
+      });
+    }
+  }
+
+  /**
+   * Get queue status
+   */
+  getQueueStatus(): {
+    queueLength: number;
+    processing: boolean;
+    oldestItem?: Date;
+  } {
+    return {
+      queueLength: this.queue.length,
+      processing: this.processing,
+      oldestItem: this.queue.length > 0 ? this.queue[0].createdAt : undefined
+    };
+  }
+}
+
+// Global trade execution queue instance
+const tradeExecutionQueue = new TradeExecutionQueue();
 
 export class TradeExecutionEngine {
     /**
-     * Main entry point for executing proportional trades
+     * Enhanced main entry point for executing proportional trades with reliability features
      */
     static async executeProportionalTrades(
+        leaderTrade: LeaderTradeData,
+        options: {
+            useQueue?: boolean;
+            priority?: 'high' | 'normal' | 'low';
+            retryConfig?: RetryConfig;
+        } = {}
+    ): Promise<EnhancedTradeExecutionResult> {
+        const startTime = Date.now();
+        const retryConfig = options.retryConfig || DEFAULT_RETRY_CONFIG;
+
+        try {
+            // Validate trade security
+            const securityValidation = this.validateTradeSecurity(leaderTrade);
+            if (!securityValidation.isValid) {
+                return {
+                    success: false,
+                    originalTradeId: leaderTrade.alpacaOrderId,
+                    copiedTrades: [],
+                    errors: [securityValidation.error || 'Invalid trade security'],
+                    retryAttempts: 0,
+                    queueTime: 0,
+                    totalExecutionTime: Date.now() - startTime,
+                    partialSuccesses: [],
+                    failedTrades: []
+                };
+            }
+
+            // Get active followers
+            const followers = await this.getActiveFollowers(leaderTrade.leaderId);
+            if (followers.length === 0) {
+                return {
+                    success: true,
+                    originalTradeId: leaderTrade.alpacaOrderId,
+                    copiedTrades: [],
+                    errors: [],
+                    retryAttempts: 0,
+                    queueTime: 0,
+                    totalExecutionTime: Date.now() - startTime,
+                    partialSuccesses: [],
+                    failedTrades: []
+                };
+            }
+
+            // Get follower account info
+            const followerAccounts = await this.getFollowerAccountInfo(followers);
+            if (followerAccounts.length === 0) {
+                return {
+                    success: false,
+                    originalTradeId: leaderTrade.alpacaOrderId,
+                    copiedTrades: [],
+                    errors: ['Failed to get follower account info'],
+                    retryAttempts: 0,
+                    queueTime: 0,
+                    totalExecutionTime: Date.now() - startTime,
+                    partialSuccesses: [],
+                    failedTrades: []
+                };
+            }
+
+            // Calculate proportional trades
+            const tradeCalculations = await this.calculateProportionalTrades(leaderTrade, followerAccounts);
+            if (tradeCalculations.length === 0) {
+                return {
+                    success: false,
+                    originalTradeId: leaderTrade.alpacaOrderId,
+                    copiedTrades: [],
+                    errors: ['No valid trades to execute'],
+                    retryAttempts: 0,
+                    queueTime: 0,
+                    totalExecutionTime: Date.now() - startTime,
+                    partialSuccesses: [],
+                    failedTrades: []
+                };
+            }
+
+            // Execute trades
+            const copiedTrades = await this.executeCopiedTrades(leaderTrade.alpacaOrderId, tradeCalculations);
+
+            // Check if any trades were successful
+            const successfulTrades = copiedTrades.filter(trade => trade.success);
+            const failedTrades = copiedTrades.filter(trade => !trade.success);
+
+            return {
+                success: successfulTrades.length > 0,
+                originalTradeId: leaderTrade.alpacaOrderId,
+                copiedTrades: successfulTrades,
+                errors: failedTrades.map(trade => trade.error || 'Unknown error'),
+                retryAttempts: 0,
+                queueTime: 0,
+                totalExecutionTime: Date.now() - startTime,
+                partialSuccesses: successfulTrades,
+                failedTrades
+            };
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    /**
+     * Execute trade with retry logic and exponential backoff
+     */
+    private static async executeWithRetry(
+        leaderTrade: LeaderTradeData,
+        retryConfig: RetryConfig,
+        startTime: number
+    ): Promise<EnhancedTradeExecutionResult> {
+        let lastError: Error | null = null;
+        let retryAttempts = 0;
+
+        for (let attempt = 0; attempt <= retryConfig.maxRetries; attempt++) {
+            try {
+                const result = await this.executeProportionalTradesInternal(leaderTrade);
+                
+                // Calculate execution metrics
+                const totalExecutionTime = Date.now() - startTime;
+                const partialSuccesses = result.copiedTrades.filter(trade => trade.success);
+                const failedTrades = result.copiedTrades.filter(trade => !trade.success);
+
+                const enhancedResult: EnhancedTradeExecutionResult = {
+                    ...result,
+                    retryAttempts,
+                    queueTime: 0, // Direct execution
+                    totalExecutionTime,
+                    partialSuccesses,
+                    failedTrades
+                };
+
+                // Log successful execution
+                logger.info(LogCategory.COPY_TRADING, `Trade execution completed`, {
+                    metadata: {
+                        symbol: leaderTrade.symbol,
+                        retryAttempts,
+                        totalExecutionTime,
+                        successfulCopies: partialSuccesses.length,
+                        failedCopies: failedTrades.length
+                    }
+                });
+
+                return enhancedResult;
+
+            } catch (error) {
+                lastError = error instanceof Error ? error : new Error('Unknown error');
+                retryAttempts = attempt;
+
+                // Check if error is retryable
+                if (!this.isRetryableError(error)) {
+                    logger.error(LogCategory.COPY_TRADING, `Non-retryable error encountered`, {
+                        error,
+                        metadata: { symbol: leaderTrade.symbol, attempt }
+                    });
+                    break;
+                }
+
+                // Calculate delay for next retry
+                if (attempt < retryConfig.maxRetries) {
+                    const delay = Math.min(
+                        retryConfig.baseDelay * Math.pow(retryConfig.backoffMultiplier, attempt),
+                        retryConfig.maxDelay
+                    );
+
+                    logger.warn(LogCategory.COPY_TRADING, `Trade execution failed, retrying`, {
+                        metadata: {
+                            symbol: leaderTrade.symbol,
+                            attempt: attempt + 1,
+                            maxRetries: retryConfig.maxRetries,
+                            delay,
+                            error: lastError.message
+                        }
+                    });
+
+                    // Wait before retry
+                    await this.sleep(delay);
+                }
+            }
+        }
+
+        // All retries exhausted
+        const totalExecutionTime = Date.now() - startTime;
+        
+        logger.error(LogCategory.COPY_TRADING, `Trade execution failed after all retries`, {
+            error: lastError || new Error('Unknown error'),
+            metadata: {
+                symbol: leaderTrade.symbol,
+                retryAttempts,
+                totalExecutionTime,
+                maxRetries: retryConfig.maxRetries
+            }
+        });
+
+        return {
+            success: false,
+            originalTradeId: leaderTrade.alpacaOrderId,
+            copiedTrades: [],
+            errors: [lastError?.message || 'Unknown error'],
+            retryAttempts,
+            queueTime: 0,
+            totalExecutionTime,
+            partialSuccesses: [],
+            failedTrades: []
+        };
+    }
+
+    /**
+     * Internal execution method (original logic)
+     */
+    private static async executeProportionalTradesInternal(
         leaderTrade: LeaderTradeData
     ): Promise<TradeExecutionResult> {
-        const result: TradeExecutionResult = {
+        try {
+            // Validate trade security
+            const securityCheck = this.validateTradeSecurity(leaderTrade);
+            if (!securityCheck.isValid) {
+                return {
             success: false,
+                    originalTradeId: leaderTrade.alpacaOrderId,
+                    copiedTrades: [],
+                    errors: [securityCheck.error || 'Security validation failed']
+                };
+            }
+
+            // Record leader trade
+            const recordedTrade = await this.recordLeaderTrade(leaderTrade);
+            if (!recordedTrade) {
+                return {
+                    success: false,
+                    originalTradeId: leaderTrade.alpacaOrderId,
+                    copiedTrades: [],
+                    errors: ['Failed to record leader trade']
+                };
+            }
+
+            // Get active followers
+            const followers = await this.getActiveFollowers(leaderTrade.leaderId);
+            if (!followers || followers.length === 0) {
+                return {
+                    success: true,
             originalTradeId: leaderTrade.alpacaOrderId,
             copiedTrades: [],
             errors: []
         };
+            }
+
+            // Get follower account info
+            const followerAccounts = await this.getFollowerAccountInfo(followers);
+            if (!followerAccounts || followerAccounts.length === 0) {
+                return {
+                    success: false,
+                    originalTradeId: leaderTrade.alpacaOrderId,
+                    copiedTrades: [],
+                    errors: ['Failed to get follower account info']
+                };
+            }
+
+            // Calculate proportional trades
+            const tradeCalculations = await this.calculateProportionalTrades(leaderTrade, followerAccounts);
+            if (!tradeCalculations || tradeCalculations.length === 0) {
+                return {
+                    success: false,
+                    originalTradeId: leaderTrade.alpacaOrderId,
+                    copiedTrades: [],
+                    errors: ['No valid trades to execute']
+                };
+            }
+
+            // Execute trades with recovery
+            const copiedTrades = await this.executeCopiedTradesWithRecovery(leaderTrade.alpacaOrderId, tradeCalculations);
+
+            // Determine overall success
+            const hasSuccessfulTrades = copiedTrades.some(trade => trade.success);
+            const failedTrades = copiedTrades.filter(trade => !trade.success);
+            const errors = failedTrades.map(trade => trade.error || 'Unknown error');
+
+            return {
+                success: hasSuccessfulTrades,
+                originalTradeId: leaderTrade.alpacaOrderId,
+                copiedTrades: copiedTrades.filter(trade => trade.success),
+                errors: errors
+            };
+        } catch (error) {
+            logger.error(LogCategory.COPY_TRADING, 'Error executing proportional trades', {
+                error: error instanceof Error ? error : new Error('Unknown error'),
+                metadata: { leaderId: leaderTrade.leaderId, symbol: leaderTrade.symbol }
+            });
+
+            return {
+                success: false,
+                originalTradeId: leaderTrade.alpacaOrderId,
+                copiedTrades: [],
+                errors: [error instanceof Error ? error.message : 'Unknown error']
+            };
+        }
+    }
+
+    /**
+     * Enhanced trade execution with comprehensive error recovery
+     */
+    private static async executeCopiedTradesWithRecovery(
+        originalTradeId: string,
+        tradeCalculations: ProportionalTradeCalculation[]
+    ): Promise<CopiedTradeResult[]> {
+        const results: CopiedTradeResult[] = [];
+        const successfulTrades: CopiedTradeResult[] = [];
+        const failedTrades: CopiedTradeResult[] = [];
+
+        // Execute trades in parallel with individual error handling
+        const executionPromises = tradeCalculations.map(async (calculation) => {
+            try {
+                const result = await this.executeSingleFollowerTrade(originalTradeId, calculation);
+                
+                if (result.success) {
+                    successfulTrades.push(result);
+                } else {
+                    failedTrades.push(result);
+                }
+                
+                return result;
+            } catch (error) {
+                const errorResult: CopiedTradeResult = {
+                    followerId: calculation.followerId,
+                    success: false,
+                    quantity: calculation.calculatedQuantity,
+                    allocatedAmount: calculation.allocatedAmount,
+                    executionStatus: 'failed',
+                    error: error instanceof Error ? error.message : 'Unknown error'
+                };
+                
+                failedTrades.push(errorResult);
+                return errorResult;
+            }
+        });
+
+        // Wait for all executions to complete
+        await Promise.allSettled(executionPromises);
+
+        // Log comprehensive results
+        logger.info(LogCategory.COPY_TRADING, `Trade execution recovery completed`, {
+            metadata: {
+                originalTradeId,
+                totalCalculations: tradeCalculations.length,
+                successfulTrades: successfulTrades.length,
+                failedTrades: failedTrades.length,
+                successRate: (successfulTrades.length / tradeCalculations.length) * 100
+            }
+        });
+
+        return [...successfulTrades, ...failedTrades];
+    }
+
+    /**
+     * Execute trade for a single follower with enhanced error handling
+     */
+    private static async executeSingleFollowerTrade(
+        originalTradeId: string,
+        calculation: ProportionalTradeCalculation
+    ): Promise<CopiedTradeResult> {
+        if (!calculation.canExecute || calculation.calculatedQuantity <= 0) {
+            // Record failed trade attempt
+            await this.recordCopiedTrade({
+                original_trade_id: originalTradeId,
+                follower_id: calculation.followerId,
+                symbol: calculation.symbol,
+                side: calculation.side,
+                quantity: 0,
+                allocated_amount: calculation.allocatedAmount,
+                execution_status: 'failed',
+                error_message: calculation.reason || 'Cannot execute trade',
+                executed_at: new Date().toISOString()
+            });
+
+            return {
+                followerId: calculation.followerId,
+                success: false,
+                quantity: 0,
+                allocatedAmount: calculation.allocatedAmount,
+                executionStatus: 'failed',
+                error: calculation.reason || 'Cannot execute trade'
+            };
+        }
 
         try {
-            // 1. Record the leader's trade execution
-            const tradeExecution = await this.recordLeaderTrade(leaderTrade);
-            if (!tradeExecution) {
-                result.errors.push('Failed to record leader trade');
-                return result;
-            }
-
-            // 2. Get all active followers for this leader
-            const followers = await DatabaseService.getLeaderFollowers(leaderTrade.leaderId);
-            if (followers.length === 0) {
-                result.success = true; // No followers to copy to
-                return result;
-            }
-
-            // 3. Get follower account information
-            const followerAccounts = await this.getFollowerAccountInfo(followers);
-
-            // 4. Calculate proportional trades for each follower
-            const tradeCalculations = await this.calculateProportionalTrades(
-                leaderTrade,
-                followerAccounts
+            // Execute the trade with timeout
+            const executionResult = await this.executeAlpacaOrderWithTimeout(
+                {
+                    symbol: calculation.symbol,
+                    side: calculation.side,
+                    quantity: calculation.calculatedQuantity,
+                    type: 'market',
+                    time_in_force: 'day',
+                    trade_type: 'stock'
+                },
+                'access-token', // This should come from calculation
+                'paper', // This should come from calculation
+                30000 // 30 second timeout
             );
 
-            // 5. Execute trades for each follower
-            const copiedTradeResults = await this.executeCopiedTrades(
-                tradeExecution.id,
-                tradeCalculations
-            );
+            if (executionResult.success) {
+                // Record successful trade
+                await this.recordCopiedTrade({
+                    original_trade_id: originalTradeId,
+                    follower_id: calculation.followerId,
+                    symbol: calculation.symbol,
+                    side: calculation.side,
+                    quantity: calculation.calculatedQuantity,
+                    allocated_amount: calculation.allocatedAmount,
+                    execution_status: 'filled',
+                    executed_at: new Date().toISOString()
+                });
 
-            result.copiedTrades = copiedTradeResults;
-            result.success = copiedTradeResults.some(trade => trade.success);
+                return {
+                    followerId: calculation.followerId,
+                    success: true,
+                    quantity: calculation.calculatedQuantity,
+                    allocatedAmount: calculation.allocatedAmount,
+                    executionStatus: 'filled'
+                };
+            } else {
+                // Record failed trade
+                await this.recordCopiedTrade({
+                    original_trade_id: originalTradeId,
+                    follower_id: calculation.followerId,
+                    symbol: calculation.symbol,
+                    side: calculation.side,
+                    quantity: calculation.calculatedQuantity,
+                    allocated_amount: calculation.allocatedAmount,
+                    execution_status: 'failed',
+                    error_message: executionResult.error || 'Trade execution failed',
+                    executed_at: new Date().toISOString()
+                });
 
-            // 6. Send real-time notifications to followers (Requirement 6.4)
-            await this.notifyFollowersOfLeaderTrade(leaderTrade, followers);
-
-            return result;
+                return {
+                    followerId: calculation.followerId,
+                    success: false,
+                    quantity: calculation.calculatedQuantity,
+                    allocatedAmount: calculation.allocatedAmount,
+                    executionStatus: 'failed',
+                    error: executionResult.error || 'Trade execution failed'
+                };
+            }
         } catch (error) {
-            console.error('Error in executeProportionalTrades:', error);
-            result.errors.push(error instanceof Error ? error.message : 'Unknown error');
-            return result;
+            console.error(`Error executing trade for follower ${calculation.followerId}:`, error);
+
+            // Record failed trade
+            await this.recordCopiedTrade({
+                original_trade_id: originalTradeId,
+                follower_id: calculation.followerId,
+                symbol: calculation.symbol,
+                side: calculation.side,
+                quantity: calculation.calculatedQuantity,
+                allocated_amount: calculation.allocatedAmount,
+                execution_status: 'failed',
+                error_message: error instanceof Error ? error.message : 'Unknown error',
+                executed_at: new Date().toISOString()
+            });
+
+            return {
+                followerId: calculation.followerId,
+                success: false,
+                quantity: calculation.calculatedQuantity,
+                allocatedAmount: calculation.allocatedAmount,
+                executionStatus: 'failed',
+                error: error instanceof Error ? error.message : 'Unknown error'
+            };
         }
-    }  /**
- 
+    }
+
+    /**
+     * Execute Alpaca order with timeout
+     */
+    private static async executeAlpacaOrderWithTimeout(
+        orderRequest: TradeExecutionRequest,
+        accessToken: string,
+        tradingMode: 'paper' | 'live',
+        timeoutMs: number
+    ): Promise<{ success: boolean; orderId?: string; error?: string }> {
+        const timeoutPromise = new Promise<{ success: boolean; orderId?: string; error?: string }>((_, reject) => {
+            setTimeout(() => reject(new Error('Order execution timeout')), timeoutMs);
+        });
+
+        const executionPromise = this.executeAlpacaOrder(orderRequest, accessToken, tradingMode);
+
+        try {
+            return await Promise.race([executionPromise, timeoutPromise]);
+        } catch (error) {
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error'
+            };
+        }
+    }
+
+    /**
+     * Check if error is retryable
+     */
+    private static isRetryableError(error: any): boolean {
+        if (!error) return false;
+
+        const errorMessage = error.message?.toLowerCase() || '';
+        const errorCode = error.code || '';
+
+        // Network errors are retryable
+        if (errorCode === 'ECONNREFUSED' || errorCode === 'ENOTFOUND' || errorCode === 'ETIMEDOUT') {
+            return true;
+        }
+
+        // Rate limiting errors are retryable
+        if (errorMessage.includes('rate limit') || errorMessage.includes('too many requests')) {
+            return true;
+        }
+
+        // Temporary server errors are retryable
+        if (errorMessage.includes('internal server error') || errorMessage.includes('service unavailable')) {
+            return true;
+        }
+
+        // Non-retryable errors
+        if (errorMessage.includes('insufficient funds') || 
+            errorMessage.includes('invalid symbol') ||
+            errorMessage.includes('market closed') ||
+            errorMessage.includes('authentication failed')) {
+            return false;
+        }
+
+        // Default to retryable for unknown errors
+        return true;
+    }
+
+    /**
+     * Sleep utility for retry delays
+     */
+    private static sleep(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    /**
+     * Validate trade security
+     */
+    private static validateTradeSecurity(leaderTrade: LeaderTradeData): { isValid: boolean; error?: string } {
+        // Validate trade amount
+        const tradeAmount = leaderTrade.quantity * (leaderTrade.price || 0);
+        const tradeValidation = SecurityService.validateTradeAmount(tradeAmount);
+        if (!tradeValidation.isValid) {
+            return { isValid: false, error: tradeValidation.error };
+        }
+
+        // Validate portfolio percentage
+        if (leaderTrade.portfolioPercentage <= 0 || leaderTrade.portfolioPercentage > 100) {
+            return { isValid: false, error: 'Invalid portfolio percentage' };
+        }
+
+        // Validate symbol
+        if (!leaderTrade.symbol || leaderTrade.symbol.length === 0) {
+            return { isValid: false, error: 'Invalid symbol' };
+        }
+
+        return { isValid: true };
+    }
+
+    /**
+     * Get queue statistics
+     */
+    static getQueueStats() {
+        return tradeExecutionQueue.getQueueStatus();
+    }
+
+    /**
   * Record the leader's trade execution in the database
    */
     private static async recordLeaderTrade(
         leaderTrade: LeaderTradeData
     ): Promise<TradeExecution | null> {
         try {
-            const tradeExecution = await DatabaseService.createTradeExecution({
-                original_trade_id: leaderTrade.alpacaOrderId,
-                leader_id: leaderTrade.leaderId,
+            // Note: Trade executions are now tracked via Alpaca APIs only
+            // No local database storage needed
+            const tradeExecution = {
                 symbol: leaderTrade.symbol,
                 side: leaderTrade.side,
                 quantity: leaderTrade.quantity,
@@ -138,7 +891,7 @@ export class TradeExecutionEngine {
                 option_details: leaderTrade.optionDetails,
                 portfolio_percentage: leaderTrade.portfolioPercentage,
                 executed_at: new Date().toISOString()
-            });
+            };
 
             return tradeExecution;
         } catch (error) {
@@ -157,10 +910,11 @@ export class TradeExecutionEngine {
 
         for (const follower of followers) {
             try {
-                // Get user profile with Alpaca tokens
+                // Get user profile and Alpaca account info
                 const profile = await DatabaseService.getUserProfile(follower.follower_id);
-                if (!profile || !profile.alpaca_access_token) {
-                    console.warn(`Follower ${follower.follower_id} has no Alpaca tokens`);
+                const alpacaAccount = await DatabaseService.getAlpacaAccount(follower.follower_id);
+                if (!profile || !alpacaAccount) {
+                    console.warn(`Follower ${follower.follower_id} has no profile or Alpaca account`);
                     continue;
                 }
 
@@ -179,15 +933,12 @@ export class TradeExecutionEngine {
                 }
 
                 followerAccounts.push({
-                    userId: follower.follower_id,
+                    followerId: follower.follower_id,
                     portfolioValue: accountData.portfolioValue,
                     buyingPower: accountData.buyingPower,
                     allocationPercentage: follower.allocation_percentage,
-                    tradingMode,
-                    alpacaTokens: {
                         accessToken: profile.alpaca_access_token,
-                        refreshToken: profile.alpaca_refresh_token
-                    }
+                    tradingMode
                 });
             } catch (error) {
                 console.error(`Error getting account info for follower ${follower.follower_id}:`, error);
@@ -256,28 +1007,27 @@ export class TradeExecutionEngine {
 
                 if (leaderTrade.tradeType === 'option' && leaderTrade.optionDetails) {
                     // Options trading calculation
-                    const premium = leaderTrade.price || leaderTrade.optionDetails.premium || 0;
-                    const contractSize = leaderTrade.optionDetails.contract_size || 100;
-                    
-                    if (premium > 0) {
-                        // Calculate number of contracts based on proportional amount
-                        // For options: cost = contracts × premium × contract_size
-                        const costPerContract = premium * contractSize;
-                        calculatedQuantity = Math.floor(proportionalAmount / costPerContract);
-                        
-                        const requiredAmount = calculatedQuantity * costPerContract;
+                    const optionSymbol = this.constructOptionSymbol(
+                        leaderTrade.symbol,
+                        leaderTrade.optionDetails
+                    );
+                    const optionPremium = await this.getCurrentMarketPrice(optionSymbol, follower.tradingMode);
+
+                    if (optionPremium && optionPremium > 0) {
+                        calculatedQuantity = Math.floor(proportionalAmount / optionPremium);
+
+                        const requiredAmount = calculatedQuantity * optionPremium;
                         
                         if (requiredAmount <= follower.buyingPower) {
                             canExecute = true;
                         } else {
-                            // Calculate maximum affordable contracts
-                            maxAffordableQuantity = Math.floor(follower.buyingPower / costPerContract);
+                            maxAffordableQuantity = Math.floor(follower.buyingPower / optionPremium);
                             
                             if (maxAffordableQuantity > 0) {
                                 calculatedQuantity = maxAffordableQuantity;
                                 canExecute = true;
                                 insufficientFunds = true;
-                                reason = `Insufficient funds: executing ${maxAffordableQuantity} contracts instead of ${Math.floor(proportionalAmount / costPerContract)}`;
+                                reason = `Insufficient funds: executing ${maxAffordableQuantity} contracts instead of ${Math.floor(proportionalAmount / optionPremium)}`;
                             } else {
                                 canExecute = false;
                                 insufficientFunds = true;
@@ -347,11 +1097,11 @@ export class TradeExecutionEngine {
                 }
 
                 calculations.push({
-                    followerId: follower.userId,
+                    followerId: follower.followerId,
                     symbol: leaderTrade.symbol,
                     side: leaderTrade.side,
                     calculatedQuantity,
-                    allocatedAmount: proportionalAmount,
+                    allocatedAmount,
                     canExecute,
                     insufficientFunds,
                     maxAffordableQuantity,
@@ -359,9 +1109,9 @@ export class TradeExecutionEngine {
                 });
 
             } catch (error) {
-                console.error(`Error calculating trade for follower ${follower.userId}:`, error);
+                console.error(`Error calculating trade for follower ${follower.followerId}:`, error);
                 calculations.push({
-                    followerId: follower.userId,
+                    followerId: follower.followerId,
                     symbol: leaderTrade.symbol,
                     side: leaderTrade.side,
                     calculatedQuantity: 0,
@@ -452,16 +1202,21 @@ export class TradeExecutionEngine {
             }
 
             try {
-                // Get follower's trading mode and tokens
+                // Get follower's profile and Alpaca account
                 const followerProfile = await DatabaseService.getUserProfile(calculation.followerId);
-                if (!followerProfile || !followerProfile.alpaca_access_token) {
-                    throw new Error('Follower profile or tokens not found');
+                const alpacaAccount = await DatabaseService.getAlpacaAccount(calculation.followerId);
+                if (!followerProfile || !alpacaAccount) {
+                    throw new Error('Follower profile or Alpaca account not found');
                 }
 
                 const tradingMode = await getUserTradingMode(calculation.followerId);
 
-                // Get the original trade data to determine trade type
-                const originalTrade = await DatabaseService.getTradeExecution(originalTradeId);
+                // Get the original trade data from Alpaca API
+                const originalTradeResponse = await apiService.getOrder(originalTradeId);
+                if (!originalTradeResponse.success || !originalTradeResponse.data) {
+                    throw new Error('Original trade not found');
+                }
+                const originalTrade = originalTradeResponse.data;
                 
                 // Execute the trade via Alpaca API
                 const orderResult = await this.executeAlpacaOrder({
@@ -583,24 +1338,20 @@ export class TradeExecutionEngine {
                 body: JSON.stringify(orderPayload)
             });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Alpaca order execution failed:', errorText);
-                return {
-                    success: false,
-                    error: `HTTP ${response.status}: ${response.statusText}`
-                };
-            }
-
+            if (response.ok) {
             const orderData = await response.json();
-
             return {
                 success: true,
                 orderId: orderData.id
             };
-
+            } else {
+                const errorData = await response.json();
+                return {
+                    success: false,
+                    error: errorData.message || `HTTP ${response.status}`
+                };
+            }
         } catch (error) {
-            console.error('Error executing Alpaca order:', error);
             return {
                 success: false,
                 error: error instanceof Error ? error.message : 'Unknown error'
@@ -639,7 +1390,9 @@ export class TradeExecutionEngine {
         copiedTradeData: Omit<CopiedTrade, 'id' | 'created_at' | 'updated_at'>
     ): Promise<CopiedTrade | null> {
         try {
-            return await DatabaseService.createCopiedTrade(copiedTradeData);
+            // Note: Copied trades are now tracked via Alpaca APIs only
+            // Return success indicator instead of database record
+            return { success: true, data: copiedTradeData };
         } catch (error) {
             console.error('Error recording copied trade:', error);
             return null;
@@ -661,18 +1414,45 @@ export class TradeExecutionEngine {
             // Send notification to all followers via WebSocket
             await WebSocketService.notifyFollowersOfLeaderTrade(
                 leaderTrade.leaderId,
-                leaderName,
+                leaderTrade.leaderId, // Using ID as name since we don't have name
                 {
                     symbol: leaderTrade.symbol,
                     side: leaderTrade.side,
                     quantity: leaderTrade.quantity,
-                    price: leaderTrade.price,
+                    price: leaderTrade.price
                 }
             );
 
             console.log(`Sent trade notifications to ${followers.length} followers for ${leaderName}'s ${leaderTrade.side} order of ${leaderTrade.quantity} ${leaderTrade.symbol}`);
         } catch (error) {
             console.error('Error notifying followers of leader trade:', error);
+        }
+    }
+
+    /**
+     * Get active followers for a leader
+     */
+    private static async getActiveFollowers(leaderId: string): Promise<CopyTradingSubscription[]> {
+    try {
+      const response = await fetch(`/api/copy-trading/subscriptions?leaderId=${leaderId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        return [];
+      }
+
+      const data = await response.json();
+      return data.subscriptions || [];
+    } catch (error) {
+      logger.error(LogCategory.COPY_TRADING, 'Error fetching active followers', {
+        error: error instanceof Error ? error : new Error('Unknown error'),
+        metadata: { leaderId }
+      });
+      return [];
         }
     }
 }

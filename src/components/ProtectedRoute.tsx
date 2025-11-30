@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { checkAuthStatus, handleAuthStateChange } from '@/lib/auth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -14,36 +16,58 @@ export default function ProtectedRoute({ children, fallback }: ProtectedRoutePro
     // Set mounted flag to prevent hydration issues
     setIsMounted(true);
     
-    const checkAuth = () => {
+    // Initialize auth state change handler
+    handleAuthStateChange();
+    
+    const checkAuth = async () => {
       try {
         // Only check auth status on client-side
         if (typeof window === 'undefined') {
           return false;
         }
         
-        // Check for auth tokens in localStorage
-        const hasAccessToken = localStorage.getItem('sb-access-token');
-        const hasRefreshToken = localStorage.getItem('sb-refresh-token');
+        // Check Supabase session first
+        const { data: { session }, error } = await supabase.auth.getSession();
         
-        return hasAccessToken && hasRefreshToken;
+        if (error) {
+          console.error('Session check error:', error);
+          return false;
+        }
+        
+        if (session) {
+          console.log('Found valid Supabase session');
+          // Store tokens if we have a valid session
+          localStorage.setItem('sb-access-token', session.access_token);
+          localStorage.setItem('sb-refresh-token', session.refresh_token);
+          localStorage.setItem('sb-token-expires-at', session.expires_at?.toString() || '');
+          return true;
+        }
+        
+        // Fallback to checking stored tokens
+        const tokenAuth = checkAuthStatus();
+        console.log('Token auth check:', tokenAuth);
+        return tokenAuth;
       } catch (error) {
         console.error('Auth check error:', error);
         return false;
       }
     };
 
-    const isAuth = checkAuth();
-    setIsAuthenticated(isAuth);
-    
-    if (!isAuth && typeof window !== 'undefined') {
-      // Redirect to signin page with return URL
-      const currentPath = window.location.pathname + window.location.search;
-      const returnUrl = encodeURIComponent(currentPath);
-      window.location.href = `/signin?returnUrl=${returnUrl}`;
-      return;
-    }
-    
-    setIsLoading(false);
+    checkAuth().then((isAuth) => {
+      console.log('ProtectedRoute auth check result:', isAuth);
+      setIsAuthenticated(isAuth);
+      
+      if (!isAuth && typeof window !== 'undefined') {
+        console.log('User not authenticated, redirecting to signin');
+        // Redirect to signin page with return URL
+        const currentPath = window.location.pathname + window.location.search;
+        const returnUrl = encodeURIComponent(currentPath);
+        window.location.href = `/signin?returnUrl=${returnUrl}`;
+        return;
+      }
+      
+      setIsLoading(false);
+    });
   }, []);
 
   // Prevent hydration mismatch by not rendering until mounted

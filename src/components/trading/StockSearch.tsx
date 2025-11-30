@@ -23,40 +23,7 @@ export default function StockSearch({ onSelectStock }: StockSearchProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(false);
-  const [popularStocks] = useState<StockData[]>([
-    {
-      symbol: 'AAPL',
-      name: 'Apple Inc.',
-      price: 185.50,
-      change: 2.30,
-      changePercent: 1.26,
-      volume: 45678900
-    },
-    {
-      symbol: 'TSLA',
-      name: 'Tesla, Inc.',
-      price: 240.80,
-      change: -5.20,
-      changePercent: -2.12,
-      volume: 23456789
-    },
-    {
-      symbol: 'MSFT',
-      name: 'Microsoft Corporation',
-      price: 378.90,
-      change: 4.50,
-      changePercent: 1.20,
-      volume: 12345678
-    },
-    {
-      symbol: 'GOOGL',
-      name: 'Alphabet Inc.',
-      price: 142.30,
-      change: 1.80,
-      changePercent: 1.28,
-      volume: 8765432
-    }
-  ]);
+  const [popularStocks, setPopularStocks] = useState<StockData[]>([]);
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) return;
@@ -98,21 +65,11 @@ export default function StockSearch({ onSelectStock }: StockSearchProps) {
         });
         setSearchResults(transformedResults);
       } else {
-        // Fallback to filtered popular stocks
-        const filtered = popularStocks.filter(stock => 
-          stock.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          stock.name.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        setSearchResults(filtered);
+        setSearchResults([]);
       }
     } catch (error) {
       console.error('Search error:', error);
-      // Fallback to filtered popular stocks
-      const filtered = popularStocks.filter(stock => 
-        stock.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        stock.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setSearchResults(filtered);
+      setSearchResults([]);
     } finally {
       setLoading(false);
     }
@@ -194,15 +151,17 @@ export default function StockSearch({ onSelectStock }: StockSearchProps) {
         </div>
       )}
 
-      {/* Popular Stocks */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Popular Stocks</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {popularStocks.map((stock) => (
-            <StockCard key={stock.symbol} stock={stock} />
-          ))}
+      {/* Popular Stocks - Load from API */}
+      {popularStocks.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Popular Stocks</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {popularStocks.map((stock) => (
+              <StockCard key={stock.symbol} stock={stock} />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

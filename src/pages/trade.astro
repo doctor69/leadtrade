@@ -1,16 +1,32 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import AppShell from "@/components/AppShell";
 import TradingInterface from "@/components/trading/TradingInterface";
 import ProtectedRoute from "@/components/ProtectedRoute";
+
+// Social media metadata for trade page
+const pageTitle = "Advanced Trading Interface - LEADTRADE";
+const pageDescription = "Execute trades with our advanced trading interface. Access real-time market data, place orders, and manage your positions with professional trading tools.";
+const pageImage = "/social/trade-thumbnail.svg";
+const pageKeywords = "stock trading, options trading, trading interface, market orders, real-time quotes, trading platform, buy sell stocks";
 ---
 
-<Layout>
-    <ProtectedRoute client:load>
-        <div class="space-y-6">
-            <div class="flex items-center justify-between">
-                <h1 class="text-3xl font-bold">LEADTRADE Trading</h1>
+<Layout 
+    title={pageTitle}
+    description={pageDescription}
+    image={pageImage}
+    keywords={pageKeywords}
+    type="website"
+
+>
+    <AppShell client:only="react">
+        <ProtectedRoute client:load>
+            <div class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-3xl font-bold">LEADTRADE Trading</h1>
+                </div>
+                <TradingInterface client:load />
             </div>
-            <TradingInterface client:load />
-        </div>
-    </ProtectedRoute>
+        </ProtectedRoute>
+    </AppShell>
 </Layout>

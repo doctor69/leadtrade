@@ -1,0 +1,50 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="defaultBgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="defaultLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#defaultBgGradient)"/>
+  
+  <!-- Main Logo -->
+  <text x="600" y="280" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="url(#defaultLogoGradient)" text-anchor="middle">LeadTrade</text>
+  
+  <!-- Tagline -->
+  <text x="600" y="330" font-family="Arial, sans-serif" font-size="24" fill="#94a3b8" text-anchor="middle">Advanced Paper &amp; Live Trading Platform</text>
+  
+  <!-- Feature highlights -->
+  <text x="600" y="380" font-family="Arial, sans-serif" font-size="18" fill="#e2e8f0" text-anchor="middle">Copy Trading • Real-time Data • Social Leaderboards</text>
+  
+  <!-- Decorative elements -->
+  <circle cx="300" cy="200" r="80" fill="none" stroke="#10b981" stroke-width="3" opacity="0.3"/>
+  <circle cx="900" cy="450" r="60" fill="none" stroke="#10b981" stroke-width="3" opacity="0.2"/>
+  <circle cx="200" cy="500" r="40" fill="none" stroke="#10b981" stroke-width="3" opacity="0.1"/>
+  <circle cx="1000" cy="150" r="50" fill="none" stroke="#10b981" stroke-width="3" opacity="0.15"/>
+  
+  <!-- Trading chart representation -->
+  <polyline points="150,400 200,390 250,380 300,370 350,360 400,350 450,340 500,330" 
+            stroke="#10b981" stroke-width="4" fill="none" opacity="0.6"/>
+  
+  <polyline points="750,300 800,310 850,320 900,330 950,340 1000,350 1050,360" 
+            stroke="#10b981" stroke-width="4" fill="none" opacity="0.6"/>
+  
+  <!-- Stats boxes -->
+  <rect x="100" y="100" width="150" height="80" rx="8" fill="#334155" fill-opacity="0.6" stroke="#10b981" stroke-width="1"/>
+  <text x="175" y="125" font-family="Arial, sans-serif" font-size="14" fill="#94a3b8" text-anchor="middle">Active Traders</text>
+  <text x="175" y="150" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#10b981" text-anchor="middle">1,247</text>
+  
+  <rect x="950" y="100" width="150" height="80" rx="8" fill="#334155" fill-opacity="0.6" stroke="#10b981" stroke-width="1"/>
+  <text x="1025" y="125" font-family="Arial, sans-serif" font-size="14" fill="#94a3b8" text-anchor="middle">Volume Traded</text>
+  <text x="1025" y="150" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#10b981" text-anchor="middle">$2.4M</text>
+  
+  <!-- Bottom accent -->
+  <rect x="0" y="600" width="1200" height="30" fill="url(#defaultLogoGradient)" opacity="0.3"/>
+</svg>

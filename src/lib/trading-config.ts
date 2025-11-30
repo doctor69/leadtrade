@@ -21,21 +21,21 @@ export interface TradingModeConfig {
 // Trading mode configuration object
 export const tradingModeConfig: TradingModeConfig = {
   paper: {
-    brokerApiKey: env.PUBLIC_ALPACA_PAPER_BROKER_API_KEY,
-    brokerApiSecret: env.PUBLIC_ALPACA_PAPER_BROKER_API_SECRET,
-    brokerBaseUrl: env.PUBLIC_ALPACA_PAPER_BROKER_BASE_URL,
-    dataApiKey: env.PUBLIC_ALPACA_PAPER_DATA_API_KEY,
-    dataApiSecret: env.PUBLIC_ALPACA_PAPER_DATA_API_SECRET,
-    dataBaseUrl: env.PUBLIC_ALPACA_PAPER_DATA_BASE_URL,
+    brokerApiKey: env.PUBLIC_ALPACA_PAPER_API_KEY,
+    brokerApiSecret: env.PUBLIC_ALPACA_PAPER_API_SECRET,
+    brokerBaseUrl: env.PUBLIC_ALPACA_PAPER_BASE_URL,
+    dataApiKey: env.PUBLIC_ALPACA_DATA_API_KEY,
+    dataApiSecret: env.PUBLIC_ALPACA_DATA_API_SECRET,
+    dataBaseUrl: env.PUBLIC_ALPACA_DATA_BASE_URL,
     wsUrl: env.PUBLIC_ALPACA_PAPER_WS_URL,
   },
   live: {
-    brokerApiKey: env.PUBLIC_ALPACA_LIVE_BROKER_API_KEY,
-    brokerApiSecret: env.PUBLIC_ALPACA_LIVE_BROKER_API_SECRET,
-    brokerBaseUrl: env.PUBLIC_ALPACA_LIVE_BROKER_BASE_URL,
-    dataApiKey: env.PUBLIC_ALPACA_LIVE_DATA_API_KEY,
-    dataApiSecret: env.PUBLIC_ALPACA_LIVE_DATA_API_SECRET,
-    dataBaseUrl: env.PUBLIC_ALPACA_LIVE_DATA_BASE_URL,
+    brokerApiKey: env.PUBLIC_ALPACA_LIVE_API_KEY,
+    brokerApiSecret: env.PUBLIC_ALPACA_LIVE_API_SECRET,
+    brokerBaseUrl: env.PUBLIC_ALPACA_LIVE_BASE_URL,
+    dataApiKey: env.PUBLIC_ALPACA_DATA_API_KEY,
+    dataApiSecret: env.PUBLIC_ALPACA_DATA_API_SECRET,
+    dataBaseUrl: env.PUBLIC_ALPACA_DATA_BASE_URL,
     wsUrl: env.PUBLIC_ALPACA_LIVE_WS_URL,
   },
 };
@@ -157,62 +157,35 @@ export function validateAllTradingModes(): {
 }
 
 /**
- * Get user's trading mode from their profile
- * @param userId - User ID to fetch trading mode for
- * @returns Promise resolving to the user's trading mode
+ * Get app-level trading mode (not user-specific)
+ * All users use the same trading mode set at the app level
+ * @returns Promise resolving to the app's trading mode
  */
-export async function getUserTradingMode(userId: string): Promise<TradingMode> {
+export async function getAppTradingMode(): Promise<TradingMode> {
   try {
-    // Import supabase here to avoid circular dependencies
-    const { supabase } = await import('./supabase');
-    
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('is_paper_trading')
-      .eq('id', userId)
-      .single();
-
-    if (error) {
-      console.warn('Failed to fetch user trading mode, defaulting to paper:', error);
-      return 'paper';
-    }
-
-    return data?.is_paper_trading !== false ? 'paper' : 'live';
+    // Import app settings to avoid circular dependencies
+    const { getAppTradingMode } = await import('./app-settings');
+    return await getAppTradingMode();
   } catch (error) {
-    console.warn('Error fetching user trading mode, defaulting to paper:', error);
+    console.warn('Error fetching app trading mode, defaulting to paper:', error);
     return 'paper';
   }
 }
 
 /**
- * Get current authenticated user's trading mode
- * @returns Promise resolving to the current user's trading mode
+ * Get current trading mode (app-level, not user-specific)
+ * @returns Promise resolving to the app's trading mode
  */
-export async function getCurrentUserTradingMode(): Promise<TradingMode> {
-  try {
-    const { supabase } = await import('./supabase');
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      console.warn('No authenticated user found, defaulting to paper trading');
-      return 'paper';
-    }
-
-    return getUserTradingMode(user.id);
-  } catch (error) {
-    console.warn('Error fetching current user trading mode, defaulting to paper:', error);
-    return 'paper';
-  }
+export async function getCurrentTradingMode(): Promise<TradingMode> {
+  return await getAppTradingMode();
 }
 
 /**
- * Update user's trading mode in the database
- * @param userId - User ID to update
- * @param mode - New trading mode to set
+ * Update app-level trading mode (admin only)
+ * @param mode - New trading mode to set for the entire app
  * @returns Promise resolving to success status
  */
-export async function updateUserTradingMode(userId: string, mode: TradingMode): Promise<{
+export async function updateAppTradingMode(mode: TradingMode): Promise<{
   success: boolean;
   error?: string;
 }> {
@@ -226,27 +199,9 @@ export async function updateUserTradingMode(userId: string, mode: TradingMode): 
       };
     }
 
-    // Import supabase here to avoid circular dependencies
-    const { supabase } = await import('./supabase');
-    
-    const isPaperTrading = mode === 'paper';
-
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ 
-        is_paper_trading: isPaperTrading,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', userId);
-
-    if (updateError) {
-      return {
-        success: false,
-        error: `Failed to update trading mode: ${updateError.message}`,
-      };
-    }
-
-    return { success: true };
+    // Import app settings to avoid circular dependencies
+    const { updateAppTradingMode } = await import('./app-settings');
+    return await updateAppTradingMode(mode);
   } catch (error) {
     return {
       success: false,

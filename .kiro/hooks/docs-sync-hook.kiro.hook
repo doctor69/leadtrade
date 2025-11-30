@@ -1,7 +1,7 @@
 {
   "enabled": true,
   "name": "Documentation Sync",
-  "description": "Listens to TypeScript source files, Astro components, configuration files, and other relevant project files. When changes are detected, automatically updates the README.md with current project information and structure.",
+  "description": "Listens to TypeScript source files, Astro components, configuration files, and other relevant project files. When changes are detected, automatically updates the README.md with current project information and structure. ",
   "version": "1",
   "when": {
     "type": "fileEdited",
@@ -20,6 +20,6 @@
   },
   "then": {
     "type": "askAgent",
-    "prompt": "Source code files have been modified in this Astro/TypeScript project. Please analyze the changes and update the README.md file to reflect the current project structure, features, components, and API endpoints. Focus on documenting new components, trading features, API routes, and any architectural changes. Ensure the documentation accurately represents the current state of the codebase."
+    "prompt": "Source code files have been modified in this Astro/TypeScript project. Please analyze the changes and update the README.md file to reflect the current project structure, features, components, and API endpoints. Focus on documenting new components, trading features, API routes, and any architectural changes. Ensure the documentation accurately represents the current state of the codebase. When updating this from tasks.md add green checkmark emoji to each line in that file."
   }
 }

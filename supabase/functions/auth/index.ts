@@ -1,18 +1,23 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
-
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+import { 
+  processRequest, 
+  createSuccessResponse, 
+  createErrorResponse,
+  corsHeaders
+} from '../_shared/index.ts'
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // Handle CORS
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return handleCors(req)
   }
 
   try {
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    )
     const url = new URL(req.url)
     const action = url.pathname.split('/').pop()
 
@@ -25,99 +30,50 @@ serve(async (req) => {
       })
 
       if (error) {
-        return new Response(
-          JSON.stringify({ 
-            error: 'Authentication failed',
-            message: error.message 
-          }),
-          { 
-            status: 401,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        )
+        return createErrorResponse(`Authentication failed: ${error.message}`, 401)
       }
 
       if (!data.session) {
-        return new Response(
-          JSON.stringify({ 
-            error: 'No session created' 
-          }),
-          { 
-            status: 401,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        )
+        return createErrorResponse('No session created', 401)
       }
 
-      return new Response(
-        JSON.stringify({
-          success: true,
-          session: data.session,
-          returnUrl: returnUrl || '/dashboard'
-        }),
-        { 
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
+      return createSuccessResponse({
+        success: true,
+        session: data.session,
+        returnUrl: returnUrl || '/dashboard'
+      })
     }
 
     if (req.method === 'POST' && action === 'signout') {
       const authHeader = req.headers.get('Authorization')
       if (!authHeader) {
-        return new Response(
-          JSON.stringify({ error: 'No authorization header' }),
-          { 
-            status: 401,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        )
+        return createErrorResponse('No authorization header', 401)
       }
 
-      const token = authHeader.replace('Bearer ', '')
-      const supabaseWithAuth = createClient(supabaseUrl, supabaseAnonKey, {
-        global: { headers: { Authorization: authHeader } }
-      })
+      const supabaseWithAuth = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        {
+          global: { headers: { Authorization: authHeader } }
+        }
+      )
 
       const { error } = await supabaseWithAuth.auth.signOut()
 
       if (error) {
-        return new Response(
-          JSON.stringify({ error: error.message }),
-          { 
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        )
+        return createErrorResponse(error.message, 400)
       }
 
-      return new Response(
-        JSON.stringify({ success: true }),
-        { 
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
+      return createSuccessResponse({ success: true })
     }
 
-    return new Response(
-      JSON.stringify({ error: 'Method not allowed' }),
-      { 
-        status: 405,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    )
+    return createErrorResponse('Method not allowed', 405)
 
   } catch (error) {
-    return new Response(
-      JSON.stringify({ 
-        error: 'Internal server error',
-        message: error.message 
-      }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+    console.error('Auth function error:', error)
+    return createErrorResponse(
+      error instanceof Error ? error.message : 'Internal server error',
+      500
     )
   }
 })
