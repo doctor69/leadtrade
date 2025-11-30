@@ -3,16 +3,16 @@
 
 -- Insert test user profiles (these would normally be created via auth.users)
 -- Note: In production, these would be created through Supabase Auth
-INSERT INTO public.profiles (id, username, full_name, is_paper_trading, share_trades, show_asset_amounts, theme_color) VALUES
-  ('11111111-1111-1111-1111-111111111111', 'trader_alice', 'Alice Johnson', true, true, true, '#ef4444'),
-  ('22222222-2222-2222-2222-222222222222', 'trader_bob', 'Bob Smith', true, true, false, '#3b82f6'),
-  ('33333333-3333-3333-3333-333333333333', 'trader_charlie', 'Charlie Brown', true, true, true, '#10b981'),
-  ('44444444-4444-4444-4444-444444444444', 'follower_dave', 'Dave Wilson', true, false, false, '#f59e0b'),
-  ('55555555-5555-5555-5555-555555555555', 'follower_eve', 'Eve Davis', true, false, false, '#8b5cf6')
+INSERT INTO public.profiles (id, username, full_name, trading_mode, share_trades, show_asset_amounts, theme_color) VALUES
+  ('11111111-1111-1111-1111-111111111111', 'trader_alice', 'Alice Johnson', 'paper', true, true, '#ef4444'),
+  ('22222222-2222-2222-2222-222222222222', 'trader_bob', 'Bob Smith', 'paper', true, false, '#3b82f6'),
+  ('33333333-3333-3333-3333-333333333333', 'trader_charlie', 'Charlie Brown', 'paper', true, true, '#10b981'),
+  ('44444444-4444-4444-4444-444444444444', 'follower_dave', 'Dave Wilson', 'paper', false, false, '#f59e0b'),
+  ('55555555-5555-5555-5555-555555555555', 'follower_eve', 'Eve Davis', 'paper', false, false, '#8b5cf6')
 ON CONFLICT (id) DO UPDATE SET
   username = EXCLUDED.username,
   full_name = EXCLUDED.full_name,
-  is_paper_trading = EXCLUDED.is_paper_trading,
+  trading_mode = EXCLUDED.trading_mode,
   share_trades = EXCLUDED.share_trades,
   show_asset_amounts = EXCLUDED.show_asset_amounts,
   theme_color = EXCLUDED.theme_color;

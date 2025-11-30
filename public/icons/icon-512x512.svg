@@ -1,0 +1,27 @@
+
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="246" fill="url(#gradient)" stroke="#3b82f6" stroke-width="8"/>
+  
+  <!-- Gradient definition -->
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Chart bars representing trading -->
+  <rect x="179.2" y="204.8" width="20.48" height="81.92" fill="white" rx="2"/>
+  <rect x="209.92" y="163.84" width="20.48" height="122.88" fill="white" rx="2"/>
+  <rect x="240.64" y="143.36" width="20.48" height="143.36" fill="white" rx="2"/>
+  <rect x="271.36" y="184.32" width="20.48" height="102.4" fill="white" rx="2"/>
+  <rect x="302.08" y="122.88" width="20.48" height="163.84" fill="white" rx="2"/>
+  
+  <!-- Trending up arrow -->
+  <path d="M 158.72 327.68 L 199.68 286.72 L 220.16 307.2 L 261.12 266.24 L 281.6 286.72 L 322.56 245.76" 
+        stroke="white" stroke-width="6.023529411764706" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  
+  <!-- LEADTRADE text (only for larger icons) -->
+  <text x="256" y="389.12" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="24.38095238095238" font-weight="bold">LEADTRADE</text>
+</svg>

@@ -144,7 +144,7 @@ export default function Leaderboard() {
         <div className="flex flex-wrap gap-2">
           {(['daily', 'weekly', 'monthly', 'all'] as const).map((period) => (
             <Button
-              key={period}
+              key={`timeframe-${period}`}
               variant={timeframe === period ? 'default' : 'outline'}
               size="sm"
               onClick={() => setTimeframe(period)}
@@ -155,20 +155,20 @@ export default function Leaderboard() {
         </div>
 
         {/* Search and Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
+        <div className="flex flex-col gap-3 sm:gap-4">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search traders..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 min-h-[44px]"
             />
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-full sm:w-[140px] min-h-[44px]">
                 <BarChart3 className="h-4 w-4 mr-2" />
                 <SelectValue />
               </SelectTrigger>
@@ -181,7 +181,7 @@ export default function Leaderboard() {
             </Select>
 
             <Select value={filterBy} onValueChange={(value: FilterOption) => setFilterBy(value)}>
-              <SelectTrigger className="w-[130px]">
+              <SelectTrigger className="w-full sm:w-[130px] min-h-[44px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue />
               </SelectTrigger>
@@ -198,57 +198,54 @@ export default function Leaderboard() {
 
       {/* Top 3 Podium */}
       {filteredData.length >= 3 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredData.slice(0, 3).map((trader) => (
             <Card 
               key={trader.id} 
-              className={`cursor-pointer transition-all hover:shadow-lg ${
+              className={`cursor-pointer transition-all hover:shadow-lg active:scale-95 ${
                 trader.rank === 1 ? 'ring-2 ring-yellow-500' : ''
               }`}
               onClick={() => setSelectedTrader(trader)}
             >
-              <CardContent className="p-6 text-center">
-                <div className="flex justify-center mb-4">
+              <CardContent className="p-4 sm:p-6 text-center">
+                <div className="flex justify-center mb-3 sm:mb-4">
                   {getRankIcon(trader.rank)}
                 </div>
                 
-                <Avatar className="h-16 w-16 mx-auto mb-4">
-                  <AvatarFallback className="text-lg font-bold">
+                <Avatar className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-3 sm:mb-4">
+                  <AvatarFallback className="text-sm sm:text-lg font-bold">
                     {getInitials(trader.username)}
                   </AvatarFallback>
                 </Avatar>
                 
-                <h3 className="font-semibold text-lg mb-2">{trader.username}</h3>
+                <h3 className="font-semibold text-base sm:text-lg mb-2 truncate">{trader.username}</h3>
                 
                 <div className="space-y-2">
-                  <div className="flex items-center justify-center space-x-2">
+                  <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                     {trader.totalReturn >= 0 ? (
-                      <TrendingUp className="h-4 w-4 text-green-500" />
+                      <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 flex-shrink-0" />
                     ) : (
-                      <TrendingDown className="h-4 w-4 text-red-500" />
+                      <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4 text-red-500 flex-shrink-0" />
                     )}
-                    <Badge variant={trader.totalReturn >= 0 ? "default" : "destructive"}>
+                    <Badge variant={trader.totalReturn >= 0 ? "default" : "destructive"} className="text-xs">
                       {trader.totalReturn >= 0 ? '+' : ''}${trader.totalReturn.toLocaleString()} ({trader.totalReturnPercent.toFixed(1)}%)
                     </Badge>
                   </div>
                   
-                  {trader.showAssetAmounts && (
-                    <div className="text-sm text-muted-foreground">
-                      Portfolio: ${trader.portfolioValue.toLocaleString()}
-                    </div>
-                  )}
-                  {!trader.showAssetAmounts && (
-                    <div className="text-sm text-muted-foreground">
-                      Portfolio: Hidden
-                    </div>
-                  )}
+                  <div className="text-xs sm:text-sm text-muted-foreground">
+                    {trader.showAssetAmounts ? (
+                      `Portfolio: $${trader.portfolioValue.toLocaleString()}`
+                    ) : (
+                      'Portfolio: Hidden'
+                    )}
+                  </div>
                   
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-xs sm:text-sm text-muted-foreground">
                     Win Rate: {trader.winRate.toFixed(1)}%
                   </div>
 
-                  <Button size="sm" className="mt-2">
-                    <Eye className="h-4 w-4 mr-2" />
+                  <Button size="sm" className="mt-2 min-h-[36px] text-xs">
+                    <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                     View Profile
                   </Button>
                 </div>
@@ -288,37 +285,37 @@ export default function Leaderboard() {
               {filteredData.map((trader) => (
                 <div 
                   key={trader.id} 
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                  className="flex items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-muted/50 active:bg-muted/70 transition-colors cursor-pointer min-h-[60px]"
                   onClick={() => setSelectedTrader(trader)}
                 >
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center justify-center w-8">
+                  <div className="flex items-center space-x-2 sm:space-x-4 flex-1 min-w-0">
+                    <div className="flex items-center justify-center w-6 sm:w-8 flex-shrink-0">
                       {trader.rank <= 3 ? getRankIcon(trader.rank) : (
-                        <span className="text-sm font-bold text-muted-foreground">#{trader.rank}</span>
+                        <span className="text-xs sm:text-sm font-bold text-muted-foreground">#{trader.rank}</span>
                       )}
                     </div>
                     
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback>{getInitials(trader.username)}</AvatarFallback>
+                    <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
+                      <AvatarFallback className="text-xs sm:text-sm">{getInitials(trader.username)}</AvatarFallback>
                     </Avatar>
                     
-                    <div className="flex-1">
-                      <h4 className="font-semibold">{trader.username}</h4>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-sm sm:text-base truncate">{trader.username}</h4>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         {trader.tradesCount} trades • {trader.winRate.toFixed(1)}% win rate
                       </p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
                     <div className="text-right">
-                      <div className="flex items-center space-x-2 mb-1">
+                      <div className="flex items-center space-x-1 sm:space-x-2 mb-1">
                         {trader.totalReturn >= 0 ? (
-                          <TrendingUp className="h-4 w-4 text-green-500" />
+                          <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
                         ) : (
-                          <TrendingDown className="h-4 w-4 text-red-500" />
+                          <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
                         )}
-                        <Badge variant={trader.totalReturn >= 0 ? "default" : "destructive"}>
+                        <Badge variant={trader.totalReturn >= 0 ? "default" : "destructive"} className="text-xs">
                           {trader.totalReturn >= 0 ? '+' : ''}${trader.totalReturn.toLocaleString()}
                         </Badge>
                       </div>
@@ -327,9 +324,9 @@ export default function Leaderboard() {
                       </div>
                     </div>
                     
-                    <Button size="sm" variant="outline">
-                      <Eye className="h-4 w-4 mr-2" />
-                      View
+                    <Button size="sm" variant="outline" className="min-h-[36px] text-xs">
+                      <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">View</span>
                     </Button>
                   </div>
                 </div>

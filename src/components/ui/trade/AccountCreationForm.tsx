@@ -3,36 +3,51 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
+
 import { Checkbox } from '@/components/ui/checkbox';
 import { createClient } from '@supabase/supabase-js';
-import { createAlpacaAccount, type AlpacaAccountData } from '@/lib/alpaca-account';
-import { encryptToken, hashUserData } from '@/lib/encryption';
+import { createUserAccount, type SignupData } from '@/lib/signup-service';
+import SupabaseSignUpForm from '@/components/SupabaseSignUpForm';
 
 interface AccountCreationFormProps {
   returnUrl?: string;
 }
 
-export default function AccountCreationForm({ returnUrl = '/dashboard' }: AccountCreationFormProps) {
+export default function AccountCreationForm({ returnUrl }: AccountCreationFormProps) {
+  // Always use Supabase form for production
+  return <SupabaseSignUpForm returnUrl={returnUrl} />;
+
+  // Get return URL from query params or use default
+  const getReturnUrl = () => {
+    if (returnUrl) return returnUrl;
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('returnUrl') || '/dashboard';
+    }
+    return '/dashboard';
+  };
+
+  const finalReturnUrl = getReturnUrl();
+
   const [formData, setFormData] = useState({
     // Auth fields
     email: '',
     password: '',
-    
+
     // Personal information
     given_name: '',
     family_name: '',
     date_of_birth: '',
     tax_id: '',
     tax_id_type: 'USA_SSN',
-    
+
     // Contact information
     phone_number: '',
     street_address: [''],
     city: '',
     state: '',
     postal_code: '',
-    
+
     // Financial information
     annual_income_min: '25000',
     annual_income_max: '50000',
@@ -40,12 +55,12 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
     total_net_worth_max: '50000',
     liquid_net_worth_min: '10000',
     liquid_net_worth_max: '25000',
-    
+
     // Investment profile
     investment_experience_with_stocks: 'limited',
     investment_objective: 'growth',
     risk_tolerance: 'moderate',
-    
+
     // Privacy controls
     share_trades: false,
     show_asset_amounts: false,
@@ -79,7 +94,7 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}${returnUrl}`,
+          redirectTo: `${window.location.origin}${finalReturnUrl}`,
         },
       });
 
@@ -97,56 +112,21 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
     setLoading(true);
     setError('');
 
-    let supabaseUserId: string | null = null;
-
     try {
-      // Step 1: Create Supabase user account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Use the new transactional signup service
+      const signupData: SignupData = {
         email: formData.email,
         password: formData.password,
-        options: {
-          data: {
-            full_name: `${formData.given_name} ${formData.family_name}`,
-            given_name: formData.given_name,
-            family_name: formData.family_name,
-            date_of_birth: formData.date_of_birth,
-            phone_number: formData.phone_number,
-            city: formData.city,
-            state: formData.state,
-            postal_code: formData.postal_code,
-            investment_experience: formData.investment_experience_with_stocks,
-            investment_objective: formData.investment_objective,
-            risk_tolerance: formData.risk_tolerance,
-            share_trades: formData.share_trades,
-            show_asset_amounts: formData.show_asset_amounts,
-          }
-        }
-      });
-
-      if (authError) {
-        throw new Error(authError.message || 'Failed to create account');
-      }
-
-      if (!authData.user) {
-        throw new Error('Failed to create user account');
-      }
-
-      supabaseUserId = authData.user.id;
-
-      // Step 2: Create Alpaca account
-      const alpacaAccountData: AlpacaAccountData = {
         given_name: formData.given_name,
         family_name: formData.family_name,
         date_of_birth: formData.date_of_birth,
         tax_id: formData.tax_id,
         tax_id_type: formData.tax_id_type,
         phone_number: formData.phone_number,
-        email_address: formData.email,
         street_address: formData.street_address,
         city: formData.city,
         state: formData.state,
         postal_code: formData.postal_code,
-        country: 'USA',
         annual_income_min: formData.annual_income_min,
         annual_income_max: formData.annual_income_max,
         total_net_worth_min: formData.total_net_worth_min,
@@ -156,87 +136,24 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
         investment_experience_with_stocks: formData.investment_experience_with_stocks,
         investment_objective: formData.investment_objective,
         risk_tolerance: formData.risk_tolerance,
+        share_trades: formData.share_trades,
+        show_asset_amounts: formData.show_asset_amounts,
       };
 
-      const alpacaResult = await createAlpacaAccount(alpacaAccountData, 'paper');
+      const result = await createUserAccount(signupData, 'paper');
 
-      if (!alpacaResult.success) {
-        throw new Error(`Alpaca account creation failed: ${alpacaResult.error}`);
+      if (!result.success) {
+        throw new Error(result.error || 'Account creation failed');
       }
 
-      // Step 3: Store encrypted Alpaca credentials in user profile
-      if (alpacaResult.account && alpacaResult.accountId) {
-        // Create encryption key from user data
-        const encryptionKey = await hashUserData(formData.email + formData.password);
-        
-        // For now, we'll store placeholder tokens since Alpaca Broker API doesn't return API keys
-        // In production, you'd get these from the Alpaca account creation response
-        const placeholderAccessToken = `alpaca_access_${alpacaResult.accountId}`;
-        const placeholderRefreshToken = `alpaca_refresh_${alpacaResult.accountId}`;
-        
-        const encryptedAccessToken = await encryptToken(placeholderAccessToken, encryptionKey);
-        const encryptedRefreshToken = await encryptToken(placeholderRefreshToken, encryptionKey);
-
-        // Update user profile with Alpaca account info and privacy settings
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            alpaca_access_token: encryptedAccessToken,
-            alpaca_refresh_token: encryptedRefreshToken,
-            is_paper_trading: true,
-            share_trades: formData.share_trades,
-            show_asset_amounts: formData.show_asset_amounts,
-          })
-          .eq('id', supabaseUserId);
-
-        if (profileError) {
-          console.error('Failed to update profile:', profileError);
-          // Don't fail the entire process for profile update errors
-        }
-
-        // Store additional user details
-        const { error: detailsError } = await supabase
-          .from('user_details')
-          .insert({
-            user_id: supabaseUserId,
-            email: formData.email,
-            password_hash: await hashUserData(formData.password), // Store hashed password
-            given_name: formData.given_name,
-            family_name: formData.family_name,
-            date_of_birth: formData.date_of_birth,
-            tax_id: formData.tax_id, // Note: In production, this should also be encrypted
-            tax_id_type: formData.tax_id_type,
-            phone_number: formData.phone_number,
-            street_address: formData.street_address,
-            city: formData.city,
-            state: formData.state,
-            postal_code: formData.postal_code,
-            investment_experience_with_stocks: formData.investment_experience_with_stocks,
-            investment_objective: formData.investment_objective,
-            risk_tolerance: formData.risk_tolerance,
-          });
-
-        if (detailsError) {
-          console.error('Failed to store user details:', detailsError);
-        }
-
-        // Store Alpaca account info
-        const { error: alpacaError } = await supabase
-          .from('alpaca_accounts')
-          .insert({
-            user_id: supabaseUserId,
-            alpaca_account_id: alpacaResult.accountId,
-            alpaca_account_number: alpacaResult.account.account_number,
-            alpaca_account_status: alpacaResult.account.status,
-            account_type: 'paper',
-          });
-
-        if (alpacaError) {
-          console.error('Failed to store Alpaca account info:', alpacaError);
-        }
-      }
+      console.log('Account created successfully:', {
+        userId: result.userId,
+        alpacaAccountId: result.alpacaAccountId,
+        needsEmailVerification: result.needsEmailVerification
+      });
 
       setSuccess(true);
+      
       // Redirect to leaderboard as specified in requirements
       setTimeout(() => {
         window.location.href = '/leaderboard';
@@ -244,36 +161,6 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
 
     } catch (err) {
       console.error('Account creation error:', err);
-      
-      // Rollback mechanism: Delete Supabase user if Alpaca account creation failed
-      if (supabaseUserId && err instanceof Error && err.message.includes('Alpaca')) {
-        try {
-          console.log('Attempting to rollback Supabase user creation...');
-          
-          // Call rollback Edge Function
-          const rollbackResponse = await fetch('/api/rollback-user', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              userId: supabaseUserId,
-              reason: 'Alpaca account creation failed',
-            }),
-          });
-
-          if (!rollbackResponse.ok) {
-            throw new Error('Rollback request failed');
-          }
-
-          console.log('User rollback completed successfully');
-        } catch (rollbackError) {
-          console.error('Rollback failed:', rollbackError);
-          setError('Account creation failed and rollback unsuccessful. Please contact support.');
-          return;
-        }
-      }
-      
       setError(err instanceof Error ? err.message : 'An error occurred during account creation');
     } finally {
       setLoading(false);
@@ -305,7 +192,8 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
         </div>
       )}
 
-      {/* Social Login Options */}
+      {/* Social Login Options - Temporarily disabled */}
+      {/*
       <Card>
         <CardHeader>
           <CardTitle>Quick Sign Up</CardTitle>
@@ -320,24 +208,6 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
               disabled={loading}
               className="w-full"
             >
-              <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
-                <path
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  fill="#4285F4"
-                />
-                <path
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  fill="#34A853"
-                />
-                <path
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  fill="#FBBC05"
-                />
-                <path
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  fill="#EA4335"
-                />
-              </svg>
               Continue with Google
             </Button>
             
@@ -348,9 +218,6 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
               disabled={loading}
               className="w-full"
             >
-              <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>
-              </svg>
               Continue with Apple
             </Button>
           </div>
@@ -365,6 +232,7 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
           </div>
         </CardContent>
       </Card>
+      */}
 
       {/* Account Information */}
       <Card>
@@ -425,7 +293,7 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
               />
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Date of Birth</label>
@@ -490,7 +358,7 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
               required
             />
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">City</label>
@@ -547,7 +415,7 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <label className="text-sm font-medium">Investment Objective</label>
               <Select value={formData.investment_objective} onValueChange={(value) => handleInputChange('investment_objective', value)}>
@@ -592,7 +460,7 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
               <Checkbox
                 id="share_trades"
                 checked={formData.share_trades}
-                onCheckedChange={(checked) => 
+                onCheckedChange={(checked) =>
                   setFormData(prev => ({ ...prev, share_trades: checked as boolean }))
                 }
               />
@@ -611,7 +479,7 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
                 <Checkbox
                   id="show_asset_amounts"
                   checked={formData.show_asset_amounts}
-                  onCheckedChange={(checked) => 
+                  onCheckedChange={(checked) =>
                     setFormData(prev => ({ ...prev, show_asset_amounts: checked as boolean }))
                   }
                 />
@@ -631,8 +499,8 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
 
       {/* Submit Button */}
       <div className="flex justify-center">
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           disabled={loading}
           className="w-full max-w-md"
           size="lg"
@@ -643,7 +511,7 @@ export default function AccountCreationForm({ returnUrl = '/dashboard' }: Accoun
 
       <div className="text-center text-sm text-muted-foreground">
         Already have an account?{' '}
-        <a href={returnUrl !== '/dashboard' ? `/signin?returnUrl=${encodeURIComponent(returnUrl)}` : '/signin'} className="text-primary hover:underline">
+        <a href={finalReturnUrl !== '/dashboard' ? `/signin?returnUrl=${encodeURIComponent(finalReturnUrl)}` : '/signin'} className="text-primary hover:underline">
           Sign in here
         </a>
       </div>

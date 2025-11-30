@@ -89,8 +89,8 @@ export function useTradingMode(userId?: string): UseTradingModeReturn {
             filter: `id=eq.${currentUserId}`,
           },
           (payload) => {
-            if (payload.new && 'is_paper_trading' in payload.new) {
-              const newMode: TradingMode = payload.new.is_paper_trading ? 'paper' : 'live';
+            if (payload.new && 'trading_mode' in payload.new) {
+              const newMode: TradingMode = payload.new.trading_mode || 'paper';
               setTradingMode(newMode);
             }
           }

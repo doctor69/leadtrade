@@ -1,0 +1,27 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import AppShell from "@/components/AppShell";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import FundingPageContent from "@/components/account/FundingPageContent";
+
+// Social media metadata for funding page
+const pageTitle = "Funding - LEADTRADE";
+const pageDescription = "Manage your account funding with ACH transfers, wire transfers, and multi-currency wallets on LEADTRADE.";
+const pageImage = "/social/default-thumbnail.svg";
+const pageKeywords = "account funding, ACH transfer, wire transfer, deposit funds, withdraw funds, multi-currency wallet";
+---
+
+<Layout 
+  title={pageTitle}
+  description={pageDescription}
+  image={pageImage}
+  keywords={pageKeywords}
+  type="website"
+  url="/funding"
+>
+  <AppShell client:only="react">
+    <ProtectedRoute client:load>
+      <FundingPageContent client:load />
+    </ProtectedRoute>
+  </AppShell>
+</Layout>

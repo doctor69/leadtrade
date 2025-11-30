@@ -3,54 +3,110 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Layout from "../layouts/Layout.astro";
 import { supabase } from "../lib/supabase";
-import SmartMarketData from "@/components/trading/SmartMarketData";
+import AppShell from "@/components/AppShell";
+import AlpacaMarketGrid from "@/components/trading/AlpacaMarketGrid";
 import { TrendingUp, Users, Trophy, BarChart3 } from "lucide-react";
 
-const accessToken = Astro.cookies.get("sb-access-token");
-const refreshToken = Astro.cookies.get("sb-refresh-token");
+// Enable prerendering for static generation
+export const prerender = true;
 
-let loggedIn = accessToken && refreshToken;
+// Remove server-side cookie access for static generation
+// Authentication will be handled client-side
+let loggedIn = false;
+
+// Define critical resources to preload
+const preloadResources = [
+	"/favicon.svg",
+	// Add other critical resources as needed
+];
+
+// Social media metadata for homepage
+const pageTitle = "LEADTRADE - Advanced Paper & Live Trading Platform";
+const pageDescription = "The ultimate trading platform with real market data, copy trading, and social leaderboards. Practice trading risk-free with $100K virtual funds or trade with real money.";
+const pageImage = "/social/leadtrade-preview.svg";
+const pageKeywords = "paper trading, live trading, copy trading, stock market, investment, finance, trading platform, social trading, leaderboards, real-time data";
 ---
 
-<Layout>
+<Layout 
+	title={pageTitle}
+	description={pageDescription}
+	image={pageImage}
+	keywords={pageKeywords}
+	type="website"
+	url="/"
+>
+	<!-- Structured Data for better social sharing -->
+	<script type="application/ld+json" slot="head">
+		{
+			"@context": "https://schema.org",
+			"@type": "WebApplication",
+			"name": "LEADTRADE",
+			"description": "Advanced paper and live trading platform with real market data, copy trading, and social leaderboards",
+			"url": "https://leadtrade.app",
+			"applicationCategory": "FinanceApplication",
+			"operatingSystem": "Web Browser",
+			"offers": {
+				"@type": "Offer",
+				"price": "0",
+				"priceCurrency": "USD",
+				"description": "Free paper trading with $100,000 virtual funds"
+			},
+			"featureList": [
+				"Real-time market data",
+				"Paper trading with virtual funds",
+				"Copy trading features",
+				"Social leaderboards",
+				"Portfolio analytics",
+				"Risk-free practice trading"
+			],
+			"screenshot": "https://leadtrade.app/social/leadtrade-preview.svg",
+			"author": {
+				"@type": "Organization",
+				"name": "LEADTRADE Team"
+			}
+		}
+	</script>
+<AppShell client:only="react">
 	<div class="space-y-12">
 		<!-- Hero Section -->
 		<div class="text-center space-y-6">
-			<h1 class="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-				LEADTRADE
+			<h1 class="text-4xl md:text-6xl font-bold text-foreground">
+				<span class="text-primary">LEAD</span>TRADE
 			</h1>
 			<p class="text-xl text-muted-foreground max-w-2xl mx-auto">
 				The ultimate paper trading platform. Practice trading with real market data, compete with others, and master your skills risk-free.
 			</p>
 			<div class="flex flex-col sm:flex-row gap-4 justify-center">
 				<a href="/dashboard">
-					<Button size="lg" class="w-full sm:w-auto">
+					<Button size="lg" className="w-full sm:w-auto">
 						Start Trading
 					</Button>
 				</a>
 				<a href="/leaderboard">
-					<Button variant="outline" size="lg" class="w-full sm:w-auto">
+					<Button variant="outline" size="lg" className="w-full sm:w-auto">
 						View Leaderboard
 					</Button>
 				</a>
 			</div>
 		</div>
 
-		<!-- Smart Market Data Section -->
-		<div class="space-y-4">
+		<!-- Live Market Data Section -->
+		<div class="space-y-8">
 			<div class="text-center">
-				<h2 class="text-2xl font-bold mb-2">Market Overview</h2>
-				<p class="text-muted-foreground">Live market data and portfolio tracking</p>
+				<h2 class="text-2xl font-bold mb-2">Dow Jones Industrial Average</h2>
+				<p class="text-muted-foreground">Real-time quotes for all 30 DJIA component stocks - Click any symbol to start trading</p>
 			</div>
-			<SmartMarketData client:load />
+			
+			<!-- Dow Jones 30 Stocks Grid -->
+			<AlpacaMarketGrid client:load />
 		</div>
 
 		<!-- Features Grid -->
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-			<Card class="text-center">
+			<Card className="text-center">
 				<CardHeader>
 					<div class="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mb-4">
-						<TrendingUp class="h-6 w-6 text-blue-600 dark:text-blue-400" />
+						<TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
 					</div>
 					<CardTitle>Real Market Data</CardTitle>
 				</CardHeader>
@@ -61,10 +117,10 @@ let loggedIn = accessToken && refreshToken;
 				</CardContent>
 			</Card>
 
-			<Card class="text-center">
+			<Card className="text-center">
 				<CardHeader>
 					<div class="mx-auto w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mb-4">
-						<Users class="h-6 w-6 text-green-600 dark:text-green-400" />
+						<Users className="h-6 w-6 text-green-600 dark:text-green-400" />
 					</div>
 					<CardTitle>Compete & Learn</CardTitle>
 				</CardHeader>
@@ -75,10 +131,10 @@ let loggedIn = accessToken && refreshToken;
 				</CardContent>
 			</Card>
 
-			<Card class="text-center">
+			<Card className="text-center">
 				<CardHeader>
 					<div class="mx-auto w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mb-4">
-						<Trophy class="h-6 w-6 text-purple-600 dark:text-purple-400" />
+						<Trophy className="h-6 w-6 text-purple-600 dark:text-purple-400" />
 					</div>
 					<CardTitle>Leaderboards</CardTitle>
 				</CardHeader>
@@ -89,10 +145,10 @@ let loggedIn = accessToken && refreshToken;
 				</CardContent>
 			</Card>
 
-			<Card class="text-center">
+			<Card className="text-center">
 				<CardHeader>
 					<div class="mx-auto w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center mb-4">
-						<BarChart3 class="h-6 w-6 text-orange-600 dark:text-orange-400" />
+						<BarChart3 className="h-6 w-6 text-orange-600 dark:text-orange-400" />
 					</div>
 					<CardTitle>Analytics</CardTitle>
 				</CardHeader>
@@ -105,8 +161,8 @@ let loggedIn = accessToken && refreshToken;
 		</div>
 
 		<!-- CTA Section -->
-		<Card class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border-none">
-			<CardContent class="p-8 text-center">
+		<Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border-none">
+			<CardContent className="p-8 text-center">
 				<h2 class="text-2xl font-bold mb-4">Ready to Start Trading?</h2>
 				<p class="text-muted-foreground mb-6 max-w-2xl mx-auto">
 					Join thousands of traders who are improving their skills with our paper trading platform. 
@@ -114,12 +170,12 @@ let loggedIn = accessToken && refreshToken;
 				</p>
 				<div class="flex flex-col sm:flex-row gap-4 justify-center">
 					<a href="/signup">
-						<Button size="lg" class="w-full sm:w-auto">
+						<Button size="lg" className="w-full sm:w-auto">
 							Create Account
 						</Button>
 					</a>
 					<a href="/signin">
-						<Button variant="outline" size="lg" class="w-full sm:w-auto">
+						<Button variant="outline" size="lg" className="w-full sm:w-auto">
 							Sign In
 						</Button>
 					</a>
@@ -127,4 +183,5 @@ let loggedIn = accessToken && refreshToken;
 			</CardContent>
 		</Card>
 	</div>
+</AppShell>
 </Layout>

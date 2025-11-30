@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clearing Cache - LeadTrade</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            backdrop-filter: blur(10px);
+            max-width: 500px;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .status {
+            margin: 1rem 0;
+            font-size: 1.1rem;
+        }
+        .success {
+            color: #4ade80;
+        }
+        button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+        button:hover {
+            background: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Clearing Cache</h1>
+        <div class="spinner"></div>
+        <div class="status" id="status">Unregistering service workers...</div>
+        <button id="continueBtn" style="display: none;">Continue to LeadTrade</button>
+    </div>
+
+    <script>
+        const statusEl = document.getElementById('status');
+        const continueBtn = document.getElementById('continueBtn');
+
+        async function clearEverything() {
+            const steps = [];
+
+            // Step 1: Unregister service workers
+            statusEl.textContent = 'Unregistering service workers...';
+            try {
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (const registration of registrations) {
+                        await registration.unregister();
+                    }
+                    steps.push(`✓ Unregistered ${registrations.length} service worker(s)`);
+                }
+            } catch (error) {
+                steps.push(`⚠ Service worker: ${error.message}`);
+            }
+
+            // Step 2: Clear all caches
+            statusEl.textContent = 'Clearing caches...';
+            try {
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    for (const cacheName of cacheNames) {
+                        await caches.delete(cacheName);
+                    }
+                    steps.push(`✓ Cleared ${cacheNames.length} cache(s)`);
+                }
+            } catch (error) {
+                steps.push(`⚠ Caches: ${error.message}`);
+            }
+
+            // Step 3: Clear localStorage
+            statusEl.textContent = 'Clearing local storage...';
+            try {
+                localStorage.clear();
+                steps.push('✓ Cleared localStorage');
+            } catch (error) {
+                steps.push(`⚠ localStorage: ${error.message}`);
+            }
+
+            // Step 4: Clear sessionStorage
+            try {
+                sessionStorage.clear();
+                steps.push('✓ Cleared sessionStorage');
+            } catch (error) {
+                steps.push(`⚠ sessionStorage: ${error.message}`);
+            }
+
+            // Step 5: Clear IndexedDB
+            statusEl.textContent = 'Clearing IndexedDB...';
+            try {
+                if ('indexedDB' in window) {
+                    const databases = await indexedDB.databases();
+                    for (const db of databases) {
+                        if (db.name) {
+                            indexedDB.deleteDatabase(db.name);
+                        }
+                    }
+                    steps.push(`✓ Cleared ${databases.length} database(s)`);
+                }
+            } catch (error) {
+                steps.push(`⚠ IndexedDB: ${error.message}`);
+            }
+
+            // Show results
+            statusEl.innerHTML = '<div class="success">' + steps.join('<br>') + '</div>';
+            continueBtn.style.display = 'block';
+        }
+
+        continueBtn.addEventListener('click', () => {
+            window.location.href = '/';
+        });
+
+        // Start clearing
+        clearEverything();
+    </script>
+</body>
+</html>

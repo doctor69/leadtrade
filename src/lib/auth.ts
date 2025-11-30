@@ -38,7 +38,7 @@ export async function getAuthenticatedUser(): Promise<AuthUser | null> {
       email: user.email || '',
       full_name: user.user_metadata?.full_name || profile?.full_name,
       username: profile?.username,
-      isPaperTrading: profile?.is_paper_trading,
+      isPaperTrading: profile?.trading_mode === 'paper',
       shareTrades: profile?.share_trades,
       showAssetAmounts: profile?.show_asset_amounts,
     };
@@ -87,6 +87,7 @@ export async function getAlpacaCredentials(userId: string, userEmail: string): P
     }
 
     // Create decryption key from user data
+    // Use consistent method: email + userId (we'll update signup to match)
     const encryptionKey = await hashUserData(userEmail + userId);
 
     // Decrypt tokens
@@ -113,18 +114,36 @@ export async function refreshAuthTokens(): Promise<boolean> {
     
     if (error || !data.session) {
       console.error('Token refresh failed:', error);
+      
+      // Clear invalid tokens
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('sb-access-token');
+        localStorage.removeItem('sb-refresh-token');
+      }
+      
       return false;
     }
 
-    // Update stored tokens
+    // Update stored tokens with expiration tracking
     if (typeof window !== 'undefined') {
       localStorage.setItem('sb-access-token', data.session.access_token);
       localStorage.setItem('sb-refresh-token', data.session.refresh_token);
+      localStorage.setItem('sb-token-expires-at', data.session.expires_at?.toString() || '');
+      localStorage.setItem('sb-token-refreshed-at', Date.now().toString());
     }
 
     return true;
   } catch (error) {
     console.error('Token refresh error:', error);
+    
+    // Clear potentially corrupted tokens
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('sb-access-token');
+      localStorage.removeItem('sb-refresh-token');
+      localStorage.removeItem('sb-token-expires-at');
+      localStorage.removeItem('sb-token-refreshed-at');
+    }
+    
     return false;
   }
 }
@@ -133,16 +152,30 @@ export async function signOut(): Promise<void> {
   try {
     await supabase.auth.signOut();
     
-    // Clear stored tokens
+    // Clear all stored tokens and session data
     if (typeof window !== 'undefined') {
       localStorage.removeItem('sb-access-token');
       localStorage.removeItem('sb-refresh-token');
+      localStorage.removeItem('sb-token-expires-at');
+      localStorage.removeItem('sb-token-refreshed-at');
+      
+      // Clear any cached user data
+      sessionStorage.clear();
       
       // Redirect to home page
       window.location.href = '/';
     }
   } catch (error) {
     console.error('Sign out error:', error);
+    
+    // Even if signOut fails, clear local storage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('sb-access-token');
+      localStorage.removeItem('sb-refresh-token');
+      localStorage.removeItem('sb-token-expires-at');
+      localStorage.removeItem('sb-token-refreshed-at');
+      sessionStorage.clear();
+    }
   }
 }
 
@@ -153,33 +186,93 @@ export function checkAuthStatus(): boolean {
     // Check for auth tokens in localStorage
     const hasAccessToken = localStorage.getItem('sb-access-token');
     const hasRefreshToken = localStorage.getItem('sb-refresh-token');
+    const expiresAt = localStorage.getItem('sb-token-expires-at');
     
-    return !!(hasAccessToken && hasRefreshToken);
+    if (!hasAccessToken || !hasRefreshToken) {
+      return false;
+    }
+    
+    // Check if token is expired
+    if (expiresAt) {
+      const expirationTime = parseInt(expiresAt) * 1000; // Convert to milliseconds
+      const now = Date.now();
+      
+      if (now >= expirationTime) {
+        // Token is expired, clear storage
+        localStorage.removeItem('sb-access-token');
+        localStorage.removeItem('sb-refresh-token');
+        localStorage.removeItem('sb-token-expires-at');
+        localStorage.removeItem('sb-token-refreshed-at');
+        return false;
+      }
+    }
+    
+    return true;
   } catch (error) {
     // localStorage not available (e.g., in tests)
     return false;
   }
 }
 
+export function isTokenNearExpiry(): boolean {
+  if (typeof window === 'undefined') return false;
+  
+  try {
+    const expiresAt = localStorage.getItem('sb-token-expires-at');
+    if (!expiresAt) return false;
+    
+    const expirationTime = parseInt(expiresAt) * 1000;
+    const now = Date.now();
+    const fifteenMinutes = 15 * 60 * 1000;
+    
+    return (expirationTime - now) < fifteenMinutes;
+  } catch (error) {
+    return false;
+  }
+}
+
+export async function validateAndRefreshToken(): Promise<boolean> {
+  if (!checkAuthStatus()) {
+    return false;
+  }
+  
+  if (isTokenNearExpiry()) {
+    return await refreshAuthTokens();
+  }
+  
+  return true;
+}
+
+export function clearAuthData(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('sb-access-token');
+    localStorage.removeItem('sb-refresh-token');
+    localStorage.removeItem('sb-token-expires-at');
+    localStorage.removeItem('sb-token-refreshed-at');
+    sessionStorage.clear();
+  }
+}
+
 export async function handleAuthStateChange(): Promise<void> {
   supabase.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session) {
-      // Store tokens
+      // Store tokens with expiration tracking
       if (typeof window !== 'undefined') {
         localStorage.setItem('sb-access-token', session.access_token);
         localStorage.setItem('sb-refresh-token', session.refresh_token);
+        localStorage.setItem('sb-token-expires-at', session.expires_at?.toString() || '');
+        localStorage.setItem('sb-token-refreshed-at', Date.now().toString());
       }
     } else if (event === 'SIGNED_OUT') {
-      // Clear tokens
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('sb-access-token');
-        localStorage.removeItem('sb-refresh-token');
-      }
+      // Clear all tokens and session data
+      clearAuthData();
     } else if (event === 'TOKEN_REFRESHED' && session) {
-      // Update tokens
+      // Update tokens with new expiration
       if (typeof window !== 'undefined') {
         localStorage.setItem('sb-access-token', session.access_token);
         localStorage.setItem('sb-refresh-token', session.refresh_token);
+        localStorage.setItem('sb-token-expires-at', session.expires_at?.toString() || '');
+        localStorage.setItem('sb-token-refreshed-at', Date.now().toString());
       }
     }
   });

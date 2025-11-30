@@ -1,0 +1,4 @@
+# Cloudflare Pages / Netlify redirects
+# Serve index.html for all routes (SPA routing)
+
+/*    /index.html   200

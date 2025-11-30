@@ -19,7 +19,7 @@
 
 ## Backend & APIs
 
-- **API Routes**: Astro API routes with REST endpoints
+- **API Routes**: Supabase Edge functions with REST endpoints
 - **Database**: Supabase (PostgreSQL) with Row Level Security
 - **Authentication**: Supabase Auth with HTTP-only cookies
 - **External APIs**: Alpaca Markets (Broker & Data APIs)

@@ -1,0 +1,21 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ThemeCustomizerDemo from '../components/ThemeCustomizerDemo';
+
+// Social media metadata for theme customizer page
+const pageTitle = "Theme Customizer - LEADTRADE";
+const pageDescription = "Customize your LEADTRADE experience with our theme editor. Personalize colors, layouts, and visual preferences for optimal trading.";
+const pageImage = "/social/default-thumbnail.svg";
+const pageKeywords = "theme customizer, UI customization, trading interface, personalization, LEADTRADE themes";
+---
+
+<Layout 
+  title={pageTitle}
+  description={pageDescription}
+  image={pageImage}
+  keywords={pageKeywords}
+  type="website"
+  showNavigation={true}
+>
+  <ThemeCustomizerDemo client:load />
+</Layout>

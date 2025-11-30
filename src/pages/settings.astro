@@ -1,28 +1,83 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import AppShell from "@/components/AppShell";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import UserSettings from "@/components/ui/UserSettings";
+import BankLinking from "@/components/account/BankLinking";
+import TradingConfigPanel from "@/components/account/TradingConfigPanel";
+import PDTStatusPanel from "@/components/account/PDTStatusPanel";
+import KYCStatus from "@/components/account/KYCStatus";
+import ACHTransferForm from "@/components/account/ACHTransferForm";
+import WireTransferForm from "@/components/account/WireTransferForm";
+import TransferHistory from "@/components/account/TransferHistory";
+import FundingWalletManager from "@/components/account/FundingWalletManager";
 
-const { cookies, redirect } = Astro;
-
-const accessToken = cookies.get("sb-access-token");
-const refreshToken = cookies.get("sb-refresh-token");
-
-if (!accessToken || !refreshToken) {
-  return redirect("/signin?returnUrl=/settings");
-}
+// Social media metadata for settings page
+const pageTitle = "Account Settings - LEADTRADE";
+const pageDescription = "Manage your LEADTRADE account settings, trading preferences, privacy controls, and customize your trading experience.";
+const pageImage = "/social/default-thumbnail.svg";
+const pageKeywords = "account settings, trading preferences, privacy settings, user profile, LEADTRADE settings";
 ---
 
-<Layout>
-  <ProtectedRoute client:load>
+<Layout 
+  title={pageTitle}
+  description={pageDescription}
+  image={pageImage}
+  keywords={pageKeywords}
+  type="website"
+
+>
+  <AppShell client:only="react">
+    <ProtectedRoute client:load>
     <div class="container mx-auto px-4 py-8">
-      <div class="max-w-4xl mx-auto">
+      <div class="max-w-6xl mx-auto">
         <div class="mb-8">
           <h1 class="text-3xl font-bold mb-2">Account Settings</h1>
-          <p class="text-muted-foreground">Manage your trading preferences and privacy settings</p>
+          <p class="text-muted-foreground">Manage your trading preferences, funding, and account settings</p>
         </div>
-        <UserSettings client:load />
+        
+        <div class="space-y-8">
+          {/* User Profile & Privacy Settings */}
+          <UserSettings client:load />
+          
+          {/* KYC Verification Status */}
+          <div id="kyc-status">
+            <KYCStatus client:load accountId="PLACEHOLDER_ACCOUNT_ID" />
+          </div>
+          
+          {/* Trading Configuration */}
+          <div id="trading-config">
+            <TradingConfigPanel client:load accountId="PLACEHOLDER_ACCOUNT_ID" />
+          </div>
+          
+          {/* PDT Status */}
+          <div id="pdt-status">
+            <PDTStatusPanel client:load accountId="PLACEHOLDER_ACCOUNT_ID" />
+          </div>
+          
+          {/* Bank & ACH Relationships */}
+          <div id="bank-linking">
+            <BankLinking client:load accountId="PLACEHOLDER_ACCOUNT_ID" />
+          </div>
+          
+          {/* Funding Wallets */}
+          <div id="funding-wallets">
+            <FundingWalletManager client:load accountId="PLACEHOLDER_ACCOUNT_ID" />
+          </div>
+          
+          {/* Transfer Forms */}
+          <div id="transfers" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ACHTransferForm client:load accountId="PLACEHOLDER_ACCOUNT_ID" />
+            <WireTransferForm client:load accountId="PLACEHOLDER_ACCOUNT_ID" />
+          </div>
+          
+          {/* Transfer History */}
+          <div id="transfer-history">
+            <TransferHistory client:load accountId="PLACEHOLDER_ACCOUNT_ID" />
+          </div>
+        </div>
       </div>
     </div>
-  </ProtectedRoute>
+    </ProtectedRoute>
+  </AppShell>
 </Layout>

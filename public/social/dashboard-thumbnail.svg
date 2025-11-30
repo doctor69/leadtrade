@@ -1,0 +1,63 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="dashboardBgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="dashboardCardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#334155;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#475569;stop-opacity:0.6" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#dashboardBgGradient)"/>
+  
+  <!-- LeadTrade Logo/Brand -->
+  <text x="60" y="80" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#10b981">LeadTrade</text>
+  <text x="60" y="120" font-family="Arial, sans-serif" font-size="20" fill="#94a3b8">Trading Dashboard</text>
+  
+  <!-- Portfolio Card -->
+  <rect x="60" y="160" width="320" height="180" rx="12" fill="url(#dashboardCardGradient)" stroke="#475569" stroke-width="1"/>
+  <text x="80" y="190" font-family="Arial, sans-serif" font-size="16" fill="#e2e8f0">Portfolio Value</text>
+  <text x="80" y="220" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#10b981">$125,847.32</text>
+  <text x="80" y="250" font-family="Arial, sans-serif" font-size="14" fill="#10b981">+$2,847.32 (+2.31%)</text>
+  
+  <!-- Chart representation -->
+  <polyline points="80,280 120,270 160,260 200,250 240,240 280,230 320,220 360,210" 
+            stroke="#10b981" stroke-width="3" fill="none"/>
+  
+  <!-- Performance Cards -->
+  <rect x="420" y="160" width="200" height="100" rx="8" fill="url(#dashboardCardGradient)" stroke="#475569" stroke-width="1"/>
+  <text x="440" y="185" font-family="Arial, sans-serif" font-size="14" fill="#e2e8f0">Today's P&amp;L</text>
+  <text x="440" y="210" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#10b981">+$1,247.89</text>
+  <text x="440" y="235" font-family="Arial, sans-serif" font-size="12" fill="#10b981">+1.02%</text>
+  
+  <rect x="640" y="160" width="200" height="100" rx="8" fill="url(#dashboardCardGradient)" stroke="#475569" stroke-width="1"/>
+  <text x="660" y="185" font-family="Arial, sans-serif" font-size="14" fill="#e2e8f0">Active Positions</text>
+  <text x="660" y="210" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#e2e8f0">12</text>
+  <text x="660" y="235" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8">Stocks &amp; Options</text>
+  
+  <!-- Trading Activity -->
+  <rect x="60" y="380" width="780" height="180" rx="12" fill="url(#dashboardCardGradient)" stroke="#475569" stroke-width="1"/>
+  <text x="80" y="410" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#e2e8f0">Recent Trading Activity</text>
+  
+  <!-- Mock trade entries -->
+  <text x="80" y="440" font-family="Arial, sans-serif" font-size="14" fill="#10b981">BUY AAPL</text>
+  <text x="200" y="440" font-family="Arial, sans-serif" font-size="14" fill="#e2e8f0">100 shares @ $185.42</text>
+  <text x="400" y="440" font-family="Arial, sans-serif" font-size="14" fill="#10b981">+$247.89</text>
+  
+  <text x="80" y="470" font-family="Arial, sans-serif" font-size="14" fill="#ef4444">SELL TSLA</text>
+  <text x="200" y="470" font-family="Arial, sans-serif" font-size="14" fill="#e2e8f0">50 shares @ $242.15</text>
+  <text x="400" y="470" font-family="Arial, sans-serif" font-size="14" fill="#ef4444">-$125.30</text>
+  
+  <text x="80" y="500" font-family="Arial, sans-serif" font-size="14" fill="#10b981">BUY MSFT</text>
+  <text x="200" y="500" font-family="Arial, sans-serif" font-size="14" fill="#e2e8f0">75 shares @ $378.92</text>
+  <text x="400" y="500" font-family="Arial, sans-serif" font-size="14" fill="#10b981">+$892.45</text>
+  
+  <!-- Decorative elements -->
+  <circle cx="950" cy="200" r="80" fill="none" stroke="#10b981" stroke-width="2" opacity="0.3"/>
+  <circle cx="1050" cy="300" r="60" fill="none" stroke="#10b981" stroke-width="2" opacity="0.2"/>
+  <circle cx="1100" cy="150" r="40" fill="none" stroke="#10b981" stroke-width="2" opacity="0.1"/>
+</svg>

@@ -41,36 +41,24 @@ export class CopyTradingService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching user subscriptions:', error);
-        return {
-          subscriptions: [],
-          totalAllocation: 0,
-          remainingAllocation: 100,
-          activeSubscriptions: 0
-        };
+        throw error;
       }
 
       const typedSubscriptions = subscriptions as SubscriptionWithLeader[];
-      const activeSubscriptions = typedSubscriptions.filter(sub => sub.is_active);
+      const activeSubscriptions = typedSubscriptions?.filter(sub => sub.is_active) || [];
       const totalAllocation = activeSubscriptions.reduce(
         (total, sub) => total + parseFloat(sub.allocation_percentage.toString()), 
         0
       );
 
       return {
-        subscriptions: typedSubscriptions,
+        subscriptions: typedSubscriptions || [],
         totalAllocation,
         remainingAllocation: Math.max(0, 100 - totalAllocation),
         activeSubscriptions: activeSubscriptions.length
       };
     } catch (error) {
-      console.error('Error in getUserSubscriptions:', error);
-      return {
-        subscriptions: [],
-        totalAllocation: 0,
-        remainingAllocation: 100,
-        activeSubscriptions: 0
-      };
+      throw error;
     }
   }
 
@@ -94,21 +82,21 @@ export class CopyTradingService {
 
       // Check if leader exists and shares trades
       const { data: leader, error: leaderError } = await supabase
-        .from('profiles')
+        .from('user_profiles')
         .select('id, share_trades')
         .eq('id', leaderId)
         .single();
 
-      if (leaderError || !leader) {
+      if (leaderError) {
         return { success: false, error: 'Leader not found' };
       }
 
-      if (!leader.share_trades) {
+      if (!leader || !leader.share_trades) {
         return { success: false, error: 'This trader is not sharing trades' };
       }
 
       // Check if subscription already exists
-      const { data: existingSubscription } = await supabase
+      const { data: existingSubscription, error: existingError } = await supabase
         .from('copy_trading_subscriptions')
         .select('id')
         .eq('follower_id', followerId)
@@ -150,14 +138,12 @@ export class CopyTradingService {
         .single();
 
       if (createError) {
-        console.error('Error creating subscription:', createError);
-        return { success: false, error: 'Failed to create subscription' };
+        throw createError;
       }
 
       return { success: true, data: newSubscription as SubscriptionWithLeader };
     } catch (error) {
-      console.error('Error in createSubscription:', error);
-      return { success: false, error: 'Internal server error' };
+      throw error;
     }
   }
 
