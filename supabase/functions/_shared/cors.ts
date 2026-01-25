@@ -13,7 +13,8 @@ export function getCorsHeaders(req: Request) {
   }
 }
 
-// Legacy export for backward compatibility
+// Legacy export - DO NOT USE with credentials
+// Use getCorsHeaders(req) instead for proper origin handling
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',

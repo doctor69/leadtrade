@@ -23,22 +23,80 @@ interface ChartDataPoint {
 // Fetch real chart data from Alpaca API
 const fetchChartData = async (symbol: string, timeframe: string): Promise<ChartDataPoint[]> => {
   try {
-    // Import apiService dynamically to avoid SSR issues
-    const { apiService } = await import('@/lib/apiService');
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
+    const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
-    // Get bars data from Alpaca
-    const barsResult = await apiService.getBars({
-      symbols: symbol,
-      timeframe: '1Day',
-      start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
-      end: new Date().toISOString()
-    });
-
-    if (!barsResult.success || !barsResult.data?.bars?.[symbol]) {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      console.error('No session available for chart data');
       return [];
     }
 
-    const bars = barsResult.data.bars[symbol];
+    // Calculate date range based on timeframe
+    const now = new Date();
+    let startDate = new Date();
+    let alpacaTimeframe = '1Day';
+    
+    switch (timeframe) {
+      case '1D':
+        startDate = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
+        alpacaTimeframe = '15Min';
+        break;
+      case '1W':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        alpacaTimeframe = '1Hour';
+        break;
+      case '1M':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        alpacaTimeframe = '1Day';
+        break;
+      case '3M':
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        alpacaTimeframe = '1Day';
+        break;
+      case '1Y':
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        alpacaTimeframe = '1Day';
+        break;
+    }
+
+    // Call the alpaca-market-data-enhanced/bars endpoint
+    const params = new URLSearchParams({
+      symbols: symbol,
+      timeframe: alpacaTimeframe,
+      start: startDate.toISOString(),
+      end: now.toISOString(),
+      limit: '1000',
+      feed: 'iex'
+    });
+
+    const response = await fetch(
+      `${supabaseUrl}/functions/v1/alpaca-market-data-enhanced/bars?${params}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': supabaseAnonKey,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (!response.ok) {
+      console.error('Failed to fetch bars:', response.status, response.statusText);
+      return [];
+    }
+
+    const result = await response.json();
+    
+    if (!result.success || !result.data?.bars?.bars?.[symbol]) {
+      console.error('Invalid bars response:', result);
+      return [];
+    }
+
+    const bars = result.data.bars.bars[symbol];
     
     return bars.map((bar: any): ChartDataPoint => ({
       timestamp: bar.t,

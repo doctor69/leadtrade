@@ -197,7 +197,7 @@ serve(async (req: Request) => {
         // Check 5: Assets/Market data connectivity
         try {
           console.log('Checking market data connectivity...')
-          const assetsResponse = await alpacaClient.dataRequest('/v2/assets', {
+          const assetsResponse = await alpacaClient.brokerRequest('/v2/assets', {
             params: { limit: '1', status: 'active' }
           })
           
