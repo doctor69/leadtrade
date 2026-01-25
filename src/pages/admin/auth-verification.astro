@@ -1,0 +1,21 @@
+---
+import { AuthVerificationDashboard } from '@/components/admin/AuthVerificationDashboard';
+import AppShell from '@/components/AppShell';
+import { getAuthenticatedUser } from '@/lib/auth';
+
+// Check authentication
+const user = await getAuthenticatedUser();
+
+if (!user) {
+  return Astro.redirect('/signin');
+}
+
+// Note: In production, add admin role check here
+// For now, any authenticated user can access for testing
+---
+
+<AppShell title="Authentication Verification - LeadTrade Admin">
+  <div class="container mx-auto py-8 px-4">
+    <AuthVerificationDashboard client:load />
+  </div>
+</AppShell>

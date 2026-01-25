@@ -300,7 +300,7 @@ export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: Supabas
         tax_id: signupData.tax_id ? '***masked***' : 'missing'
       });
 
-      const signupResponse = await edgeFunctionClient.post('signup', signupData, undefined, false);
+      const signupResponse = await edgeFunctionClient.post('streamlined-signup', signupData, undefined, false);
 
       if (!signupResponse.success) {
         console.error('❌ Signup Edge Function failed:', signupResponse.error);
@@ -386,7 +386,13 @@ export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: Supabas
           tax_id: alpacaAccountData.tax_id ? '***masked***' : 'missing'
         });
 
-        const alpacaResponse = await edgeFunctionClient.post('create-alpaca-account', alpacaAccountData, undefined, false);
+        const alpacaResponse = await edgeFunctionClient.request('create-alpaca-account', {
+          method: 'POST',
+          body: alpacaAccountData,
+          requireAuth: false,
+          timeout: 30000, // 30 seconds for Alpaca account creation
+          retries: 1 // Only retry once
+        });
 
         if (!alpacaResponse.success) {
           console.error('❌ Alpaca account creation failed:', alpacaResponse.error);
