@@ -198,20 +198,42 @@ export class MarketDataFallbackService {
 
     try {
       const symbolsParam = this.config.symbols.join(',');
-      const response = await fetch(`${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-market-quotes?symbols=${symbolsParam}&feed=iex`);
+      
+      // Call Alpaca Data API directly (public market data, no user auth needed)
+      // Uses platform's public API keys from environment
+      const alpacaDataUrl = `https://data.alpaca.markets/v2/stocks/quotes/latest?symbols=${symbolsParam}&feed=iex`;
+      
+      const response = await fetch(alpacaDataUrl, {
+        headers: {
+          'Accept': 'application/json',
+          'APCA-API-KEY-ID': import.meta.env.PUBLIC_ALPACA_DATA_API_KEY || '',
+          'APCA-API-SECRET-KEY': import.meta.env.PUBLIC_ALPACA_DATA_API_SECRET || ''
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const result = await response.json();
+      const data = await response.json();
       
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch market data');
-      }
+      // Transform Alpaca response to our format
+      const quotes = Object.entries(data.quotes || {}).map(([symbol, quote]: [string, any]) => ({
+        symbol,
+        bid: quote.bp || 0,
+        ask: quote.ap || 0,
+        bid_size: quote.bs || 0,
+        ask_size: quote.as || 0,
+        latest_trade: {
+          price: quote.ap || quote.bp || 0,
+          size: quote.as || 0,
+          timestamp: quote.t || new Date().toISOString()
+        },
+        timestamp: quote.t || new Date().toISOString()
+      }));
 
       // Process the market data
-      this.processMarketData(result.data);
+      this.processMarketData({ quotes });
       
       // Reset retry count on success
       this.state.retryCount = 0;
