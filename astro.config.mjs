@@ -13,7 +13,7 @@ export default defineConfig({
       experimentalReactChildren: false,
     })
   ],
-  output: 'static', // Use static output for optimal performance
+  output: 'static', // Pure static output for CDN deployment
   build: {
     assets: 'assets',
     // Ensure proper routing for static sites

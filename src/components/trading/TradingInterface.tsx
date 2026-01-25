@@ -17,7 +17,6 @@ import {
   Search,
   Info
 } from 'lucide-react';
-import StockSearch from './StockSearch';
 import TradeForm from './TradeForm';
 import AccountPositions from './AccountPositions';
 import OrderHistory from './OrderHistory';
@@ -310,16 +309,6 @@ export default function TradingInterface() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Search & Select Stock</CardTitle>
-                  <CardDescription>Find stocks to trade</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <StockSearch onSelectStock={handleStockSelect} />
-                </CardContent>
-              </Card>
-              
               {selectedStock && (
                 <AssetChart 
                   symbol={selectedStock.symbol} 

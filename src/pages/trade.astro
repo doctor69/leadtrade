@@ -2,6 +2,7 @@
 import Layout from "@/layouts/Layout.astro";
 import AppShell from "@/components/AppShell";
 import TradingInterface from "@/components/trading/TradingInterface";
+import SimpleMarketGrid from "@/components/trading/SimpleMarketGrid";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Social media metadata for trade page
@@ -25,7 +26,12 @@ const pageKeywords = "stock trading, options trading, trading interface, market 
                 <div class="flex items-center justify-between">
                     <h1 class="text-3xl font-bold">LEADTRADE Trading</h1>
                 </div>
+                
+                <!-- Trading Interface -->
                 <TradingInterface client:load />
+                
+                <!-- Market Overview Grid (Simplified) -->
+                <SimpleMarketGrid client:load />
             </div>
         </ProtectedRoute>
     </AppShell>

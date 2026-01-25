@@ -20,17 +20,23 @@ export const CreateTransferSchema = z.object({
 export const TransferSchema = z.object({
   id: z.string(),
   account_id: z.string(),
-  type: TransferTypeSchema,
-  status: z.enum(['queued', 'pending', 'sent_to_clearing', 'approved', 'canceled', 'rejected']),
+  type: z.string(), // More flexible - accept any string
+  status: z.string(), // More flexible - accept any string
   amount: z.string(),
-  direction: DirectionSchema,
+  direction: z.string(), // More flexible - accept any string
   created_at: z.string(),
   updated_at: z.string(),
   expires_at: z.string().optional(),
   relationship_id: z.string().optional(),
   bank_id: z.string().optional(),
   additional_information: z.string().optional(),
-  fee_payment_method: FeePaymentMethodSchema.optional()
+  fee_payment_method: z.string().optional(),
+  currency: z.string().optional(),
+  instant_amount: z.string().optional(),
+  reason: z.string().nullable().optional(),
+  hold_until: z.string().nullable().optional(),
+  requested_amount: z.string().optional(),
+  fee: z.string().optional(),
 });
 
 // TypeScript types
@@ -107,15 +113,31 @@ export async function createTransfer(
       };
     }
 
-    const edgeFunctionUrl = `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-transfers/${accountId}`;
+    // Get Supabase session for authentication
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
+    const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      return {
+        success: false,
+        error: 'Authentication required. Please sign in.',
+      };
+    }
+
+    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/alpaca-transfers/${accountId}`;
 
     const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': supabaseAnonKey,
       },
       body: JSON.stringify(transferData),
-      credentials: 'include'
     });
 
     const result = await response.json();
@@ -123,12 +145,19 @@ export async function createTransfer(
     if (!response.ok) {
       return {
         success: false,
-        error: result.error || 'Failed to create transfer'
+        error: result.error?.message || result.error || result.message || 'Failed to create transfer'
+      };
+    }
+
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error?.message || result.error || 'Failed to create transfer'
       };
     }
 
     // Validate response
-    const transferValidation = TransferSchema.safeParse(result);
+    const transferValidation = TransferSchema.safeParse(result.data);
     if (!transferValidation.success) {
       return {
         success: false,
@@ -157,6 +186,21 @@ export async function listTransfers(
   params?: ListTransfersParams
 ): Promise<{ success: boolean; transfers?: Transfer[]; error?: string }> {
   try {
+    // Get Supabase session for authentication
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
+    const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      return {
+        success: false,
+        error: 'Authentication required. Please sign in.',
+      };
+    }
+
     // Build query string
     const queryParams = new URLSearchParams();
     if (params) {
@@ -166,11 +210,14 @@ export async function listTransfers(
     }
 
     const queryString = queryParams.toString();
-    const edgeFunctionUrl = `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-transfers/${accountId}${queryString ? `?${queryString}` : ''}`;
+    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/alpaca-transfers/${accountId}${queryString ? `?${queryString}` : ''}`;
 
     const response = await fetch(edgeFunctionUrl, {
       method: 'GET',
-      credentials: 'include'
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': supabaseAnonKey,
+      },
     });
 
     const result = await response.json();
@@ -179,7 +226,7 @@ export async function listTransfers(
       // Include status code in error for better handling
       const errorMessage = response.status === 401 
         ? '401: Unauthorized - Alpaca account not linked'
-        : result.error || 'Failed to list transfers';
+        : result.error?.message || result.error || result.message || 'Failed to list transfers';
       
       return {
         success: false,
@@ -187,12 +234,21 @@ export async function listTransfers(
       };
     }
 
-    // Validate response
-    const transfersValidation = z.array(TransferSchema).safeParse(result);
-    if (!transfersValidation.success) {
+    if (!result.success) {
       return {
         success: false,
-        error: 'Invalid response from server'
+        error: result.error?.message || result.error || 'Failed to list transfers'
+      };
+    }
+
+    // Validate response
+    const transfersValidation = z.array(TransferSchema).safeParse(result.data);
+    if (!transfersValidation.success) {
+      console.error('Transfer validation failed:', transfersValidation.error);
+      console.error('Actual data:', result.data);
+      return {
+        success: false,
+        error: `Invalid response from server: ${transfersValidation.error.message}`
       };
     }
 
@@ -225,11 +281,29 @@ export async function cancelTransfer(
       };
     }
 
-    const edgeFunctionUrl = `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-transfers/${accountId}/${transferId}`;
+    // Get Supabase session for authentication
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
+    const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      return {
+        success: false,
+        error: 'Authentication required. Please sign in.',
+      };
+    }
+
+    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/alpaca-transfers/${accountId}/${transferId}`;
 
     const response = await fetch(edgeFunctionUrl, {
       method: 'DELETE',
-      credentials: 'include'
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': supabaseAnonKey,
+      },
     });
 
     const result = await response.json();
@@ -237,7 +311,7 @@ export async function cancelTransfer(
     if (!response.ok) {
       return {
         success: false,
-        error: result.error || 'Failed to cancel transfer'
+        error: result.error?.message || result.error || result.message || 'Failed to cancel transfer'
       };
     }
 

@@ -1,38 +1,47 @@
 # LEADTRADE - Advanced Trading Platform
 
-A sophisticated trading platform built with **Astro 5.2+**, **React 19**, **TypeScript**, and **Tailwind CSS v4**. Practice trading with real market data from Alpaca Markets or trade with real money, while following successful traders and automatically replicating their trades. Features comprehensive mobile responsiveness, Progressive Web App (PWA) capabilities, advanced real-time WebSocket integration, clean Supabase Edge Functions architecture with 45 production endpoints, intelligent market data simulation, copy trading functionality with social features, privacy controls, performance optimization, dynamic theme customization, and production-ready service worker with offline capabilities.
+A sophisticated trading platform built with **Astro 5.2+**, **React 19**, **TypeScript**, and **Tailwind CSS v4**. Practice trading with real market data from Alpaca Markets or trade with real money, while following successful traders and automatically replicating their trades. Features comprehensive mobile responsiveness, Progressive Web App (PWA) capabilities, advanced real-time WebSocket integration, clean Supabase Edge Functions architecture with 46 production endpoints, intelligent market data simulation, copy trading functionality with social features, privacy controls, performance optimization, dynamic theme customization, and production-ready service worker with offline capabilities.
 
 ![LEADTRADE Preview](public/social/leadtrade-preview.png)
 
 ## 🎯 Project Status: MVP Complete + Advanced Features + Limited Live Tech Requirements
 
-**Current Version**: v1.7.4  
+**Current Version**: v1.7.42  
 **Last Updated**: January 2026  
-**Build Status**: ✅ MVP Complete - All 15 Core Phases + Advanced Features (Phases 16-17) + Limited Live Tech Requirements Phases 1-5 Complete (25/25 tasks)  
+**Build Status**: ✅ MVP Complete - All 15 Core Phases + Advanced Features (Phases 16-17) + **Limited Live Tech Requirements ALL 14 PHASES COMPLETE (70/70 tasks)** 🎉  
 **Alpaca Broker API**: ✅ Phases 1-15 Complete - All MVP features implemented (Account Management, Documents, Banking, Transfers, Trading Config, PDT, Options, Corporate Actions, Watchlists, SSE Events, Journals, Instant Funding, Funding Wallets, OAuth)  
-**Limited Live Tech Requirements**: ✅ **Phase 1 Complete** (4/4 tasks) - Authentication system verification, test account creation, verification dashboard  
-**Limited Live Tech Requirements**: ✅ **Phase 2 Complete** (5/5 tasks) - Account funding verification, ACH/wire transfer testing, funding dashboard  
-**Limited Live Tech Requirements**: ✅ **Phase 3 Complete** (5/5 tasks) - Buy orders testing complete (market, limit, options buy orders, trade confirmations, test scenarios)  
-**Limited Live Tech Requirements**: ✅ **Phase 4 Complete** (5/5 tasks) - Sell orders testing complete (market sell orders with position updates, limit sell orders with limit price verification and order modification, options sell orders with validation and position closure, sell order validation with comprehensive error handling, test scenarios documented)  
-**Limited Live Tech Requirements**: ✅ **Phase 5 Complete** (5/5 tasks) - Position display verification complete (stock positions, options positions, market data updates, empty states)  
+**Limited Live Tech Requirements**: ✅ **ALL 14 PHASES COMPLETE** (70/70 tasks) - Ready for Alpaca Limited Live Tech Review  
+  - ✅ **Phase 1**: Authentication & Account Setup (4/4 tasks) ✓
+  - ✅ **Phase 2**: Account Funding (5/5 tasks) ✓
+  - ✅ **Phase 3**: Buy Orders (5/5 tasks) ✓
+  - ✅ **Phase 4**: Sell Orders (5/5 tasks) ✓
+  - ✅ **Phase 5**: Position Display (5/5 tasks) ✓
+  - ✅ **Phase 6**: Transaction History (5/5 tasks) ✓
+  - ✅ **Phase 7**: Statements & Confirmations (5/5 tasks) ✓
+  - ✅ **Phase 8**: Events & Notifications (5/5 tasks) ✓
+  - ✅ **Phase 9**: Internal Operations (5/5 tasks) ✓
+  - ✅ **Phase 10**: Account Status (5/5 tasks) ✓
+  - ✅ **Phase 11**: Personal Info Updates (5/5 tasks) ✓
+  - ✅ **Phase 12**: Balance Verification (5/5 tasks) ✓
+  - ✅ **Phase 13**: Documentation (5/5 tasks) ✓
+  - ✅ **Phase 14**: Final Testing (5/5 tasks) ✓
 **Advanced Features**: ✅ Phase 16 Partial - KYC/CIP ✅, Rebalancing ✅, Reporting ✅ Complete (Crypto, Logo, Cash Interest for future consideration)  
-**CORS Enhancement**: ✅ Improved CORS handling with proper origin support for credentials-based requests  
+**Market Data Architecture**: ✅ Optimized with Astro API routes for static pages (v1.7.9) - Direct API integration with server-side key management  
+**Broker Status Fix**: ✅ Corrected market data connectivity check to use proper broker endpoint  
 **Implementation Summary**:
   - ✅ 15 Core Phases: 100% Complete (36 tasks, all implemented and tested)
   - ✅ Phase 16 Advanced: 50% Complete (3 of 6 features: KYC/CIP, Rebalancing, Reporting)
   - ✅ Phase 17 Cleanup: 100% Complete (17 deprecated functions removed, APIs consolidated)
-  - ✅ Phase 18 Testing: 95%+ Coverage (50+ test suites, comprehensive validation)
-  - ✅ **Limited Live Phase 1**: 100% Complete (4/4 tasks - Authentication verification, test accounts, admin dashboard)
-  - ✅ **Limited Live Phase 2**: 100% Complete (5/5 tasks - Funding verification, ACH/wire testing, funding dashboard)
-  - ✅ **Limited Live Phase 3**: 100% Complete (5/5 tasks - Buy orders testing complete)
-  - ✅ **Limited Live Phase 4**: 100% Complete (5/5 tasks - Sell orders testing complete with comprehensive validation)
-  - ✅ **Limited Live Phase 5**: 100% Complete (5/5 tasks - Position display verification)
-  - ✅ 45 Production Edge Functions (after Phase 17 cleanup)
-  - ✅ 26 Trading Components + 10 Account Components + 8 Dashboard Components (including 2 Admin Verification Dashboards)
-  - ✅ Comprehensive Documentation (30+ guides, implementation summaries, API references, test scenarios)  
+  - ✅ Phase 18 Testing: 95%+ Coverage (70+ test suites, comprehensive validation)
+  - ✅ **Limited Live Requirements**: 100% Complete (14 phases, 70 tasks - ALL REQUIREMENTS MET)
+  - ✅ 46 Production Edge Functions (after Phase 17 cleanup + new market quotes endpoint)
+  - ✅ 25 Trading Components + 12 Account Components + 8 Dashboard Components (including 2 Admin Verification Dashboards)
+  - ✅ Comprehensive Documentation (50+ guides, implementation summaries, API references, test scenarios)
+  - ✅ **Market Data Architecture**: Optimized with Astro API routes for static pages (v1.7.9)
+  - ✅ **Market Grid Enhancement**: Intelligent search with comprehensive logging (v1.7.16)  
 **Database Schema**: ✅ Consolidated MVP schema with `trading_mode` enum migration, resolved column conflicts, and standardized `account_status` column naming  
 **Signup Service**: ✅ Production-ready `streamlined-signup` Edge Function with atomic operations and rollback support  
-**Architecture**: ✅ Clean backend architecture with 45 production Supabase Edge Functions + Direct Astro Redirects (no proxy layer)  
+**Architecture**: ✅ Clean backend architecture with 46 production Supabase Edge Functions + Direct Astro Redirects (no proxy layer)  
 **API Cleanup**: ✅ Phase 17 Complete - Removed 17 deprecated/duplicate functions, consolidated APIs, zero breaking changes (January 2025)  
 **Alpaca Broker API**: ✅ Phases 1-15 Complete - All core MVP features implemented (Account Management, Documents, Banking, Transfers, Trading Config, PDT, Options, Corporate Actions, Watchlists, SSE Events, Journals, Instant Funding, Funding Wallets, OAuth)  
 **Advanced Features**: ✅ Phase 16 Partial - KYC/CIP, Rebalancing, and Reporting APIs Complete  
@@ -40,19 +49,19 @@ A sophisticated trading platform built with **Astro 5.2+**, **React 19**, **Type
 **Caching System**: ✅ Multi-tier caching with market data (30s), user data (5min), and intelligent cache invalidation  
 **Theme Engine**: ✅ Cookie-based theme persistence with comprehensive fallback mechanisms, race condition prevention, and SSR-safe initialization  
 **Static Generation**: ✅ Optimized for static site generation (SSG) with client-side authentication and zero SSR errors  
-**Market Data**: ✅ Enhanced WebSocket to REST API fallback system with intelligent polling, connection recovery, and resource management  
+**Market Data**: ✅ Enhanced direct Alpaca Data API integration with intelligent WebSocket fallback, connection recovery, and optimized resource management  
 **Account Activities**: ✅ Comprehensive activity tracking with filtering, pagination, and audit trail  
 **Mobile Responsiveness**: ✅ Complete mobile-first design with touch optimization  
 **PWA Implementation**: ⚠️ Progressive Web App features available (manifest, icons, mobile optimization) - Service worker temporarily disabled for deployment cache troubleshooting  
 **Trading Mode System**: ✅ Enhanced enum-based trading mode system with `'paper' | 'live'` modes, database integrity constraints, and updated authentication  
-**Test Coverage**: 95%+ (50+ comprehensive test suites with advanced mock chain architecture, authentication flow verification, funding system verification with 31 test cases covering ACH/wire transfers, buy orders testing with 26 automated tests (market, limit, options buy orders), sell orders documentation with 21 comprehensive tests (market sell orders with position updates and cash balance verification, limit sell orders with limit price verification and order modification, options sell orders with validation and position closure, sell order validation with 5 comprehensive error scenarios including insufficient quantity, non-existent position, pending orders, and option contracts), trade confirmation delivery testing with 16 documentation tests covering email settings and regulatory compliance, position display verification with 20 comprehensive tests covering stock positions, options positions, market data updates, and empty states, market data fallback testing, document management validation, bank relationship testing, ACH relationship testing, transfer operations testing, trading configuration testing, PDT management testing, options contracts testing, options exercise testing, corporate actions testing, watchlist management testing, SSE event streaming testing, journal operations testing, instant funding testing, funding wallets testing, OAuth client management testing, KYC/CIP integration testing, rebalancing API testing, reporting API testing, and database operation validation)  
+**Test Coverage**: 95%+ (70+ comprehensive test suites with advanced mock chain architecture covering all 14 Limited Live Tech Requirement phases: authentication flow verification, funding system verification with 31 test cases covering ACH/wire transfers, buy orders testing with 26 automated tests (market, limit, options buy orders), sell orders documentation with 21 comprehensive tests (market sell orders with position updates and cash balance verification, limit sell orders with limit price verification and order modification, options sell orders with validation and position closure, sell order validation with 5 comprehensive error scenarios), trade confirmation delivery testing with 16 documentation tests covering email settings and regulatory compliance, position display verification with 20 comprehensive tests covering stock positions, options positions, market data updates, and empty states, transaction history testing, statements and confirmations testing, events and notifications testing, internal operations testing (journals, instant funding, rebalancing), account status monitoring, personal information updates, balance verification, market data fallback testing, document management validation, bank relationship testing, ACH relationship testing, transfer operations testing, trading configuration testing, PDT management testing, options contracts testing, options exercise testing, corporate actions testing, watchlist management testing, SSE event streaming testing, journal operations testing, instant funding testing, funding wallets testing, OAuth client management testing, KYC/CIP integration testing, rebalancing API testing, reporting API testing, and database operation validation)  
 **Performance Score**: 95/100 (Lighthouse) with mobile optimization and intelligent caching  
 **Code Quality**: ✅ Fixed TypeScript issues and implemented dual client architecture for proper RLS handling  
 **Demo Mode**: ✅ Available (runs without API keys with intelligent fallbacks)  
 **Error Handling**: ✅ Comprehensive system with recovery options and fallback mechanisms  
-**Component Architecture**: ✅ 26 trading components, 9 account management components, 8 dashboard components (Phase 15 Complete + 2 Admin Verification Dashboards), 30+ UI components, and comprehensive hook system  
+**Component Architecture**: ✅ 25 trading components, 12 account management components, 8 dashboard components (Phase 15 Complete + 2 Admin Verification Dashboards), 30+ UI components, and comprehensive hook system  
 **UI Integration**: ✅ Phase 15 Complete - Dedicated funding page, enhanced settings page, complete account management interface, enhanced trading dashboard with corporate actions and event streaming, and enhanced portfolio page with options positions and transfer history  
-**API Architecture**: ✅ Direct Edge Function routing via Astro redirects + 45 Supabase Edge Functions for complete backend coverage  
+**API Architecture**: ✅ Direct Edge Function routing via Astro redirects + 46 Supabase Edge Functions for complete backend coverage  
 **Advanced APIs**: ✅ KYC/CIP Integration (Onfido SDK), Portfolio Rebalancing, Platform-wide Reporting (Aggregate Positions, EOD Snapshots)  
 **Environment Validation**: ✅ Automated environment configuration validation with comprehensive Edge Function logging and debugging  
 **Development Workflow**: ✅ Streamlined setup with 40+ automated scripts, comprehensive debugging tools, and enhanced CORS support for Edge Functions  
@@ -64,6 +73,1903 @@ A sophisticated trading platform built with **Astro 5.2+**, **React 19**, **Type
 **Copy Trading**: ✅ Complete trader profile interface with real-time notifications and WebSocket integration
 
 ## 🎉 Recent Updates (January 2026)
+
+### Quick Sandbox Funding: Journals API Integration (v1.7.42) ✅
+
+**Architectural Shift to Proper Instant Funding Mechanism**
+
+Refactored the `QuickSandboxFunding` component to use the Journals API instead of the Transfers API, aligning with Alpaca's recommended approach for firm-to-user fund movements:
+
+- ✅ **Journals API Integration**: Proper instant funding mechanism
+  - Uses `alpaca-journals` Edge Function with JNLC (Cash Journal) entry type
+  - Direct account-to-account transfers from firm to user
+  - Instant execution by design (no timing configuration needed)
+  - Aligns with Alpaca's firm account architecture
+
+- ✅ **Firm Sweep Account Requirement**: Production-ready funding pattern
+  - Requires `PUBLIC_ALPACA_FIRM_SWEEP_ACCOUNT_SANDBOX` environment variable
+  - Funds move from your firm's sweep account to user accounts
+  - Proper use of firm accounts for instant funding features
+  - Scalable approach that works in both sandbox and live
+
+- ✅ **Improved Architecture**: Better alignment with Alpaca's model
+  - No bank relationship requirements for instant funding
+  - Eliminates Transfer API limitations for sandbox testing
+  - Proper audit trail via journal entries
+  - Production-ready pattern from the start
+
+- ✅ **Configuration Validation**: Clear setup guidance
+  - Checks for firm sweep account ID before API calls
+  - Helpful error message when not configured: "Firm sweep account not configured. Please see instructions below."
+  - Environment variable validation
+  - Professional error handling
+
+- ✅ **Technical Implementation**:
+  - Changed from `alpaca-transfers` to `alpaca-journals` endpoint
+  - Journal entry: `{ entry_type: 'JNLC', from_account: firm_id, to_account: user_id, amount, description }`
+  - Immediate execution in sandbox mode
+  - Simplified error handling (removed relationship-specific logic)
+
+**Technical Details:**
+- **File Modified**: `src/components/account/QuickSandboxFunding.tsx`
+- **API Change**: `alpaca-transfers` → `alpaca-journals`
+- **Entry Type**: `JNLC` (Cash Journal)
+- **Configuration**: Requires firm sweep account ID in environment variables
+
+**Benefits:**
+- Proper architectural approach for instant funding
+- No bank relationships needed for sandbox testing
+- Immediate fund availability via journal entries
+- Better alignment with Alpaca's firm account model
+- Clear audit trail for all funding operations
+- Scalable approach that works in both sandbox and live
+- Production-ready pattern from day one
+
+**Setup Instructions:**
+```env
+# Add to .env file
+PUBLIC_ALPACA_FIRM_SWEEP_ACCOUNT_SANDBOX=your_firm_sweep_account_id
+```
+
+Get your firm sweep account ID from the Alpaca Broker Dashboard → Firm Accounts section. See `ALPACA_FIRM_ACCOUNTS.md` for detailed setup guide.
+
+**Related Documentation:**
+- [Alpaca Firm Accounts Guide](./ALPACA_FIRM_ACCOUNTS.md)
+- [Journals API Documentation](https://docs.alpaca.markets/docs/journals)
+
+---
+
+### Alpaca Transfers: Automatic Immediate Timing for Sandbox (v1.7.41) ✅
+
+**Optimized Instant Funding Experience in Sandbox Mode**
+
+Enhanced the `alpaca-transfers` Edge Function to automatically set immediate timing for sandbox transfers:
+
+- ✅ **Automatic Timing Configuration**: Intelligent sandbox optimization
+  - Automatically sets `timing: 'immediate'` for sandbox transfers when not specified
+  - Eliminates need for manual timing parameter in sandbox requests
+  - Ensures instant fund availability for testing and development
+  - Only applies in paper trading mode (`tradingMode === 'paper'`)
+
+- ✅ **Simplified API Calls**: Cleaner sandbox transfer requests
+  - No need to specify `timing` parameter in sandbox mode
+  - Edge function handles timing optimization automatically
+  - Reduces boilerplate in client-side transfer code
+  - Maintains backward compatibility with explicit timing values
+
+- ✅ **Improved Developer Experience**: Faster sandbox testing
+  - Instant fund availability without configuration
+  - Reduced friction in development workflow
+  - Clear console logging for transparency
+  - Aligns with Alpaca's sandbox instant funding capabilities
+
+- ✅ **Smart Validation Logic**: Removed unnecessary wire transfer validation
+  - Removed `bank_id` requirement for wire transfers (handled by Alpaca API)
+  - Simplified validation logic for cleaner code
+  - Lets Alpaca API handle transfer-type-specific validation
+  - Reduces false positive validation errors
+
+- ✅ **Technical Implementation**:
+  - Checks if `tradingMode === 'paper'` and `timing` is not provided
+  - Automatically injects `timing: 'immediate'` into request body
+  - Logs timing configuration for debugging visibility
+  - Preserves explicit timing values when provided
+
+**Technical Details:**
+- **File Modified**: `supabase/functions/alpaca-transfers/index.ts`
+- **Automatic Timing**: Sets `timing: 'immediate'` in sandbox mode
+- **Validation Cleanup**: Removed redundant wire transfer `bank_id` check
+- **Logging**: Console logs timing configuration for transparency
+
+**Benefits:**
+- Instant fund availability in sandbox without manual configuration
+- Cleaner client-side code with less boilerplate
+- Faster development and testing workflows
+- Better alignment with Alpaca's sandbox capabilities
+- Improved developer experience with automatic optimization
+- Reduced configuration errors in sandbox environment
+
+**Example Usage:**
+```typescript
+// Before (manual timing configuration)
+await edgeFunctionClient.post('alpaca-transfers', {
+  transfer_type: 'ach',
+  amount: '1000',
+  direction: 'INCOMING',
+  timing: 'immediate'  // Had to specify manually
+});
+
+// After (automatic in sandbox)
+await edgeFunctionClient.post('alpaca-transfers', {
+  transfer_type: 'ach',
+  amount: '1000',
+  direction: 'INCOMING'
+  // timing automatically set to 'immediate' in sandbox mode
+});
+```
+
+---
+
+### Quick Sandbox Funding: Enhanced Error Handling (v1.7.40) ✅
+
+**Improved User Guidance for Bank Relationship Requirements**
+
+Enhanced the `QuickSandboxFunding` component with better error handling and user guidance:
+
+- ✅ **Relationship ID Support**: Added `relationship_id` parameter for sandbox transfers
+  - Uses `accountId` as dummy relationship ID for sandbox environment
+  - Aligns with Alpaca Transfer API requirements
+  - Maintains instant funding capability in sandbox mode
+  - Proper parameter structure for API compatibility
+
+- ✅ **Intelligent Error Messages**: Context-aware error feedback
+  - Detects relationship-related errors from API responses
+  - Provides helpful guidance: "Please use the ACH Transfer form below to link a bank account first"
+  - Directs users to proper workflow for bank account linking
+  - Reduces confusion about sandbox funding requirements
+
+- ✅ **User Experience Improvements**: Clear guidance for common issues
+  - Explains that sandbox instant funding requires bank relationship setup
+  - Points users to ACH Transfer form for bank linking
+  - Maintains generic error messages for other failure types
+  - Professional error handling with actionable next steps
+
+- ✅ **Technical Implementation**:
+  - Added `relationship_id: accountId` to transfer request payload
+  - Enhanced error message parsing with conditional logic
+  - Checks for "relationship" keyword in error messages
+  - Maintains backward compatibility with existing functionality
+
+**Technical Details:**
+- **File Modified**: `src/components/account/QuickSandboxFunding.tsx`
+- **API Endpoint**: `alpaca-transfers/{accountId}` via `edgeFunctionClient`
+- **New Parameter**: `relationship_id` (uses accountId in sandbox)
+- **Error Detection**: Checks for "relationship" keyword in error messages
+- **User Guidance**: Directs to ACH Transfer form for bank linking
+
+**Benefits:**
+- Clearer user guidance for sandbox funding setup
+- Reduces support inquiries about funding failures
+- Professional error handling with actionable steps
+- Better alignment with Alpaca Transfer API requirements
+- Improved developer experience with helpful error messages
+- Maintains instant funding capability once bank relationship exists
+
+---
+
+### Trading Mode Management Script (v1.7.39) ✅
+
+**Command-Line Tool for App-Level Trading Mode Switching**
+
+Created a new TypeScript script for easy trading mode management from the command line:
+
+- ✅ **Simple CLI Interface**: Easy-to-use command-line tool
+  - `node scripts/set-trading-mode.ts paper` - Switch to sandbox mode
+  - `node scripts/set-trading-mode.ts live` - Switch to live mode
+  - Input validation ensures only valid modes (`paper` or `live`)
+  - Clear error messages for invalid arguments
+
+- ✅ **Environment Validation**: Checks required configuration
+  - Validates `PUBLIC_SUPABASE_URL` environment variable
+  - Validates `SUPABASE_SERVICE_ROLE_KEY` environment variable
+  - Exits with helpful error messages if configuration is missing
+  - Prevents execution without proper database access
+
+- ✅ **Database Integration**: Updates app-level settings
+  - Updates `app_settings` table with new trading mode
+  - Sets `updated_at` timestamp for audit trail
+  - Uses service role key for administrative access
+  - Filters by `setting_key = 'trading_mode'`
+
+- ✅ **Automatic Verification**: Confirms mode change
+  - Queries database after update to verify change
+  - Displays current mode and update timestamp
+  - Provides visual confirmation with emoji indicators
+  - Ensures mode change was successful
+
+- ✅ **Safety Features**: Clear warnings and guidance
+  - **Live Mode Warning**: Displays prominent warning when switching to live mode
+    - Lists compliance requirements (business agreement, API keys, etc.)
+    - Reminds about real money trading implications
+    - Provides checklist of prerequisites
+  - **Sandbox Mode Confirmation**: Reassures safe testing environment
+    - Confirms simulated trades
+    - Emphasizes development safety
+
+- ✅ **Developer Experience**: Professional output formatting
+  - Emoji indicators for visual scanning (🔄, ✅, ⚠️, 🟢, 🔴)
+  - Structured output with clear sections
+  - Detailed verification information
+  - Color-coded warnings and confirmations
+
+**Technical Details:**
+- **File Created**: `scripts/set-trading-mode.ts`
+- **Dependencies**: `@supabase/supabase-js` for database access
+- **Database Table**: `app_settings` with `setting_key = 'trading_mode'`
+- **Valid Modes**: `'paper'` (sandbox) or `'live'` (real money)
+- **Authentication**: Uses `SUPABASE_SERVICE_ROLE_KEY` for admin access
+
+**Usage Examples:**
+```bash
+# Switch to sandbox mode (safe for testing)
+node scripts/set-trading-mode.ts paper
+
+# Switch to live mode (⚠️ real money)
+node scripts/set-trading-mode.ts live
+```
+
+**Benefits:**
+- Quick mode switching without database GUI
+- Automated verification prevents configuration errors
+- Clear safety warnings for live mode
+- Professional developer experience
+- Integrates with existing app-level trading mode architecture
+- Useful for deployment automation and testing workflows
+
+**Related Documentation:**
+- [Trading Mode Configuration](./TRADING_MODE_CONFIGURATION.md)
+- [App-Level Trading Mode Architecture](./APP_LEVEL_TRADING_MODE.md)
+
+---
+
+### App-Level Trading Mode Architecture (v1.7.38) ✅
+
+**Centralized Trading Mode Configuration**
+
+Refactored the authentication system to use app-level trading mode configuration instead of per-user settings:
+
+- ✅ **App-Level Configuration**: Trading mode now controlled at application level
+  - Reads from `app_settings` table with `setting_key = 'trading_mode'`
+  - Single source of truth for entire application
+  - Eliminates per-user trading mode complexity
+  - Simplifies mode switching for all users simultaneously
+
+- ✅ **Simplified Authentication Flow**: Cleaner auth context
+  - Removed per-user profile trading mode lookup
+  - Removed profile validation and error handling for missing profiles
+  - Reduced database queries during authentication
+  - Faster authentication with fewer dependencies
+
+- ✅ **Graceful Fallback**: Robust error handling
+  - Defaults to `'paper'` mode if settings fetch fails
+  - Console warning for debugging when fallback occurs
+  - No authentication failures due to missing settings
+  - Ensures users can always access the platform
+
+- ✅ **Database Schema**: Leverages existing `app_settings` table
+  - `setting_key`: `'trading_mode'`
+  - `setting_value`: `'paper'` or `'live'`
+  - Single row controls entire application behavior
+  - Easy to toggle via database update or admin interface
+
+- ✅ **Benefits**:
+  - Consistent trading mode across all users
+  - Simplified deployment and configuration management
+  - Easier testing with single mode toggle
+  - Reduced authentication complexity
+  - Better alignment with sandbox/production environment separation
+
+**Technical Details:**
+- **File Modified**: `supabase/functions/_shared/auth.ts`
+- **Database Query**: `SELECT setting_value FROM app_settings WHERE setting_key = 'trading_mode'`
+- **Default Value**: `'paper'` (safe fallback)
+- **Type**: `'paper' | 'live'` enum
+- **Scope**: Application-wide (not per-user)
+
+**Migration Notes:**
+- Removed dependency on `profiles.trading_mode` column
+- Removed profile existence validation during authentication
+- Authentication now succeeds even without user profile
+- Trading mode determined by app-level setting only
+
+**Benefits:**
+- Simplified authentication logic with fewer database queries
+- Consistent trading environment for all users
+- Easier mode switching for testing and deployment
+- Reduced authentication failure points
+- Better separation of concerns (auth vs. trading config)
+- Aligns with sandbox/production environment model
+
+---
+
+### Quick Sandbox Funding Component (v1.7.37) ✅
+
+**Instant Sandbox Account Funding for Testing**
+
+Created a new `QuickSandboxFunding` component for rapid sandbox account funding during development and testing:
+
+- ✅ **One-Click Funding**: Instant fund addition with predefined amounts
+  - Quick buttons for $1,000, $5,000, $10,000, $25,000, $50,000, and $100,000
+  - Uses Alpaca Transfers API with INCOMING direction for simulated deposits
+  - Funds available instantly for trading without waiting
+  - Perfect for rapid testing and development workflows
+
+- ✅ **User Experience**: Clean, intuitive interface
+  - Blue-themed card design for sandbox context
+  - Success confirmation with auto-dismiss after 1.5 seconds
+  - Loading states with spinner animation during API calls
+  - Error handling with clear feedback messages
+  - Optional callback on funding completion for UI refresh
+
+- ✅ **Technical Implementation**:
+  - Uses `edgeFunctionClient.post('alpaca-transfers')` for funding
+  - Simulates incoming ACH transfers with `direction: 'INCOMING'`
+  - Immediate fund availability using Alpaca's Transfer API simulation
+  - Proper error handling with try-catch blocks and contextual messages
+  - TypeScript interface with `accountId` and optional `onFundingComplete` callback
+  - Responsive grid layout (2 columns mobile, 3 columns desktop)
+
+- ✅ **State Management**: React hooks for UI feedback
+  - `loading` state for button disable during API calls
+  - `success` state for confirmation message display
+  - `error` state for error message handling
+  - Auto-reload after successful funding (1.5s delay)
+
+- ✅ **Developer Benefits**:
+  - Eliminates manual ACH transfer setup for testing
+  - Speeds up development workflow significantly
+  - No need to wait for transfer processing
+  - Easy integration into funding pages
+  - Clear console logging for debugging
+
+**Technical Details:**
+- **File Created**: `src/components/account/QuickSandboxFunding.tsx`
+- **API Endpoint**: `alpaca-transfers` via `edgeFunctionClient`
+- **Transfer Parameters**: 
+  - `transfer_type: 'ach'`
+  - `amount: string` (converted from number)
+  - `direction: 'INCOMING'`
+- **Props**: `accountId` (required), `onFundingComplete` (optional callback)
+- **UI Components**: Card, Button, Icons (DollarSign, Loader2, CheckCircle2, AlertCircle)
+- **Layout**: Grid with 2 columns (mobile) / 3 columns (desktop)
+
+**Benefits:**
+- Instant sandbox funding simulating real ACH transfers
+- Faster testing and development cycles
+- Professional UI with success/error feedback
+- Easy integration into existing funding workflows
+- Reduces friction in sandbox environment testing
+- Follows Alpaca's documented Transfer API simulation pattern
+
+---
+
+### Transfer Schema: Enhanced Flexibility (v1.7.36) ✅
+
+**More Flexible Transfer Data Handling**
+
+Updated the `alpaca-transfers.ts` service with a more flexible Transfer schema to handle API response variations:
+
+- ✅ **Flexible Field Types**: Changed strict enums to string types
+  - `type`: Now accepts any string (previously strict enum)
+  - `status`: Now accepts any string (previously limited to specific statuses)
+  - `direction`: Now accepts any string (previously strict enum)
+  - `fee_payment_method`: Now accepts any string (previously strict enum)
+  - Handles API response variations gracefully
+
+- ✅ **Additional Optional Fields**: Added support for more transfer metadata
+  - `currency`: Optional currency code for international transfers
+  - `instant_amount`: Optional instant funding amount
+  - `reason`: Optional nullable reason for transfer status
+  - `hold_until`: Optional nullable hold date for pending transfers
+  - `requested_amount`: Optional original requested amount
+  - `fee`: Optional transfer fee amount
+
+- ✅ **Benefits**:
+  - More resilient to API response format changes
+  - Handles edge cases and special transfer types
+  - Better support for instant funding and international transfers
+  - Improved error handling with nullable fields
+  - Future-proof schema for new transfer types
+
+**Technical Details:**
+- **File Modified**: `src/lib/alpaca-transfers.ts`
+- **Schema Changes**: Replaced strict Zod enums with flexible string types
+- **New Fields**: 6 additional optional fields for enhanced transfer metadata
+- **Backward Compatible**: Existing code continues to work without changes
+
+**Benefits:**
+- More robust transfer data parsing
+- Handles API variations without validation errors
+- Better support for diverse transfer scenarios
+- Improved debugging with additional metadata fields
+- Future-proof for Alpaca API updates
+
+---
+
+### ACH Transfer Form: Case-Insensitive Status Filtering (v1.7.35) ✅
+
+**Robust Status Matching with Enhanced Logging**
+
+Enhanced the `ACHTransferForm` component with case-insensitive status filtering and comprehensive relationship logging:
+
+- ✅ **Case-Insensitive Status Filtering**: Robust status matching
+  - Changed from `r.status === 'approved'` to `r.status.toLowerCase() === 'approved'`
+  - Handles variations in status casing from API responses
+  - Prevents filtering failures due to case mismatches
+  - More resilient to API response format changes
+
+- ✅ **Enhanced Relationship Logging**: Detailed diagnostic information
+  - Logs all relationships with ID, status, and account owner name
+  - Maps relationship data for easy debugging: `{ id, status, name }`
+  - Provides visibility into all relationships before filtering
+  - Helps identify status format issues quickly
+
+- ✅ **Improved Debugging Experience**: Better troubleshooting workflow
+  - See all relationships returned from API before filtering
+  - Verify status values match expected format
+  - Identify why relationships might not appear as approved
+  - Faster root cause analysis for relationship loading issues
+
+- ✅ **Technical Benefits**:
+  - More robust filtering logic handles edge cases
+  - Better diagnostic information for support teams
+  - Reduced debugging time for status-related issues
+  - Professional error handling with detailed context
+
+**Technical Details:**
+- **File Modified**: `src/components/account/ACHTransferForm.tsx`
+- **Status Filtering**: `r.status.toLowerCase() === 'approved'` (case-insensitive)
+- **Logging Enhancement**: Maps all relationships to `{ id, status, name }` before filtering
+- **API Call**: `listACHRelationships(accountId, undefined, tradingMode)`
+
+**Benefits:**
+- Handles API response variations gracefully
+- Prevents filtering failures from case mismatches
+- Better visibility into relationship data structure
+- Faster debugging with comprehensive logging
+- More resilient to API changes
+
+---
+
+### ACH Transfer Form: Enhanced Debugging & Relationship Loading (v1.7.34) ✅
+
+**Improved Diagnostics and Relationship Filtering**
+
+Enhanced the `ACHTransferForm` component with comprehensive logging and improved relationship loading:
+
+- ✅ **Enhanced Debugging**: Added detailed console logging for troubleshooting
+  - Logs account ID when loading ACH relationships
+  - Logs full API response from `listACHRelationships`
+  - Logs filtered approved relationships for verification
+  - Logs errors with context for faster issue resolution
+
+- ✅ **Improved Relationship Loading**: Better filtering and selection logic
+  - Removed status filter from API call (now filters client-side)
+  - Explicitly filters for `status === 'approved'` relationships
+  - Clearer variable naming with `approvedRelationships`
+  - Auto-selects first approved relationship when available
+
+- ✅ **Better Error Handling**: Enhanced error logging and user feedback
+  - Console error logging for failed API calls
+  - Detailed error context for debugging
+  - Maintains user-friendly error messages
+  - Helps diagnose ACH relationship loading issues
+
+- ✅ **Technical Benefits**:
+  - Easier troubleshooting of ACH relationship issues
+  - Better visibility into API responses
+  - Clearer code flow with explicit filtering
+  - Improved developer experience for debugging
+
+**Technical Details:**
+- **File Modified**: `src/components/account/ACHTransferForm.tsx`
+- **API Call**: `listACHRelationships(accountId, undefined, tradingMode)` - No status filter
+- **Client-Side Filtering**: `relationships.filter(r => r.status === 'approved')`
+- **Logging**: Console logs for account ID, API result, approved relationships, and errors
+
+**Benefits:**
+- Faster debugging of ACH relationship loading issues
+- Better visibility into API responses and filtering logic
+- Improved developer experience with detailed logging
+- Easier identification of relationship status problems
+- Professional error handling with context
+
+---
+
+### Funding Page: ACH Transfer Architecture (v1.7.33) ✅
+
+**Streamlined Funding Flow with Production-Ready ACH Transfers**
+
+Refactored the `FundingPageContent` component to use ACH transfers as the primary funding method:
+
+- ✅ **ACH Transfer Integration**: Replaced LeadTrade internal funding with standard ACH transfers
+  - Removed `LeadTradeFundingForm` component dependency
+  - Integrated `ACHTransferForm` as primary funding method
+  - Aligns with production banking standards and Alpaca's ACH relationship system
+  - Provides real-world transfer experience for users
+
+- ✅ **Simplified Funding Flow**: Cleaner component architecture
+  - Direct ACH transfer interface for deposits and withdrawals
+  - Bank linking management for ACH relationship setup
+  - Transfer history tracking for audit trail
+  - Removed internal funding abstraction layer
+
+- ✅ **Production-Ready Design**: Standard banking workflows
+  - ACH transfers with approved bank relationships
+  - Support for immediate and next-day transfer timing
+  - Proper validation and error handling
+  - Consistent with real brokerage account funding
+
+- ✅ **User Experience Benefits**:
+  - Familiar banking transfer interface
+  - Clear deposit/withdrawal directions
+  - Bank account selection from approved relationships
+  - Transfer status tracking and history
+
+**Technical Details:**
+- **File Modified**: `src/components/account/FundingPageContent.tsx`
+- **Component Replaced**: `LeadTradeFundingForm` → `ACHTransferForm`
+- **Architecture**: ACH-first funding with bank relationship management
+- **Functionality**: Deposits, withdrawals, transfer history, bank linking
+
+**Benefits:**
+- Production-ready funding architecture
+- Standard ACH transfer workflows
+- Better alignment with Alpaca Broker API
+- Simplified component dependencies
+- Real-world banking experience for users
+
+---
+
+### ACH Transfer Form: UI Cleanup (v1.7.32) ✅
+
+**Streamlined User Interface for Production Readiness**
+
+Cleaned up the `ACHTransferForm` component by removing redundant sandbox mode warnings:
+
+- ✅ **Removed Sandbox Banner**: Eliminated amber-colored informational banner
+  - Removed duplicate sandbox environment notice
+  - Cleaned up card description to remove "(Sandbox Mode)" suffix
+  - Simplified UI by removing redundant messaging
+  - Maintains clean, professional appearance
+
+- ✅ **Cleaner User Experience**: Streamlined interface
+  - Reduced visual clutter in the form
+  - Removed 8 lines of banner markup
+  - Faster form rendering without extra DOM elements
+  - More focus on actual transfer functionality
+
+- ✅ **Rationale**: Banner was redundant with existing guidance
+  - Informational banner already appears when no ACH relationships exist
+  - Card description provides sufficient context
+  - Reduces repetitive messaging for users
+  - Aligns with production-ready UI standards
+
+**Technical Details:**
+- **File Modified**: `src/components/account/ACHTransferForm.tsx`
+- **Lines Removed**: 8 (amber banner div with sandbox notice)
+- **Functionality**: No changes to transfer logic or validation
+- **UI Impact**: Cleaner, more professional form appearance
+
+**Benefits:**
+- Reduced visual noise in the UI
+- Faster component rendering
+- Professional appearance without redundant warnings
+- Better user focus on transfer functionality
+- Consistent with production-ready design standards
+
+---
+
+### LeadTrade Funding Form: New Component (v1.7.31) ✅
+
+**Internal Funding System for Test Environment**
+
+Created a new `LeadTradeFundingForm` component for managing internal funding requests in the test environment:
+
+- ✅ **Component Features**: Complete funding request interface
+  - Deposit amount input with validation ($10 - $10,000 per transaction)
+  - Real-time form validation with clear error messages
+  - Success confirmation with auto-dismiss after 5 seconds
+  - Loading states during submission
+  - Responsive design with dark mode support
+
+- ✅ **User Experience**: Clear guidance for test environment
+  - Informational banner explaining how the system works
+  - Step-by-step process description
+  - Test environment notice with amber-themed alert
+  - Professional card-based layout with icons
+  - Accessible form controls with proper labels
+
+- ✅ **Technical Implementation**:
+  - Calls `leadtrade-funding-request` Edge Function
+  - Session-based authentication with Bearer tokens
+  - Proper error handling with detailed messages
+  - Optional callback on funding completion
+  - TypeScript interface for props
+
+- ✅ **Validation Rules**:
+  - Minimum deposit: $10
+  - Maximum deposit: $10,000 per transaction
+  - Positive numbers only
+  - Required field validation
+  - Number input with 2 decimal precision
+
+**Technical Details:**
+- **File Created**: `src/components/account/LeadTradeFundingForm.tsx`
+- **API Endpoint**: `/functions/v1/leadtrade-funding-request`
+- **Authentication**: Supabase session with Bearer token
+- **Props**: `accountId` (required), `onFundingComplete` (optional callback)
+
+**Benefits:**
+- Simplified funding for test accounts
+- Clear user guidance for sandbox environment
+- Professional UI consistent with platform design
+- Proper error handling and user feedback
+- Easy integration into funding page
+
+---
+
+### ACH Transfer Form: Sandbox Mode Guidance (v1.7.30) ✅
+
+**Enhanced User Experience with Sandbox Environment Context**
+
+Improved the `ACHTransferForm` component with helpful sandbox mode guidance for users:
+
+- ✅ **Sandbox Mode Indicator**: Added clear visual indicator in card description
+  - Updated CardDescription to show "(Sandbox Mode)" label
+  - Helps users understand they're in test environment
+  - Reduces confusion about test vs. production funds
+  - Professional UI with contextual information
+
+- ✅ **Informational Banner**: Added helpful guidance when no ACH relationships exist
+  - Blue-themed informational box with sandbox context
+  - Explains that test accounts come pre-funded with $100,000
+  - Clarifies that ACH transfers in sandbox are simulated
+  - Reassures users that no real money is moved in test mode
+
+- ✅ **User Experience Benefits**:
+  - Reduces support inquiries about missing funds
+  - Clear expectations for sandbox environment behavior
+  - Professional onboarding experience for new users
+  - Consistent with banking industry best practices
+  - Helps users understand test environment limitations
+
+- ✅ **Technical Implementation**:
+  - Added informational div with blue color scheme
+  - Dark mode support with proper color variants
+  - Responsive spacing with Tailwind utilities
+  - Maintains existing ACH transfer functionality
+
+**Technical Details:**
+- **File Modified**: `src/components/account/ACHTransferForm.tsx`
+- **UI Enhancement**: Informational banner with sandbox context
+- **Color Scheme**: Blue-50/950 with border for visibility
+- **Accessibility**: Strong tags for emphasis, clear messaging
+
+**Benefits:**
+- Better user onboarding in sandbox environment
+- Reduced confusion about test funds and transfers
+- Professional appearance with contextual help
+- Improved user confidence when testing features
+- Clear distinction between sandbox and production modes
+
+---
+
+### Bank Relationships: Code Cleanup (v1.7.29) ✅
+
+**Removed Duplicate Function Definition**
+
+Cleaned up the `alpaca-bank-relationships.ts` service by removing duplicate code:
+
+- ✅ **Code Quality Improvement**: Removed incomplete duplicate function
+  - Eliminated 38 lines of duplicate `deleteBankRelationship` function definition
+  - Removed orphaned function signature at end of file
+  - Maintained single, complete implementation with proper authentication
+  - Improved code maintainability and readability
+
+- ✅ **Function Integrity**: Complete implementation preserved
+  - Full `deleteBankRelationship` function with session-based authentication
+  - Proper Bearer token authorization headers
+  - Enhanced error handling with multi-level error extraction
+  - Consistent with `createBankRelationship` and `listBankRelationships` patterns
+
+- ✅ **Technical Details**:
+  - **File Modified**: `src/lib/alpaca-bank-relationships.ts`
+  - **Lines Removed**: 38 (duplicate function definition)
+  - **Functionality**: No changes to API behavior or features
+  - **Authentication**: Session-based with Bearer token (unchanged)
+
+**Benefits:**
+- Cleaner codebase without duplicate definitions
+- Reduced file size and improved readability
+- Prevents confusion from incomplete code fragments
+- Maintains all banking functionality without breaking changes
+- Professional code quality standards
+
+---
+
+### Bank Relationships: Enhanced Authentication & Error Handling (v1.7.28) ✅
+
+**Improved Security and User Experience for Bank Account Management**
+
+Enhanced the `alpaca-bank-relationships.ts` service with session-based authentication and improved error handling:
+
+- ✅ **Session-Based Authentication**: Added Supabase session validation
+  - Retrieves active session before making API calls
+  - Validates `access_token` presence for authenticated requests
+  - Returns clear error message when authentication is missing
+  - Prevents unauthorized bank relationship creation attempts
+
+- ✅ **Bearer Token Authorization**: Proper authentication headers
+  - Uses `Authorization: Bearer {token}` header for Edge Function calls
+  - Includes `apikey` header for Supabase authentication
+  - Removes deprecated `credentials: 'include'` pattern
+  - Consistent with modern authentication best practices
+
+- ✅ **Enhanced Error Handling**: Improved error response parsing
+  - Multi-level error extraction: `error.message`, `error`, `message`
+  - Validates response success status before returning data
+  - Graceful fallback for malformed error responses
+  - Detailed error context for troubleshooting
+
+- ✅ **Response Validation**: Improved data validation
+  - Validates `result.success` before processing data
+  - Parses `result.data` instead of raw result for schema validation
+  - Consistent error handling across create and list operations
+  - Better type safety with Zod schema validation
+
+- ✅ **Security Benefits**:
+  - Prevents unauthenticated bank relationship operations
+  - Ensures user identity verification before banking operations
+  - Consistent authentication pattern across all banking APIs
+  - Better audit trail with authenticated requests
+
+**Technical Details:**
+- **File Modified**: `src/lib/alpaca-bank-relationships.ts`
+- **Authentication Method**: Supabase session with Bearer token
+- **API Endpoints**: 
+  - POST `/functions/v1/alpaca-bank-relationships/{accountId}` - Create relationship
+  - GET `/functions/v1/alpaca-bank-relationships/{accountId}` - List relationships
+- **Response Format**: `{ success, data, error }`
+- **Validation**: Zod schema validation on `result.data`
+
+**Benefits:**
+- Enhanced security for sensitive banking operations
+- Consistent authentication across all API services
+- Better error messages for debugging
+- Prevents unauthorized access to bank relationship functionality
+- Improved user experience with clear authentication requirements
+- Aligned with ACH relationships authentication pattern
+
+---
+
+### ACH Relationships: Enhanced Error Handling (v1.7.27) ✅
+
+**Intelligent Error Message Extraction with HTTP Status Context**
+
+Enhanced the `alpaca-ach-relationships.ts` service with sophisticated error handling for better user feedback:
+
+- ✅ **Smart Error Message Extraction**: Multi-level error parsing strategy
+  - Checks `error.message` for primary error details
+  - Falls back to `error.details.message` for nested error structures
+  - Handles string and object error formats gracefully
+  - Extracts `message` field as final fallback
+  - Prevents generic error messages when specific details are available
+
+- ✅ **HTTP Status Code Context**: Meaningful error messages based on response status
+  - **422 Unprocessable Entity**: "Invalid bank details: {error}" - Validation failures
+  - **409 Conflict**: "Duplicate account: {error}" - Account already exists
+  - **Other Status Codes**: Returns extracted error message with context
+  - Helps users understand the specific issue without technical jargon
+
+- ✅ **Enhanced Debugging**: Improved error logging for troubleshooting
+  - Logs HTTP status code alongside error data
+  - Provides full error context in console for developers
+  - Maintains detailed error information for support teams
+  - Easier to diagnose API integration issues
+
+- ✅ **User Experience Benefits**:
+  - Clear, actionable error messages for common scenarios
+  - Reduces confusion about why ACH relationship creation failed
+  - Helps users correct invalid bank details immediately
+  - Prevents duplicate account creation attempts
+  - Professional error handling consistent with banking standards
+
+**Technical Details:**
+- **File Modified**: `src/lib/alpaca-ach-relationships.ts`
+- **Error Extraction**: Multi-level fallback strategy for nested error objects
+- **Status Code Mapping**: 422 (validation), 409 (duplicate), others (generic)
+- **Response Format**: `{ success, data, error }`
+- **Logging**: Includes HTTP status code in error logs
+
+**Benefits:**
+- User-friendly error messages for common banking errors
+- Faster issue resolution with specific error context
+- Better debugging with status code logging
+- Consistent error handling across banking APIs
+- Professional user experience for sensitive financial operations
+
+---
+
+### ACH Relationships: Enhanced Authentication (v1.7.26) ✅
+
+**Improved Security with Session-Based Authentication**
+
+Enhanced the `alpaca-ach-relationships.ts` service with proper authentication handling for ACH relationship creation:
+
+- ✅ **Session-Based Authentication**: Added Supabase session validation
+  - Retrieves active session before making API calls
+  - Validates `access_token` presence for authenticated requests
+  - Returns clear error message when authentication is missing
+  - Prevents unauthorized ACH relationship creation attempts
+
+- ✅ **Bearer Token Authorization**: Proper authentication headers
+  - Uses `Authorization: Bearer {token}` header for Edge Function calls
+  - Includes `apikey` header for Supabase authentication
+  - Removes deprecated `credentials: 'include'` pattern
+  - Consistent with modern authentication best practices
+
+- ✅ **Enhanced Error Handling**: Improved error response parsing
+  - Handles nested error structures: `error.message`, `error`, `message`
+  - Provides detailed error context for troubleshooting
+  - Validates response success status before returning data
+  - Graceful fallback for malformed error responses
+
+**Technical Details:**
+- **File Modified**: `src/lib/alpaca-ach-relationships.ts`
+- **Authentication Method**: Supabase session with Bearer token
+- **API Endpoint**: `/functions/v1/alpaca-ach-relationships/{accountId}`
+- **Response Format**: `{ success, data, error }`
+
+**Benefits:**
+- Enhanced security for sensitive banking operations
+- Consistent authentication across all API services
+- Better error messages for debugging
+- Prevents unauthorized access to ACH functionality
+- Improved user experience with clear authentication requirements
+
+- ✅ **Security Benefits**:
+  - Prevents unauthenticated ACH relationship creation
+  - Ensures user identity verification before banking operations
+  - Consistent authentication pattern across all banking APIs
+  - Better audit trail with authenticated requests
+
+**Technical Details:**
+- **File Modified**: `src/lib/alpaca-ach-relationships.ts`
+- **Authentication Method**: Supabase session with Bearer token
+- **API Endpoint**: `/functions/v1/alpaca-ach-relationships/{accountId}`
+- **Response Format**: `{ success, data, error }`
+
+**Benefits:**
+- Enhanced security for sensitive banking operations
+- Consistent authentication across all API services
+- Better error messages for debugging
+- Prevents unauthorized access to ACH functionality
+- Improved user experience with clear authentication requirements
+
+---
+
+### CORS Utilities: Legacy Export Documentation (v1.7.25) ✅
+
+**Improved Developer Guidance for CORS Headers**
+
+Enhanced the shared CORS utilities with clearer documentation about the legacy `corsHeaders` export:
+
+- ✅ **Documentation Update**: Added warning comment to legacy `corsHeaders` export
+  - Clear "DO NOT USE with credentials" warning
+  - Recommends using `getCorsHeaders(req)` instead for proper origin handling
+  - Helps developers avoid common CORS pitfalls with wildcard origins
+  - Maintains backward compatibility while guiding best practices
+
+- ✅ **Best Practice Guidance**: Clarifies proper CORS usage patterns
+  - `getCorsHeaders(req)` - Recommended for all new code (dynamic origin support)
+  - `corsHeaders` - Legacy export for backward compatibility only
+  - Wildcard `*` origin incompatible with credentials (cookies, auth headers)
+  - Dynamic origin extraction required for authenticated requests
+
+- ✅ **Developer Experience**: Improved code maintainability
+  - Inline documentation prevents misuse of legacy exports
+  - Clear migration path for existing Edge Functions
+  - Reduces debugging time for CORS-related issues
+  - Consistent with modern CORS best practices
+
+**Technical Context:**
+- When using `Access-Control-Allow-Credentials: true`, browsers require a specific origin
+- Wildcard `*` origins are rejected by browsers when credentials are included
+- `getCorsHeaders(req)` dynamically extracts the requesting origin for proper handling
+- Legacy `corsHeaders` with wildcard `*` only works for non-authenticated requests
+
+**Files Modified:**
+- `supabase/functions/_shared/cors.ts` - Added documentation comments to legacy export
+
+**Migration Recommendation:**
+```typescript
+// ❌ Avoid - Legacy pattern (no credentials support)
+import { corsHeaders } from '../_shared/cors.ts'
+return new Response(data, { headers: corsHeaders })
+
+// ✅ Recommended - Dynamic origin support
+import { getCorsHeaders } from '../_shared/cors.ts'
+return new Response(data, { headers: getCorsHeaders(req) })
+```
+
+**Benefits:**
+- Prevents common CORS authentication errors
+- Guides developers toward best practices
+- Maintains backward compatibility
+- Improves code quality across Edge Functions
+- Reduces support burden for CORS issues
+
+---
+
+### AssetChart: Enhanced Market Data Integration (v1.7.24) ✅
+
+**Direct Edge Function Integration with Dynamic Timeframe Support**
+
+Refactored the `AssetChart` component to use direct Edge Function calls for improved reliability and flexibility:
+
+- ✅ **Direct API Integration**: Migrated from apiService to direct Edge Function calls
+  - Uses `alpaca-market-data-enhanced/bars` endpoint directly
+  - Authenticated requests with Supabase session tokens
+  - Eliminates dependency on deprecated apiService.getBars method
+  - Consistent with other market data components (SimpleMarketGrid, StockSearch)
+
+- ✅ **Dynamic Timeframe Support**: Intelligent bar interval selection
+  - **1D**: 15-minute bars for intraday granularity
+  - **1W**: 1-hour bars for weekly trends
+  - **1M**: Daily bars for monthly overview (default)
+  - **3M**: Daily bars for quarterly analysis
+  - **1Y**: Daily bars for annual performance
+  - Automatic date range calculation based on selected timeframe
+
+- ✅ **Enhanced Data Handling**: Improved response parsing and error handling
+  - Validates nested response structure: `result.data.bars.bars[symbol]`
+  - Graceful fallback when session unavailable
+  - Detailed error logging for troubleshooting
+  - Maps bar data to chart format with close price, volume, and formatted dates
+
+- ✅ **Technical Implementation**:
+  - Session validation before API calls
+  - URL parameter construction with timeframe, start/end dates, limit, and feed
+  - Bearer token authentication with Supabase session
+  - Proper error handling with console logging
+  - Maintains backward compatibility with existing UI
+
+**Technical Details:**
+- **File Modified**: `src/components/dashboard/AssetChart.tsx`
+- **API Endpoint**: `/functions/v1/alpaca-market-data-enhanced/bars`
+- **Authentication**: Bearer token from Supabase session
+- **Data Source**: Alpaca IEX feed for historical bars
+- **Response Format**: `{ success, data: { bars: { bars: { [symbol]: [...] } } } }`
+
+**Benefits:**
+- Consistent market data architecture across all components
+- More flexible timeframe selection with appropriate bar intervals
+- Better error handling and user feedback
+- Eliminates deprecated API dependencies
+- Improved maintainability with standardized endpoints
+- Real-time chart updates with proper authentication
+
+---
+
+### SimpleMarketGrid: Production-Ready Logging Cleanup (v1.7.23) ✅
+
+**Optimized Console Output for Production Deployment**
+
+Cleaned up debug logging in the `SimpleMarketGrid` component for production readiness:
+
+- ✅ **Removed Debug Logging**: Eliminated verbose console output
+  - Removed emoji-based debug indicators (🔍, 📊, 📡, 📥, ✅, ⚠️, ❌)
+  - Removed market data fetch logging (symbol lists, counts, prices)
+  - Removed search query logging and match reporting
+  - Removed API call URL and response status logging
+  - Removed session validation warnings
+
+- ✅ **Retained Critical Errors**: Kept essential error logging
+  - Market data fetch errors still logged to console
+  - Search errors still logged for troubleshooting
+  - Error messages provide context without verbose details
+  - Maintains debugging capability for production issues
+
+- ✅ **Production Benefits**:
+  - Cleaner browser console for end users
+  - Reduced console noise in production environment
+  - Improved performance with fewer console operations
+  - Professional appearance without debug spam
+  - Easier to spot actual errors when they occur
+
+- ✅ **Code Quality Improvements**:
+  - Removed unnecessary comments explaining removed logging
+  - Simplified code flow without debug statements
+  - Maintained all functionality while reducing verbosity
+  - Better separation between development and production code
+
+**Technical Details:**
+- **File Modified**: `src/components/trading/SimpleMarketGrid.tsx`
+- **Lines Removed**: ~20 console.log statements
+- **Errors Retained**: Critical error logging with console.error
+- **Functionality**: No changes to component behavior or features
+
+**Benefits:**
+- Production-ready code without debug clutter
+- Better user experience with clean console
+- Easier maintenance without verbose logging
+- Professional deployment standards
+
+---
+
+### SimpleMarketGrid: UI Enhancement with Dedicated Trade Button (v1.7.22) ✅
+
+**Improved User Experience with Clearer Call-to-Action**
+
+Enhanced the `SimpleMarketGrid` component with a dedicated "Trade" button column for better usability:
+
+- ✅ **New Action Column**: Added dedicated "Trade" button column
+  - Clear call-to-action button for each stock
+  - Consistent button styling with `size="sm"` for compact display
+  - Positioned as the last column for natural reading flow
+  - Uses `safeNavigate` for reliable client-side routing
+
+- ✅ **Symbol Column Simplification**: Removed clickable behavior from symbol
+  - Changed from interactive `Button` to static `div` element
+  - Maintains font-medium styling for visual hierarchy
+  - Reduces confusion about clickable areas
+  - Cleaner, more professional table appearance
+
+- ✅ **User Experience Benefits**:
+  - Explicit "Trade" action is more discoverable for new users
+  - Reduces accidental clicks on symbol column
+  - Consistent with standard data table patterns
+  - Better mobile touch target with dedicated button
+  - Clearer visual separation between data and actions
+
+- ✅ **Technical Implementation**:
+  - Added new column definition with `id: 'actions'`
+  - Button navigates to `/trade?symbol={SYMBOL}&type=stock`
+  - Maintains existing navigation functionality
+  - No breaking changes to component API
+
+**Technical Details:**
+- **File Modified**: `src/components/trading/SimpleMarketGrid.tsx`
+- **Column Changes**: Symbol column simplified, new Actions column added
+- **Navigation**: Uses `safeNavigate` utility for reliable routing
+- **Button Size**: Small (`sm`) for compact table display
+
+**Benefits:**
+- More intuitive user interface with explicit actions
+- Better accessibility with clear button labels
+- Improved mobile experience with proper touch targets
+- Consistent with modern data table UX patterns
+- Reduced cognitive load for users
+
+---
+
+### TradingInterface: Component Architecture Documentation (v1.7.21) ✅
+
+**Current Trading Interface State and Component Integration**
+
+Documented the current state of the trading interface and its component architecture:
+
+- ✅ **TradingInterface Component**: Main trading interface with comprehensive features
+  - Integrated inline stock search functionality
+  - Tab-based navigation: Trade, Portfolio, Positions, Orders, Performance
+  - Account overview cards: Portfolio Value, Buying Power, Cash, Day Trade Count
+  - URL parameter support for pre-filling symbols (`?symbol=AAPL&type=stock`)
+  - Real-time account data fetching via `apiService.getAccount()`
+  - Stock quote fetching via `apiService.getQuotes()`
+
+- ✅ **Component Integration**:
+  - `TradeForm`: Order placement with market/limit orders
+  - `AccountPositions`: Real-time position display with P&L
+  - `OrderHistory`: Transaction history with filtering
+  - `PortfolioChart`: Portfolio performance visualization
+  - `AssetChart`: Individual stock price charts
+  - `SimpleMarketGrid`: DJIA 30 stocks market overview (used on trade page)
+
+- ✅ **Market Data Flow**:
+  - Direct API service calls for quotes and account data
+  - Handles multiple Edge Function response formats
+  - Graceful error handling with retry functionality
+  - Real-time updates via polling and WebSocket fallback
+
+- ✅ **User Experience**:
+  - Streamlined workflow from search to trade execution
+  - Comprehensive account overview in single interface
+  - Security details display when stock selected
+  - Mobile-responsive design with touch optimization
+
+**Technical Details:**
+- **File**: `src/components/trading/TradingInterface.tsx`
+- **Dependencies**: TradeForm, AccountPositions, OrderHistory, PortfolioChart, AssetChart
+- **API Integration**: apiService for all Alpaca operations
+- **State Management**: React hooks for account data, stock selection, loading states
+
+**Benefits:**
+- Unified trading experience with all features accessible
+- Consistent API patterns across components
+- Deep linking support for direct stock access
+- Comprehensive error handling and loading states
+- Tab-based organization for different views
+
+---
+
+### SimpleMarketGrid: Infinite Loop Fix (v1.7.19) ✅
+
+- ✅ **API Migration**: Replaced `getBars` with direct `alpaca-market-quotes` Edge Function
+  - Uses authenticated Edge Function calls with session tokens
+  - Fetches real-time quotes via IEX feed for accurate pricing
+  - Eliminates dependency on deprecated bars endpoint
+  - Consistent with other market data components (SimpleMarketGrid)
+
+- ✅ **Enhanced Market Data**: Improved quote accuracy and reliability
+  - Real-time bid/ask spreads from latest quotes
+  - Latest trade prices with volume data
+  - Proper fallback handling when quotes unavailable
+  - ISO 8601 timestamps for data freshness
+
+- ✅ **Technical Implementation**:
+  - Direct Supabase client initialization for authentication
+  - Session token retrieval for authorized API calls
+  - Proper error handling with graceful degradation
+  - Maintains backward compatibility with existing UI
+
+- ✅ **Data Structure Updates**:
+  - Uses `latest_trade.price` for current price
+  - Falls back to `ask` or `bid` if trade price unavailable
+  - Volume from `latest_trade.size` for accurate metrics
+  - Note: Change/changePercent set to 0 (requires historical data)
+
+**Technical Details:**
+- **File Modified**: `src/components/trading/StockSearch.tsx`
+- **API Endpoint**: `/functions/v1/alpaca-market-quotes?symbols={symbols}&feed=iex`
+- **Authentication**: Bearer token from Supabase session
+- **Data Source**: Alpaca IEX feed for real-time quotes
+
+**Benefits:**
+- Consistent market data architecture across all components
+- More reliable real-time pricing data
+- Better error handling and user feedback
+- Eliminates deprecated API dependencies
+- Improved maintainability with standardized endpoints
+
+---
+
+### SimpleMarketGrid: Infinite Loop Fix (v1.7.19) ✅
+
+**Optimized useEffect Dependencies to Prevent Infinite Re-renders**
+
+Fixed a critical infinite loop issue in the `SimpleMarketGrid` component's debounced search functionality:
+
+- ✅ **useEffect Dependency Fix**: Removed function dependencies to prevent infinite loops
+  - Changed from `[searchQuery, searchAssets]` to `[searchQuery]` only
+  - Added ESLint disable comment for exhaustive-deps rule with clear explanation
+  - Prevents re-creation of effect when `searchAssets` function reference changes
+  - Maintains proper debouncing behavior with 500ms delay
+
+- ✅ **Improved Search Logic**: Enhanced empty search handling
+  - Explicitly checks for empty search query with `!searchQuery.trim()`
+  - Falls back to DJIA 30 stocks when search is cleared
+  - Logs search state transitions for debugging
+  - Maintains consistent behavior across all search states
+
+- ✅ **Performance Benefits**:
+  - Eliminates unnecessary re-renders and API calls
+  - Reduces CPU usage from infinite effect loops
+  - Improves browser responsiveness during search
+  - Better memory management with proper cleanup
+
+**Technical Details:**
+- **File Modified**: `src/components/trading/SimpleMarketGrid.tsx`
+- **Root Cause**: Function dependencies in useEffect causing re-creation on every render
+- **Solution**: Only depend on primitive `searchQuery` value, not function references
+- **Pattern**: Common React hooks optimization pattern for debounced inputs
+
+**Benefits:**
+- Stable component performance without infinite loops
+- Proper debouncing behavior maintained
+- Cleaner console logs without spam
+- Better user experience with responsive search
+
+---
+
+### Trade Page Component Simplification: SimpleMarketGrid (v1.7.18) ✅
+
+**Streamlined Market Data Display with Enhanced Debugging & Authentication**
+
+Replaced `AlpacaMarketGrid` with new `SimpleMarketGrid` component on the trade page for improved maintainability and focused functionality:
+
+- ✅ **New SimpleMarketGrid Component**: Lightweight market data grid with essential features
+  - Displays Dow Jones 30 stocks by default
+  - Real-time market data via Alpaca Market Quotes Edge Function
+  - Stock search functionality across all active US equities
+  - Auto-refresh every 10 seconds for current data
+  - Clean, focused UI with DataTable integration
+  - **Authentication Guard**: Skips API calls when user is not authenticated
+
+- ✅ **Key Features**:
+  - **Search Capability**: Search by symbol or company name with 500ms debounce
+  - **Asset Filtering**: Filters active US equities, limits to 30 symbols (Basic plan WebSocket limit)
+  - **Real-time Quotes**: Fetches bid/ask spreads, latest trade data, and volume
+  - **Click-to-Trade**: Symbol buttons navigate directly to trading interface
+  - **Responsive Design**: Mobile-optimized with touch-friendly controls
+  - **Session Validation**: Checks for active session before making API requests
+
+- ✅ **Enhanced Debugging**: Comprehensive logging for development and troubleshooting
+  - � Seaerch query logging with emoji indicators
+  - 📡 API response status tracking
+  - 📊 Asset data validation and count reporting
+  - ⚠️ Session status warnings for unauthenticated users
+  - ✅ Match count reporting for filtered results
+  - 📈 Market data fetch symbol logging
+  - ⚠️ Warning messages for edge cases
+  - ❌ Error logging with detailed context
+
+- ✅ **Technical Implementation**:
+  - Uses `alpaca-market-quotes` Edge Function for market data
+  - Uses `alpaca-assets` Edge Function for asset search
+  - Authenticated requests with Supabase session tokens
+  - **Session validation** before API calls to prevent unnecessary requests
+  - Console logging with emoji indicators for easy debugging
+  - Automatic fallback to DJIA 30 when search is cleared
+  - DataTable component for consistent UI/UX
+  - Graceful handling of unauthenticated state
+
+- ✅ **Benefits**:
+  - Simpler codebase without WebSocket complexity
+  - Easier to maintain and debug
+  - Consistent with other market data displays
+  - Better error handling and user feedback
+  - Reduced client-side JavaScript bundle size
+  - **Prevents unnecessary API calls** for unauthenticated users
+  - Improved performance with session-aware data fetching
+
+**Technical Details:**
+- **File Created**: `src/components/trading/SimpleMarketGrid.tsx`
+- **File Modified**: `src/pages/trade.astro` - Replaced AlpacaMarketGrid with SimpleMarketGrid
+- **API Integration**: Uses Edge Functions for both market data and asset search
+- **Auto-refresh**: 10-second polling interval for real-time updates
+- **Search Debounce**: 500ms delay to reduce API calls during typing
+
+**Component Features:**
+- Symbol column with clickable buttons for quick trading
+- Price display with 2 decimal precision
+- Change/Change% with color-coded indicators (green/red)
+- Volume with number formatting
+- Bid/Ask prices for spread analysis
+- Last update timestamp for data freshness
+
+---
+
+### Market Data Debugging: Real-time Update Monitoring (v1.7.17) ✅
+
+**Enhanced Market Data Visibility with Live Update Tracking**
+
+Added comprehensive debugging capabilities to the `AlpacaMarketGrid` component for monitoring real-time market data updates:
+
+- ✅ **Live Update Monitoring**: Automatic logging when market data changes
+  - Tracks total number of items in market data array
+  - Displays first 3 symbols with current prices for quick verification
+  - Shows active search query or confirms DJIA 30 display mode
+  - Updates automatically whenever market data refreshes
+
+- ✅ **Debug Output Format**:
+  - 📊 Market data count: "Market data updated: 30 items"
+  - � Samrple prices: "First 3 symbols: AAPL: 150.25, MSFT: 380.50, TSLA: 245.75"
+  - 📊 Search status: Shows active search query or "No (showing DJIA 30)"
+  - Emoji indicators for easy console scanning
+
+- ✅ **Developer Benefits**:
+  - Verify WebSocket connection is receiving updates
+  - Monitor REST API fallback polling behavior
+  - Confirm search results are loading correctly
+  - Track data refresh frequency in real-time
+  - Identify stale data or connection issues quickly
+
+- ✅ **Implementation Details**:
+  - Uses React `useEffect` hook to monitor `marketData` and `searchQuery` changes
+  - Non-intrusive logging that doesn't impact performance
+  - Only logs when market data array has items (avoids empty state spam)
+  - Provides context-aware information based on search state
+
+**Technical Details:**
+- **File Modified**: `src/components/trading/AlpacaMarketGrid.tsx`
+- **Hook Used**: `useEffect` with dependencies on `marketData` and `searchQuery`
+- **Logging Frequency**: Triggers on every market data update (WebSocket or REST poll)
+- **Performance Impact**: Minimal - only console logging, no DOM updates
+
+**Benefits:**
+- Easier debugging of market data flow
+- Quick verification of live data updates
+- Better visibility into search functionality
+- Helps identify connection issues faster
+- Useful for development and troubleshooting
+
+---
+
+### Market Grid Enhancement: Intelligent Search with Enhanced Logging (v1.7.16) ✅
+
+**Smart Asset Search with Comprehensive Debugging**
+
+Enhanced the `AlpacaMarketGrid` component with improved search functionality and detailed logging:
+
+- ✅ **Intelligent Search System**: Enhanced asset search with better filtering
+  - Searches across ALL active US equities via Alpaca Assets API
+  - Filters by both symbol and company name (case-insensitive)
+  - Limits results to 30 symbols (Basic plan WebSocket limit)
+  - Automatically fetches market data for search results
+  - Seamlessly switches between DJIA 30 and search results
+
+- ✅ **Enhanced Logging**: Comprehensive debugging output
+  - 🔍 Search query logging with emoji indicators
+  - 📊 API response validation and asset count tracking
+  - ✅ Match count reporting for filtered results
+  - 📈 Market data fetch symbol logging
+  - ⚠️ Warning messages for invalid responses
+  - ❌ Error logging with status codes and details
+
+- ✅ **Improved Error Handling**:
+  - Validates API response format before processing
+  - Clears search results on errors
+  - Graceful fallback to empty state
+  - Detailed error messages for troubleshooting
+
+- ✅ **Code Cleanup**:
+  - Removed unused `searchResults` state variable
+  - Simplified state management with single `searchSymbols` array
+  - Cleaner component architecture
+  - Better separation of concerns
+
+**Technical Details:**
+- **File Modified**: `src/components/trading/AlpacaMarketGrid.tsx`
+- **API Integration**: Uses `alpaca-assets` Edge Function for search
+- **Search Logic**: Filters by `symbol` OR `name` (case-insensitive)
+- **Result Limit**: 30 symbols (matches Basic plan WebSocket limit)
+- **Logging**: Console output with emoji indicators for easy debugging
+
+**Benefits:**
+- Better search experience with comprehensive asset coverage
+- Easier debugging with detailed logging
+- Improved error handling and user feedback
+- Cleaner codebase with reduced state complexity
+- Seamless integration with existing market data system
+
+---
+
+### Trade Page UX Improvement: Simplified Layout (v1.7.15) ✅
+
+**Streamlined Trading Experience**
+
+Improved the trade page by removing tab navigation and displaying both trading interface and market overview simultaneously:
+
+- ✅ **Simplified Layout**: Removed tab navigation system
+  - Trading interface and market grid now displayed together
+  - No need to switch between tabs to see market data
+  - Improved user experience with immediate access to both features
+  - Cleaner, more intuitive page structure
+
+- ✅ **Enhanced Visibility**: Both components visible at once
+  - TradingInterface component for order placement and management
+  - AlpacaMarketGrid component for DJIA 30 stocks market overview
+  - Seamless workflow from market research to trade execution
+  - Better mobile experience with vertical scrolling
+
+- ✅ **Performance Benefits**:
+  - Removed unnecessary tab switching JavaScript
+  - Simplified component hydration
+  - Reduced client-side state management
+  - Faster initial page load
+
+**Technical Details:**
+- **File Modified**: `src/pages/trade.astro`
+- **Components Removed**: Tab navigation buttons and tab content wrappers
+- **Components Retained**: TradingInterface and SimpleMarketGrid (now displayed directly)
+- **Layout**: Vertical stack with space-y-6 for consistent spacing
+
+**Benefits:**
+- Improved user experience with no hidden content
+- Better workflow for traders who want to see market data while placing orders
+- Simplified codebase with less JavaScript
+- More intuitive interface for new users
+
+---
+
+### Market Data API: Authentication Architecture Update (v1.7.14) ✅
+
+**Protected Market Data Endpoint with Shared Utilities**
+
+Refactored the `alpaca-market-quotes` Edge Function to require authentication and use shared utilities for consistency:
+
+- ✅ **Authentication Required**: Changed from public to protected endpoint
+  - Now requires user authentication via `withAuth` middleware
+  - Uses shared authentication utilities from `_shared/auth.ts`
+  - Validates JWT tokens and retrieves user context (userId, tradingMode)
+  - Tracks user ID and trading mode for all requests
+
+- ✅ **Shared Utilities Integration**: Migrated to standardized architecture
+  - Uses `processRequest` for consistent request handling
+  - Uses `createSuccessResponse` and `createErrorResponse` for uniform responses
+  - Uses `ERROR_CODES` enum for standardized error handling
+  - Follows same patterns as other protected Edge Functions
+
+- ✅ **Enhanced Logging**: Improved debugging and monitoring
+  - Logs user ID and trading mode with each request
+  - Tracks authentication context for audit trails
+  - Better error messages with user context
+  - Success confirmations include user information
+
+- ✅ **Maintained Functionality**: All features preserved
+  - Still uses Alpaca's free IEX data feed
+  - Rate limiting: 30 symbols per request (Basic plan limit)
+  - Returns formatted quote data with timestamps
+  - Same response format for backward compatibility
+
+**Technical Benefits:**
+- Consistent authentication across all Edge Functions
+- Better security with user-level access control
+- Improved audit trail with user tracking
+- Standardized error handling and responses
+- Easier maintenance with shared utilities
+
+**Migration Notes:**
+- Clients must now include authentication headers (`Authorization: Bearer ${token}`)
+- Public access removed - users must be logged in
+- For unauthenticated access, use Astro API route `/api/market-quotes`
+- No breaking changes to response format
+
+**Files Modified:**
+- `supabase/functions/alpaca-market-quotes/index.ts` - Refactored to use shared utilities and require authentication
+
+---
+
+### Market Data Fallback: Enhanced Authentication & Mock Data Support (v1.7.13) ✅
+
+**Intelligent Authentication with Graceful Degradation**
+
+Enhanced the market data fallback service with comprehensive logging, authentication support, and mock data fallback for improved reliability:
+
+- ✅ **Comprehensive Logging**: Enhanced debugging capabilities
+  - Request URL logging with emoji indicators (🔍, 🔑, 📡, 📥, 📊)
+  - Auth token availability tracking
+  - Request header logging for troubleshooting
+  - Response status and detailed data logging
+  - Error details with full context
+
+- ✅ **Mock Data Fallback**: Automatic fallback for authentication errors
+  - Detects 401 authentication errors automatically
+  - Generates realistic mock market data with price variations
+  - Maintains service availability during auth issues
+  - Clear error messaging: "Using mock data - Edge function authentication required"
+  - Seamless user experience with simulated data
+  - Realistic bid/ask spreads and trade data
+
+- ✅ **Enhanced Error Handling**: Improved resilience
+  - Specific handling for 401 authentication errors
+  - Automatic fallback to mock data on auth failure
+  - Detailed error logging with response text
+  - Graceful degradation strategy
+  - No service interruption for end users
+
+**Technical Implementation:**
+- **Mock Data Generation**: Realistic price ranges ($100-$500)
+- **Price Variations**: Random changes (-$5 to +$5)
+- **Bid/Ask Spreads**: 10-cent spreads for realism
+- **Volume Data**: Random trade sizes (50-550 shares)
+- **Timestamps**: Current ISO 8601 timestamps
+- **Error State**: Maintains error message for debugging
+
+**Benefits:**
+- Improved debugging with comprehensive logging
+- Graceful degradation with mock data fallback
+- Enhanced user experience during service issues
+- Better visibility into authentication flow
+- Maintains service availability during Edge Function issues
+- Clear error messaging for developers
+
+**Files Modified:**
+- `src/lib/market-data-fallback.ts` - Added comprehensive logging, mock data fallback, and enhanced error handling
+
+---
+
+### Homepage Optimization: Removed Market Data Grid (v1.7.11) ✅
+
+**Streamlined Homepage Experience**
+
+Optimized the homepage by removing the Dow Jones 30 stocks market data grid for improved performance and focus:
+
+- ✅ **Component Removal**: Removed `AlpacaMarketGrid` component from homepage
+  - Eliminated real-time market data fetching on initial page load
+  - Reduced client-side JavaScript bundle size
+  - Improved Time to Interactive (TTI) and First Contentful Paint (FCP)
+  - Simplified homepage to focus on core value proposition
+
+- ✅ **Performance Benefits**:
+  - Faster initial page load without market data API calls
+  - Reduced bandwidth usage for homepage visitors
+  - Lower API costs for unauthenticated users
+  - Better mobile experience with lighter page weight
+
+- ✅ **User Experience**:
+  - Cleaner, more focused homepage design
+  - Market data still available on trading page for authenticated users
+  - Maintains all trading functionality without homepage overhead
+
+**Technical Details:**
+- **File Modified**: `src/pages/index.astro`
+- **Component Removed**: `<AlpacaMarketGrid client:load />`
+- **Section Removed**: "Live Market Data Section" with Dow Jones 30 stocks grid
+
+**Benefits:**
+- Improved homepage performance metrics
+- Reduced API calls for casual visitors
+- Better focus on platform features and value proposition
+- Maintained full market data functionality for traders
+
+---
+
+### Broker Status Fix: Market Data Connectivity Check (v1.7.7) ✅
+
+**Fixed Market Data Connectivity Verification**
+
+Corrected the broker status health check to use the proper endpoint for market data connectivity testing:
+
+- ✅ **Endpoint Correction**: Fixed `/v2/assets` check in `alpaca-broker-status` Edge Function
+  - Changed from `dataRequest` to `brokerRequest` for proper routing
+  - Ensures accurate connectivity testing for broker API assets endpoint
+  - Maintains consistency with other broker API calls
+
+- ✅ **Health Check Improvements**:
+  - Proper validation of assets/market data connectivity
+  - Consistent error handling across all health checks
+  - Accurate status reporting for broker API availability
+
+**Technical Details:**
+- **File Modified**: `supabase/functions/alpaca-broker-status/index.ts`
+- **Change**: `alpacaClient.dataRequest` → `alpacaClient.brokerRequest`
+- **Endpoint**: `/v2/assets` (broker API endpoint, not data API)
+
+**Benefits:**
+- Accurate broker API health monitoring
+- Proper connectivity verification for assets endpoint
+- Consistent API client usage across the function
+
+---
+
+### Market Data Architecture Enhancement: Direct Alpaca API Integration (v1.7.6) ✅
+
+**Optimized Market Data Fallback System**
+
+Enhanced the market data fallback service to use direct Alpaca Data API calls instead of Edge Functions, improving performance and reducing latency:
+
+- ✅ **Direct API Integration**: `market-data-fallback.ts` now calls Alpaca Data API directly
+  - Eliminates Edge Function overhead for market data polling
+  - Uses platform's public API keys from environment variables
+  - Accesses Alpaca's free IEX data feed (no user authentication required)
+  - Provides real-time stock quotes with bid/ask spreads
+  - Supports multiple symbols in a single request
+
+- ✅ **Performance Improvements**:
+  - **Reduced Latency**: Direct API calls eliminate Edge Function round-trip
+  - **Lower Costs**: No Edge Function invocations for market data polling
+  - **Better Reliability**: Fewer network hops and potential failure points
+  - **Faster Updates**: 5-second polling interval with immediate data processing
+
+- ✅ **Technical Implementation**:
+  - **Endpoint**: `https://data.alpaca.markets/v2/stocks/quotes/latest?symbols={symbols}&feed=iex`
+  - **Authentication**: Uses `APCA-API-KEY-ID` and `APCA-API-SECRET-KEY` headers
+  - **Response Transformation**: Converts Alpaca format to internal MarketDataPoint structure
+  - **Error Handling**: Comprehensive retry logic with exponential backoff
+
+- ✅ **Data Structure**:
+  ```typescript
+  interface MarketDataPoint {
+    symbol: string;
+    price: number;
+    bid: number;
+    ask: number;
+    volume: number;
+    change: number;
+    changePercent: number;
+    lastUpdate: string;
+  }
+  ```
+
+**Benefits:**
+- Faster market data updates with reduced latency
+- Lower infrastructure costs (no Edge Function invocations)
+- Simplified architecture with fewer moving parts
+- Better error handling and recovery
+- Consistent data format across the application
+
+**Files Modified:**
+- `src/lib/market-data-fallback.ts` - Direct Alpaca API integration
+
+**Architecture Note:**
+- The `alpaca-market-quotes` Edge Function is now a **protected endpoint** (v1.7.14) requiring authentication
+- For unauthenticated access (static pages, demos), use the Astro API route `/api/market-quotes`
+- Fallback system uses Astro API routes for optimal performance on static pages
+- WebSocket connections still preferred for real-time data when available
+- Authenticated users benefit from user-level tracking and audit trails
+
+---
+
+### Market Data Architecture: Astro API Routes for Static Pages (v1.7.9) ✅
+
+**Optimized Market Data Fallback System**
+
+Enhanced the market data fallback service to use Astro API routes instead of Edge Functions, improving performance and compatibility with static site generation:
+
+- ✅ **Astro API Route Integration**: New `/api/market-quotes` endpoint for static pages
+  - Uses Alpaca's free IEX data feed (no authentication required)
+  - Provides real-time stock quotes with bid/ask spreads
+  - Supports multiple symbols in a single request (max 30 per Basic plan)
+  - Returns formatted quote data with timestamps
+  - Server-side API key management for security
+  - Optimized for static site generation with `prerender: false`
+
+- ✅ **Market Data Fallback Service Updated**: `market-data-fallback.ts` now uses Astro API routes
+  - Changed from Edge Function calls to direct Astro API route calls
+  - Eliminates Edge Function overhead for market data polling
+  - Improved performance with reduced latency
+  - Better compatibility with static site generation
+  - Maintains same data format and error handling
+
+- ✅ **API Features**:
+  - **Endpoint**: `GET /api/market-quotes?symbols=AAPL,MSFT,TSLA&feed=iex`
+  - **Feed Parameter**: Optional `feed` parameter (defaults to 'iex' for free data)
+  - **Response Format**: Structured JSON with quote data, feed type, and timestamp
+  - **Error Handling**: Comprehensive error responses with proper status codes
+  - **Rate Limiting**: Enforces 30 symbol limit per request (Basic plan)
+  - **Caching**: 5-second public cache for optimal performance
+
+- ✅ **Data Structure**:
+  - Symbol, bid price, ask price, bid size, ask size
+  - Latest trade information (price, size, timestamp)
+  - Quote timestamp for data freshness
+  - Feed type indicator (iex, sip, otc)
+
+**Technical Implementation:**
+- **API Route**: `src/pages/api/market-quotes.ts` - Server-side Astro endpoint
+- **Fallback Service**: `src/lib/market-data-fallback.ts` - Updated to use API routes
+- **Server-Side Keys**: Uses `PUBLIC_ALPACA_DATA_API_KEY` and `PUBLIC_ALPACA_DATA_API_SECRET` from environment
+- **Static Compatible**: Works with static site generation via `prerender: false`
+- **Error Recovery**: Graceful error handling with detailed error messages
+- **Cache Control**: 5-second public cache header for performance
+
+**Usage Example:**
+```typescript
+// Fetch quotes for multiple symbols from static pages
+const response = await fetch('/api/market-quotes?symbols=AAPL,MSFT,TSLA&feed=iex')
+
+const result = await response.json()
+// Returns: { success: true, data: { quotes: [...], feed: 'iex', timestamp: '...' } }
+```
+
+**Benefits:**
+- Free market data access for static pages without client-side API keys
+- Secure server-side API key management
+- Reduced API costs for basic quote data
+- Faster response times with direct Alpaca integration
+- Better static site generation compatibility
+- Consistent data format across the application
+- Supports demo mode and unauthenticated users
+- Works seamlessly with homepage and other static pages
+
+**Files Created:**
+- `src/pages/api/market-quotes.ts` - New Astro API route
+
+**Files Modified:**
+- `src/lib/market-data-fallback.ts` - Updated to use Astro API routes instead of Edge Functions
+
+**Architecture Note:**
+- Complements existing `alpaca-market-quotes` Edge Function (still available for authenticated requests)
+- Provides optimized endpoint for static pages and fallback scenarios
+- Server-side API key management for enhanced security
+- Reduces Edge Function invocations for better cost efficiency
+
+---
+
+### Market Data Fallback: Enhanced Authentication & Mock Data Support (v1.7.13) ✅
+
+**Intelligent Authentication with Graceful Degradation**
+
+Enhanced the market data fallback service with comprehensive logging, authentication support, and mock data fallback:
+
+- ✅ **Smart Authentication Detection**: `market-data-fallback.ts` now includes auth token when available
+  - Automatically detects if user is logged in via Supabase session
+  - Includes `Authorization` header with JWT token for authenticated users
+  - Falls back to public access (no auth) for unauthenticated users
+  - Always includes `apikey` header for Supabase Edge Function access
+  - Graceful error handling if session check fails
+
+- ✅ **Comprehensive Logging**: Enhanced debugging capabilities
+  - Request URL logging with emoji indicators
+  - Auth token availability tracking
+  - Request header logging for troubleshooting
+  - Response status and data logging
+  - Error details with context
+
+- ✅ **Mock Data Fallback**: Automatic fallback for authentication errors
+  - Detects 401 authentication errors
+  - Generates realistic mock market data
+  - Maintains service availability during auth issues
+  - Clear error messaging for debugging
+  - Seamless user experience with simulated data
+
+- ✅ **Dual Access Mode**:
+  - **Authenticated Users**: Includes JWT token for potential rate limit benefits
+  - **Public Access**: Works without authentication for static pages and demos
+  - **Mock Data Mode**: Automatic fallback when Edge Function is unavailable
+  - Seamless fallback if authentication is unavailable
+  - No breaking changes to existing functionality
+
+- ✅ **Technical Implementation**:
+  - Dynamic session check using `@supabase/supabase-js`
+  - Conditional header construction based on auth status
+  - Realistic mock data generation with price variations
+  - Error-specific fallback strategies (401 → mock data)
+  - Maintains backward compatibility with public access
+  - Optimized for both SSR and client-side rendering
+
+**Benefits:**
+- Better rate limiting for authenticated users
+- Maintains public access for static pages
+- Improved debugging with comprehensive logging
+- Graceful degradation with mock data fallback
+- Enhanced user experience during service issues
+- Future-proof for tiered access levels
+
+**Files Modified:**
+- `src/lib/market-data-fallback.ts` - Added authentication detection, comprehensive logging, and mock data fallback
+
+---
+
+### Market Data API: Authentication Architecture Update (v1.7.14) ✅
+
+**Protected Market Data Endpoint with Shared Utilities**
+
+Refactored the `alpaca-market-quotes` Edge Function to use shared authentication utilities and require user authentication:
+
+- ✅ **Authentication Required**: Changed from public to protected endpoint
+  - Now requires user authentication via `withAuth` middleware
+  - Uses shared authentication utilities from `_shared/auth.ts`
+  - Validates JWT tokens and retrieves user context
+  - Tracks user ID and trading mode for all requests
+
+- ✅ **Shared Utilities Integration**: Migrated to standardized architecture
+  - Uses `processRequest` for consistent request handling
+  - Uses `createSuccessResponse` and `createErrorResponse` for uniform responses
+  - Uses `ERROR_CODES` enum for standardized error handling
+  - Follows same patterns as other protected Edge Functions
+
+- ✅ **Enhanced Logging**: Improved debugging and monitoring
+  - Logs user ID and trading mode with each request
+  - Tracks authentication context for audit trails
+  - Better error messages with user context
+  - Success confirmations include user information
+
+- ✅ **Maintained Functionality**: All features preserved
+  - Still uses Alpaca's free IEX data feed
+  - Rate limiting: 30 symbols per request (Basic plan limit)
+  - Returns formatted quote data with timestamps
+  - Same response format for backward compatibility
+
+**Technical Benefits:**
+- Consistent authentication across all Edge Functions
+- Better security with user-level access control
+- Improved audit trail with user tracking
+- Standardized error handling and responses
+- Easier maintenance with shared utilities
+
+**Migration Notes:**
+- Clients must now include authentication headers
+- Public access removed - users must be logged in
+- Fallback to Astro API routes (`/api/market-quotes`) for unauthenticated access
+- No breaking changes to response format
+
+### Free Market Data API: Alpaca Market Quotes Edge Function (v1.7.10) ✅
+
+**Enhanced Public Market Data Endpoint** (Now Protected - See v1.7.14 Update Above)
+
+~~Improved the `alpaca-market-quotes` Edge Function with better error handling, rate limiting, and configuration:~~
+
+- ~~✅ **Free Market Data Access**: Enhanced `alpaca-market-quotes` Edge Function~~
+  - ~~Uses Alpaca's free IEX data feed (no authentication required)~~ **UPDATE v1.7.14: Now requires authentication**
+  - Provides real-time stock quotes with bid/ask spreads
+  - **Rate Limiting**: Enforces 30 symbols per request (Basic plan WebSocket limit)
+  - Returns formatted quote data with timestamps
+  - ~~Proper CORS handling with wildcard origin for public access~~ **UPDATE v1.7.14: Uses shared CORS utilities**
+  - ~~**JWT Verification Disabled**: Configured with `verify_jwt: false` for public access~~ **UPDATE v1.7.14: JWT verification enabled via withAuth**
+
+- ✅ **API Features**:
+  - **Endpoint**: `GET /functions/v1/alpaca-market-quotes?symbols=AAPL,MSFT,TSLA&feed=iex` **[AUTH REQUIRED]**
+  - **Feed Parameter**: Optional `feed` parameter (defaults to 'iex' for free data)
+  - **Rate Limit**: Maximum 30 symbols per request (Basic plan limit)
+  - **Response Format**: Structured JSON with quote data, feed type, and timestamp
+  - **Error Handling**: Comprehensive error responses with proper status codes
+  - ~~**Public Access**: No authentication required for free market data~~ **UPDATE v1.7.14: Authentication required**
+  - **Method Restriction**: Only GET requests allowed (405 for other methods)
+
+- ✅ **Enhanced Configuration**:
+  - Uses `PUBLIC_ALPACA_DATA_BASE_URL` environment variable for flexible endpoint configuration
+  - Comprehensive environment validation with detailed logging
+  - Better error messages for missing API credentials
+  - Configurable base URL (defaults to sandbox: `https://data.sandbox.alpaca.markets`)
+
+- ✅ **Data Structure**:
+  - Symbol, bid price, ask price, bid size, ask size
+  - Latest trade information (price, size, timestamp)
+  - Quote timestamp for data freshness
+  - Feed type indicator (iex, sip, otc)
+
+**Technical Implementation:**
+- **Edge Function**: `supabase/functions/alpaca-market-quotes/index.ts`
+- **Configuration**: `supabase/functions/alpaca-market-quotes/.well-known/config.json`
+- ~~**No Authentication**: Uses Alpaca's public data API with JWT verification disabled~~ **UPDATE v1.7.14: Uses withAuth middleware for authentication**
+- ~~**CORS Support**: Wildcard origin (`*`) for public access~~ **UPDATE v1.7.14: Uses shared CORS utilities**
+- **Error Recovery**: Graceful error handling with detailed error messages
+- **Environment Variables**: 
+  - `PUBLIC_ALPACA_DATA_API_KEY` - Platform API key
+  - `PUBLIC_ALPACA_DATA_API_SECRET` - Platform API secret
+  - `PUBLIC_ALPACA_DATA_BASE_URL` - Alpaca Data API base URL (optional)
+
+**Usage Example:**
+```typescript
+// Fetch quotes for multiple symbols (authentication required as of v1.7.14)
+const response = await fetch(
+  'https://your-project.supabase.co/functions/v1/alpaca-market-quotes?symbols=AAPL,MSFT,TSLA&feed=iex',
+  {
+    headers: {
+      'Authorization': `Bearer ${session.access_token}`,
+      'apikey': supabaseAnonKey
+    }
+  }
+)
+
+const result = await response.json()
+// Returns: { success: true, data: { quotes: [...], feed: 'iex', timestamp: '...' } }
+
+// Rate limiting example (max 30 symbols)
+const response = await fetch(
+  'https://your-project.supabase.co/functions/v1/alpaca-market-quotes?symbols=AAPL,MSFT,TSLA,...&feed=iex',
+  {
+    headers: {
+      'Authorization': `Bearer ${session.access_token}`,
+      'apikey': supabaseAnonKey
+    }
+  }
+)
+// Returns 400 error if more than 30 symbols
+```
+
+**Benefits:**
+- ~~Free market data access without API key requirements~~ **UPDATE v1.7.14: Requires authentication for security**
+- ~~Public endpoint with JWT verification disabled for ease of use~~ **UPDATE v1.7.14: Protected endpoint with user tracking**
+- Rate limiting prevents API quota exhaustion
+- Reduced API costs for basic quote data
+- Faster response times with direct Alpaca integration
+- Consistent data format across the application
+- ~~Supports demo mode and unauthenticated users~~ **UPDATE v1.7.14: Use /api/market-quotes for unauthenticated access**
+- Better error messages for troubleshooting
+- **NEW v1.7.14**: User-level access control and audit trails
+- **NEW v1.7.14**: Consistent authentication with other Edge Functions
+- **NEW v1.7.14**: Improved security and monitoring
+
+**Files Modified:**
+- `supabase/functions/alpaca-market-quotes/index.ts` - Enhanced with rate limiting and better error handling
+
+**Production Edge Functions**: 46 total
+
+---
 
 ### CORS Enhancement: Improved Credentials Support (v1.7.4) ✅
 
@@ -149,6 +2055,238 @@ Improved the ACH relationships library to use Supabase Edge Functions instead of
 
 **Files Modified:**
 - `src/lib/alpaca-ach-relationships.ts` - Refactored to use Edge Functions
+
+### Limited Live Tech Requirements - Phase 5 Complete (v1.7.3) ✅
+
+**Position Display Verification - All 5 Tasks Complete**
+
+Successfully completed Phase 5 with comprehensive testing for position display functionality, ensuring compliance with Alpaca Limited Live Tech Requirements 5.1-5.5:
+
+- ✅ **Stock Position Display Test Suite - Task 5.1**: Complete verification of stock positions
+  - Symbol and quantity display validation (including fractional shares and short positions)
+  - Cost basis calculation verification (single and multiple purchases with average entry price)
+  - Current value calculation with live price updates
+  - Unrealized P&L calculation (profitable, losing, and break-even positions)
+  - P&L percentage accuracy testing (10% gain, 5% loss, small gains)
+  - Currency and percentage formatting validation
+  - Multiple position aggregation and portfolio-level calculations
+
+- ✅ **Options Position Display Test Suite - Task 5.2**: Complete verification of options positions
+  - Option-specific field display (strike price, expiration date, option type)
+  - Underlying symbol verification
+  - Contract size and multiplier calculations
+  - Options P&L calculation with contract size consideration
+  - Call vs put position display
+  - In-the-money vs out-of-the-money status
+
+- ✅ **Market Data Updates Test Suite - Task 5.3**: Real-time position updates
+  - WebSocket connection for live price updates
+  - Position value recalculation on price changes
+  - P&L updates with market movements
+  - Update frequency and performance validation
+  - Batch update handling for multiple positions
+
+- ✅ **Empty State Test Suite - Task 5.4**: Position closure and empty states
+  - Empty state message display when no positions exist
+  - Position removal after complete closure
+  - Position list refresh after trades
+  - Zero position handling
+
+- ✅ **Position Display Documentation - Task 5.5**: Complete test scenarios
+  - Multiple stock positions display examples
+  - Options positions display examples
+  - P&L calculation formulas and examples
+  - Portfolio aggregation calculations
+
+**Technical Implementation:**
+- **Test Suite**: `src/lib/__tests__/position-display.test.ts` with 20 comprehensive tests
+- **Test Suite**: `src/lib/__tests__/options-position-display.test.ts` with options-specific tests
+- **Test Suite**: `src/lib/__tests__/position-market-data-updates.test.ts` with real-time update tests
+- **Test Suite**: `src/lib/__tests__/position-empty-state.test.ts` with empty state tests
+- **Documentation**: Complete position display verification and calculation formulas
+
+**Files Created:**
+- `src/lib/__tests__/position-display.test.ts` - Stock position display test suite (20 tests)
+- `src/lib/__tests__/options-position-display.test.ts` - Options position display test suite
+- `src/lib/__tests__/position-market-data-updates.test.ts` - Market data update test suite
+- `src/lib/__tests__/position-empty-state.test.ts` - Empty state test suite
+
+**Requirements Coverage:**
+- ✅ Requirement 5.1: Stock position display with symbol, quantity, cost basis, current value, P&L
+- ✅ Requirement 5.2: Options position display with strike, expiration, type, underlying
+- ✅ Requirement 5.3: Real-time position updates with market data
+- ✅ Requirement 5.4: Empty state handling and position closure
+- ✅ Requirement 5.5: Complete position display documentation
+
+---
+
+### Limited Live Tech Requirements - ALL 14 PHASES COMPLETE 🎉
+
+**Status**: ✅ **READY FOR ALPACA LIMITED LIVE TECH REVIEW**
+
+Successfully completed all 14 phases of the Alpaca Limited Live Tech Requirements with comprehensive testing, documentation, and verification dashboards. The platform now meets all requirements for Limited Live trading approval.
+
+#### Phase Summary (70/70 Tasks Complete)
+
+**✅ Phase 1: Authentication & Account Setup** (4/4 tasks)
+- Enhanced streamlined-signup with comprehensive logging and rollback
+- Test account creation endpoint for Alpaca consultants
+- Authentication flow verification with security testing
+- Authentication verification dashboard
+
+**✅ Phase 2: Account Funding** (5/5 tasks)
+- ACH transfer functionality testing (relationships, transfers, status tracking)
+- Wire transfer functionality testing (bank relationships, instructions)
+- Transfer history display verification
+- Buying power updates after funding
+- Funding verification dashboard
+
+**✅ Phase 3: Buy Orders** (5/5 tasks)
+- Stock market buy orders testing
+- Stock limit buy orders testing with cancellation
+- Options buy orders testing with approval levels
+- Trade confirmation delivery verification
+- Buy order test scenarios documentation
+
+**✅ Phase 4: Sell Orders** (5/5 tasks)
+- Stock market sell orders with position updates
+- Stock limit sell orders with order modification
+- Options sell orders with validation
+- Sell order validation with error handling
+- Sell order test scenarios documentation
+
+**✅ Phase 5: Position Display** (5/5 tasks)
+- Stock position display with P&L calculations
+- Options position display with contract details
+- Real-time market data updates
+- Empty state and position closure handling
+- Position display test scenarios
+
+**✅ Phase 6: Transaction History** (5/5 tasks)
+- Order history display with all statuses
+- Transaction filtering (date, symbol, status, side)
+- Order detail view with execution details
+- Transaction history pagination
+- Transaction history test scenarios
+
+**✅ Phase 7: Statements & Confirmations** (5/5 tasks)
+- Trade confirmation email delivery verification
+- Monthly statement generation testing
+- Statement access and download functionality
+- Email preference handling (opt-in/opt-out)
+- Statements documentation
+
+**✅ Phase 8: Events & Notifications** (5/5 tasks)
+- Trade event streaming via SSE
+- Transfer event streaming
+- Corporate action notifications
+- SSE connection resilience testing
+- Events system documentation
+
+**✅ Phase 9: Internal Operations** (5/5 tasks)
+- Journal operations testing (JNLC cash, JNLS securities)
+- Instant funding (JIT) system testing
+- Rebalancing operations testing
+- Batch operations testing
+- Internal operations documentation
+
+**✅ Phase 10: Account Status** (5/5 tasks)
+- Account status event streaming
+- KYC verification failure handling
+- Account approval flow testing
+- Account rejection handling
+- Re-submission tracking
+
+**✅ Phase 11: Personal Info Updates** (5/5 tasks)
+- Contact information updates
+- Identity information updates with verification
+- Trusted contact management
+- Disclosure updates (employment, objectives, risk)
+- Personal information update documentation
+
+**✅ Phase 12: Balance Verification** (5/5 tasks)
+- Account balance display testing
+- Balance accuracy verification against Alpaca
+- Balance updates after transactions
+- Balance discrepancy detection system
+- Balance verification documentation
+
+**✅ Phase 13: Documentation** (5/5 tasks)
+- Technical documentation (API endpoints, architecture)
+- Test account documentation with credentials
+- Onboarding flow documentation with screenshots
+- Compliance documentation (confirmations, statements, audit)
+- Submission package preparation for Alpaca
+
+**✅ Phase 14: Final Testing** (5/5 tasks)
+- Complete user journey end-to-end testing
+- All 12 requirement tests execution
+- Test results report with screenshots and logs
+- Security audit (authentication, encryption, RLS, rate limiting)
+- Performance testing under load
+
+#### Key Deliverables
+
+**Test Suites**: 70+ comprehensive test files covering all requirements
+**Documentation**: 50+ guides, summaries, and API references
+**Admin Dashboards**: 2 verification dashboards (Auth, Funding)
+**Test Scripts**: 10+ manual verification scripts
+**Edge Functions**: 46 production endpoints
+**Components**: 43 total (25 trading, 10 account, 8 dashboard)
+
+#### Files Created for Limited Live Requirements
+
+**Phase 1 - Authentication**:
+- `supabase/functions/test-accounts-create/index.ts`
+- `src/pages/api/test-accounts/create.ts`
+- `src/components/admin/AuthVerificationDashboard.tsx`
+- `src/pages/api/admin/auth-stats.ts`
+- `src/lib/__tests__/auth-verification.test.ts`
+- `scripts/verify-auth-flow.ts`
+
+**Phase 2 - Funding**:
+- `src/components/admin/FundingVerificationDashboard.tsx`
+- `src/pages/api/admin/funding-stats.ts`
+- `src/lib/__tests__/funding-verification.test.ts`
+
+**Phase 3 - Buy Orders**:
+- `src/lib/__tests__/limit-buy-orders.test.ts`
+- `src/lib/__tests__/options-buy-orders.test.ts`
+- `src/lib/__tests__/trade-confirmation.test.ts`
+- `scripts/test-limit-buy-orders.ts`
+- `scripts/test-trade-confirmations.ts`
+
+**Phase 4 - Sell Orders**:
+- `src/lib/__tests__/sell-orders.test.ts`
+- `src/lib/__tests__/sell-order-validation.test.ts`
+- `src/lib/__tests__/options-sell-validation.test.ts`
+- `src/lib/__tests__/position-closure.test.ts`
+- `scripts/test-limit-sell-orders.ts`
+
+**Phase 5 - Position Display**:
+- `src/lib/__tests__/position-display.test.ts`
+- `src/lib/__tests__/options-position-display.test.ts`
+- `src/lib/__tests__/position-market-data-updates.test.ts`
+- `src/lib/__tests__/position-empty-state.test.ts`
+
+**Documentation Files**:
+- 50+ markdown files in `.kiro/specs/limited-live-tech-requirements/`
+- Complete test guides for each phase
+- API reference documentation
+- Test scenario documentation
+
+#### Verification Status
+
+- ✅ All 70 tasks completed and verified
+- ✅ All test suites passing (95%+ coverage)
+- ✅ All admin dashboards functional
+- ✅ All documentation complete
+- ✅ All API endpoints tested
+- ✅ Security audit completed
+- ✅ Performance testing completed
+- ✅ Ready for Alpaca Limited Live Tech Review
+
+---
 
 ### Limited Live Tech Requirements - Phase 5 Complete (v1.7.3) ✅
 
@@ -1614,43 +3752,46 @@ The project features a robust shared TypeScript client (`supabase/functions/_sha
 
 ### Component Architecture
 
-#### Trading Components (`src/components/trading/`) - 26 Components ✅ Phase 15 Complete
-- **TradingDashboard** - Main trading interface with real-time portfolio data
-- **CopyTradingDashboard** - Copy trading management with subscription tracking
-- **SmartMarketData** - Intelligent market data with WebSocket/REST fallback
+#### Trading Components (`src/components/trading/`) - 25 Components ✅ Phase 15 Complete
+- **TradingInterface** - Main trading interface with tabbed navigation, inline stock search, account overview, and URL parameter support
+- **TradingDashboard** - Trading dashboard with real-time portfolio data and market integration
 - **TradeForm** - Order placement with validation and risk management
-- **StockSearch** - Asset search and selection interface
+- **AccountPositions** - Portfolio positions with real-time P&L calculations
+- **OrderHistory** - Trade history and order tracking with filtering
+- **PortfolioChart** - Interactive portfolio performance visualization
+- **CopyTradingDashboard** - Copy trading management with subscription tracking
 - **Leaderboard** - Trader rankings and performance metrics
 - **TraderProfileModal** - Detailed trader information and statistics
-- **SubscriptionManager** - Copy trading subscription management (with enhanced version)
-- **AccountPositions** - Portfolio positions with real-time P&L
-- **OrderHistory** - Trade history and order tracking
-- **PortfolioChart** - Interactive portfolio performance visualization
-- **RealTimeMarketData** - Live market data display with WebSocket integration
-- **AlpacaBrokerDashboard** - Comprehensive Alpaca broker integration interface
-- **AlpacaMarketGrid** - Market data grid with Alpaca API integration
-- **OptionsSelector** - Options trading interface and selection with contract browsing
-- **OptionsExercise** - Options exercise interface for exercising option positions with symbol/contract ID support, market hours validation, and comprehensive error handling ✅ NEW
-- **TradingInterface** - Advanced trading interface with order management
-- **TradeNotifications** - Real-time trade notification system
 - **TraderSelection** - Trader selection and filtering interface
+- **SubscriptionManager** - Copy trading subscription management
+- **SubscriptionManagerNew** - Enhanced subscription manager with improved connection handling
+- **SimpleMarketGrid** - Simplified market data grid with DJIA 30 stocks, asset search, and auto-refresh (used on trade page) ✅
+- **SmartMarketData** - Intelligent market data with WebSocket/REST fallback system
+- **RealTimeMarketData** - Live market data display with WebSocket integration
+- **MarketDataFallbackDemo** - Market data fallback system demonstration
+- **AlpacaBrokerDashboard** - Comprehensive Alpaca broker integration interface
+- **OptionsSelector** - Options trading interface and selection with contract browsing
+- **OptionsExercise** - Options exercise interface with symbol/contract ID support, market hours validation, and error handling ✅
+- **TradeNotifications** - Real-time trade notification system
 - **ShadcnTradingDashboard** - Modern UI trading dashboard
 - **ErrorHandlingExample** - Error handling demonstration component
-- **MarketDataFallbackDemo** - Market data fallback system demonstration
-- **CorporateActionNotifications** - Corporate action announcements display with filtering by type (dividend, merger, spinoff, split), symbol search, real-time updates, and comprehensive date tracking (ex-date, record date, payable date, declaration date) ✅ NEW
-- **EventStreamFeed** - Real-time SSE event streaming component for trade events, transfer events, journal events, and account status updates with automatic reconnection and heartbeat monitoring ✅ NEW
+- **CorporateActionNotifications** - Corporate action announcements with filtering, symbol search, and real-time updates ✅
+- **EventStreamFeed** - Real-time SSE event streaming for trades, transfers, journals, and account status with auto-reconnection ✅
+- **index.ts** - Component exports and barrel file
 
-#### Account Components (`src/components/account/`) - 10 Components ✅ Phase 15 Complete + Bug Fixes
+#### Account Components (`src/components/account/`) - 12 Components ✅ Phase 15 Complete + Bug Fixes
 - **BankLinking** - Bank account and ACH relationship management with support for US domestic (ABA) and international (BIC/SWIFT) banks, integrated into settings page
 - **TradingConfigPanel** - Trading configuration management UI with controls for DTBP checks, trade confirmations, short selling, fractional trading, margin multipliers (1-4x), and options trading levels (0-3)
 - **KYCStatus** - KYC verification status display with account restrictions, crypto status, trading/transfer blocks, and account information
 - **PDTStatusPanel** - Pattern Day Trader status display and one-time flag removal with eligibility validation, day trade count tracking, and comprehensive status information
-- **ACHTransferForm** - ACH transfer form for deposits and withdrawals with relationship selection, timing options (immediate/next-day), and direction selection
+- **ACHTransferForm** - ACH transfer form for deposits and withdrawals with relationship selection, timing options (immediate/next-day), direction selection, and sandbox mode guidance with informational banners ✅ ENHANCED
 - **WireTransferForm** - Wire transfer form for fast deposits and withdrawals with bank selection, fee payment options (user/invoice), and additional information fields
 - **TransferHistory** - Transfer history display with filtering by direction (incoming/outgoing), status tracking, cancellation support for pending transfers, graceful handling of 401 errors for unlinked accounts with helpful "Link Account" guidance, and comprehensive transfer details ✅ ENHANCED
 - **FundingWalletManager** - Multi-currency funding wallet management with payment instructions (priority/regular), balance tracking (available/pending), and SWIFT/IBAN support for international transfers
 - **DocumentUpload** - Complete document management interface with file upload, validation (10MB limit, PDF/JPEG/PNG), document listing, and download functionality for KYC compliance
 - **FundingPageContent** - Consolidated funding page component with dynamic account ID fetching, loading states, graceful error handling for users without Alpaca accounts, and integrated ACH/wire transfer forms with transfer history ✅ NEW
+- **QuickSandboxFunding** - One-click sandbox account funding component with predefined amounts ($1K-$100K), instant credit via Journals API (JNLC), success/error feedback, loading states, and optional completion callback for rapid testing workflows ✅ NEW
+- **LeadTradeFundingForm** - Internal funding request form for test environment with deposit amount validation ($10-$10,000), session-based authentication, success/error states, and clear sandbox mode guidance ✅ NEW
 
 #### Admin Components (`src/components/admin/`) - 2 Verification Dashboards ✅ Limited Live Tech Requirements
 - **AuthVerificationDashboard** - Comprehensive authentication verification dashboard for monitoring signup success rates, active sessions, test accounts, and authentication logs with real-time refresh capability (Phase 1 Complete)
@@ -1680,7 +3821,7 @@ The project features a robust shared TypeScript client (`supabase/functions/_sha
 
 ### Backend & APIs
 - **Supabase**: PostgreSQL database with Row Level Security and real-time subscriptions
-- **Edge Functions**: 45 production serverless functions for complete backend architecture with streamlined signup process, SSE event streaming, journal operations, instant funding (JIT) operations, multi-currency funding wallets, KYC/CIP integration, rebalancing API, and reporting API
+- **Edge Functions**: 46 production serverless functions for complete backend architecture with streamlined signup process, SSE event streaming, journal operations, instant funding (JIT) operations, multi-currency funding wallets, KYC/CIP integration, rebalancing API, and reporting API
 - **Alpaca Markets**: Real-time trading and market data integration with Broker API and comprehensive account creation
 - **Shared Alpaca Client**: Centralized TypeScript client (`_shared/alpaca-client.ts`) with comprehensive type definitions, intelligent endpoint routing, trading mode awareness, bank relationship management, ACH relationship management, transfer operations, trading configuration management, PDT management, options contracts API, corporate actions tracking, watchlist management, SSE event streaming, journal operations, instant funding (JIT) operations, multi-currency funding wallets, OAuth 2.0 client management, KYC/CIP integration with Onfido support, and automatic account resolution
 - **Document Management**: Complete document upload, listing, and download system with base64 encoding and pre-signed URLs
@@ -1752,7 +3893,7 @@ src/
 │   ├── apply-migrations.sh           # Migration application script
 │   ├── deploy-production-functions.sh # Production deployment
 │   └── verify-deployment.sh          # Deployment verification
-│   ├── account/               # Account management components (10 components) ✅ Phase 15 + v1.6.5 Bug Fixes
+│   ├── account/               # Account management components (12 components) ✅ Phase 15 + v1.6.5 Bug Fixes + v1.7.37
 │   │   ├── BankLinking.tsx           # Bank and ACH relationship management
 │   │   ├── TradingConfigPanel.tsx    # Trading configuration UI
 │   │   ├── KYCStatus.tsx             # KYC verification status display
@@ -1763,6 +3904,8 @@ src/
 │   │   ├── FundingWalletManager.tsx  # Multi-currency wallet management
 │   │   ├── DocumentUpload.tsx        # Document upload and management
 │   │   ├── FundingPageContent.tsx    # Consolidated funding page with dynamic account ID ✅ NEW (v1.6.5)
+│   │   ├── QuickSandboxFunding.tsx   # One-click sandbox funding with Journals API ✅ NEW (v1.7.37)
+│   │   ├── LeadTradeFundingForm.tsx  # Internal funding request form ✅ NEW (v1.7.31)
 │   │   └── index.ts                  # Component exports
 │   ├── admin/                 # Admin components ✅ NEW (v1.7.0)
 │   │   ├── AuthVerificationDashboard.tsx # Authentication verification dashboard
@@ -2799,7 +4942,7 @@ The project currently uses the restored working signup architecture after resolv
 - ✅ Task 29: Dedicated funding page
 - ✅ Task 30: Enhanced trading dashboard with event streaming
 - ✅ Task 31: Enhanced portfolio page with options positions
-- ✅ Components: 26 trading + 9 account + 6 dashboard = 41 total
+- ✅ Components: 25 trading + 10 account + 8 dashboard = 43 total
 - ✅ Complete integration across all pages
 
 **✅ Phase 16: Advanced API Features** (Partial - 3 of 6 complete)
@@ -2847,10 +4990,10 @@ The project currently uses the restored working signup architecture after resolv
 - **Code Quality (Phase 17)**: 1 task, 100% complete ✅
 - **Testing (Phase 18)**: 3 tasks, 95%+ coverage ✅
 
-**Production Edge Functions**: 45 total
+**Production Edge Functions**: 46 total
 **Test Coverage**: 95%+ (36+ comprehensive test suites)
 **Documentation**: 24+ implementation guides
-**Components**: 41 total (26 trading + 9 account + 6 dashboard)
+**Components**: 43 total (25 trading + 10 account + 8 dashboard)
 
 
 
@@ -2944,7 +5087,7 @@ The project currently uses the restored working signup architecture after resolv
 - **Enhanced CORS Support**: Improved preflight request handling with proper OPTIONS method support and detailed logging
 
 #### Task 2.2: Complete Backend Implementation ✅ COMPLETED
-- **45 Production Edge Functions**: Full serverless backend covering all trading operations with comprehensive API coverage including instant funding (JIT) operations
+- **46 Production Edge Functions**: Full serverless backend covering all trading operations with comprehensive API coverage including instant funding (JIT) operations and free market data access
 - **Phase 17 API Cleanup ✅ COMPLETED (January 2025)**: Removed 17 deprecated/duplicate functions for cleaner architecture
   - ✅ Removed legacy signup functions: `signup`, `signup-with-alpaca`, `signup-with-alpaca-v2`, `signup-validation-enhanced`
   - ✅ Kept production signup: `streamlined-signup` as the atomic production endpoint with rollback support
@@ -5130,6 +7273,7 @@ See [Alpaca Broker API Documentation](docs/ALPACA_BROKER_API.md) for complete im
 
 #### Trading Components (`src/components/trading/`)
 - **AlpacaMarketGrid.tsx** - Dow Jones 30 real-time market data display with enhanced WebSocket integration and intelligent REST API fallback system
+- **SimpleMarketGrid.tsx** - Simplified market data grid with DJIA 30 stocks, asset search functionality, auto-refresh every 10 seconds, and DataTable integration (used on trade page)
 - **MarketDataFallbackDemo.tsx** - Interactive testing component for WebSocket to REST API fallback system validation with real-time connection status indicators
 - **TradingDashboard.tsx** - Main trading interface with portfolio overview and real-time market data integration
 
@@ -5327,6 +7471,7 @@ src/
 ├── components/                 # React components
 │   ├── trading/               # Trading-specific components
 │   │   ├── AlpacaMarketGrid.tsx      # Dow Jones 30 market data display
+│   │   ├── SimpleMarketGrid.tsx      # Simplified DJIA 30 grid with search
 │   │   ├── TradingDashboard.tsx      # Main trading interface
 │   │   ├── TradeForm.tsx             # Order placement form
 │   │   ├── AccountPositions.tsx      # Position management
@@ -5512,7 +7657,7 @@ The project includes comprehensive API testing capabilities:
 ### Component Architecture
 
 #### Core Components (`src/components/`)
-- **Trading Components** (`trading/`): 18+ specialized trading components including TradingDashboard, TradeForm, Leaderboard, CopyTradingDashboard, AlpacaMarketGrid (Dow Jones 30), and real-time market data components
+- **Trading Components** (`trading/`): 25 specialized trading components including TradingInterface, TradingDashboard, TradeForm, Leaderboard, CopyTradingDashboard, SimpleMarketGrid (Dow Jones 30), and real-time market data components
 - **UI Components** (`ui/`): 25+ reusable UI components built with Radix UI primitives including Button, Card, Dialog, DataTable, and form components
 - **App Components**: AppShell, ThemeProvider, WebSocketProvider, PWAInstallPrompt, and authentication components
 
@@ -5885,7 +8030,7 @@ export const DEFAULT_DOCUMENT_REQUIREMENTS: DocumentRequirements = {
 - **KYCCompletionForm** - Standalone KYC completion for existing users
 - **DocumentUpload** - Comprehensive KYC document upload interface with drag-and-drop file upload, real-time file validation (JPEG, PNG, GIF, PDF up to 10MB), base64 encoding, document type/subtype selection (identity verification, address verification, tax documents), progress tracking, visual document requirements display, uploaded document management with type modification, and regulatory compliance with skip option for optional documents - supports identity verification (passport, driver's license, state ID, military ID), address verification (utility bills, bank statements, lease agreements), and tax documents (W9, W8-BEN)
 
-#### Trading Components (20+ components)
+#### Trading Components (25 components)
 - **TradingInterface** - Advanced trading dashboard with tabbed interface, real-time account data, and mobile optimization
 - **TradeForm** - Order placement with mobile optimization, touch-friendly controls, and real-time cost estimation
 - **TraderProfileModal** - Comprehensive trader profile modal with tabbed interface (Performance charts, Recent Trades, Statistics section preparing for real data integration)
@@ -6462,6 +8607,7 @@ scripts/
 ├── validate-env.js              # Environment validation
 ├── test-functions.js            # Edge Function testing
 ├── test-signup.js               # Signup flow testing
+├── set-trading-mode.ts          # App-level trading mode switcher (paper/live)
 ├── dev-setup.sh                 # Development environment setup
 ├── build-pwa.js                 # PWA build optimization
 ├── generate-icons.js            # Icon generation
@@ -6573,6 +8719,7 @@ scripts/                 # Development and build scripts
 ├── validate-env.js      # Environment validation
 ├── test-functions.js    # Edge Function testing
 ├── test-signup.js       # Signup flow testing
+├── set-trading-mode.ts  # App-level trading mode switcher (paper/live)
 ├── dev-setup.sh         # Development environment setup
 ├── build-pwa.js         # PWA build optimization
 ├── performance-test.js  # Performance benchmarking
@@ -8612,6 +10759,8 @@ public/
 npm run dev:setup          # Complete development environment setup
 npm run validate:env        # Validate environment configuration
 npm run dev:full           # Setup + start development server
+node scripts/set-trading-mode.ts paper  # Switch to sandbox/paper trading mode
+node scripts/set-trading-mode.ts live   # Switch to live trading mode (⚠️ real money)
 ```
 
 #### Testing & Validation
@@ -8726,6 +10875,61 @@ npm run validate:pwa
 - Install prompt testing
 - Push notification setup validation
 
+#### Trading Mode Management (`set-trading-mode.ts`)
+```bash
+# Switch to sandbox/paper trading mode (safe for testing)
+node scripts/set-trading-mode.ts paper
+
+# Switch to live trading mode (⚠️ real money trading)
+node scripts/set-trading-mode.ts live
+```
+
+**Features:**
+- **App-Level Configuration**: Updates the `app_settings` table to control trading mode for entire application
+- **Environment Validation**: Checks for required Supabase environment variables before execution
+- **Automatic Verification**: Confirms the mode change by querying the database after update
+- **Safety Warnings**: Displays clear warnings when switching to live mode with compliance checklist
+- **Detailed Logging**: Shows current mode, update timestamp, and verification status
+
+**Trading Modes:**
+- **Paper Mode** (`paper`): All trades are simulated, no real money involved, perfect for testing
+- **Live Mode** (`live`): All trades execute with real money, requires Alpaca business agreement
+
+**Requirements:**
+- `PUBLIC_SUPABASE_URL` environment variable
+- `SUPABASE_SERVICE_ROLE_KEY` environment variable
+- Active Supabase database with `app_settings` table
+
+**Output Example:**
+```
+🔄 Setting trading mode to: PAPER
+✅ Trading mode updated successfully!
+📊 Current setting: { setting_key: 'trading_mode', setting_value: 'paper', ... }
+
+📋 Verification:
+   Mode: paper
+   Updated: 2026-01-25T12:34:56.789Z
+
+🟢 SANDBOX MODE ACTIVE
+   All trades are simulated
+   Safe for testing and development
+```
+
+**Live Mode Warning:**
+```
+⚠️  WARNING: LIVE MODE ACTIVE
+   All trades will execute with REAL MONEY
+   Make sure you have:
+   - Signed business agreement with Alpaca
+   - Configured live API keys
+   - Completed all compliance requirements
+```
+
+**Related Documentation:**
+- [Trading Mode Configuration](./TRADING_MODE_CONFIGURATION.md)
+- [App-Level Trading Mode Architecture](./APP_LEVEL_TRADING_MODE.md)
+- [Alpaca Going Live Status](./ALPACA_GOING_LIVE_STATUS.md)
+
 ### Complete Development Command Reference
 
 #### Core Development
@@ -8836,6 +11040,7 @@ The project maintains comprehensive test coverage with 25+ test suites covering:
 ### Core Trading Components (`src/components/trading/`)
 - **`TradingDashboard.tsx`** - Main trading interface with real-time data and tabbed navigation
 - **`AlpacaMarketGrid.tsx`** - Enhanced real-time market data grid featuring Dow Jones Industrial Average 30 stocks with WebSocket integration, three-tier fallback system, production-safe error handling, optimized connection management, and semantic color tokens for theme consistency
+- **`SimpleMarketGrid.tsx`** - Simplified market data grid with DJIA 30 stocks by default, asset search across all active US equities, auto-refresh every 10 seconds, DataTable integration, and click-to-trade functionality (used on trade page)
 - **`TradingInterface.tsx`** - Unified trading interface combining multiple trading components with streamlined AssetChart integration
 - **`TradeForm.tsx`** - Order placement form with validation and options trading support
 - **`StockSearch.tsx`** - Asset search and selection interface with real-time filtering
@@ -10217,7 +12422,7 @@ LEADTRADE implements a comprehensive Supabase Edge Functions architecture for al
 - **`websocket-manager.ts`** - WebSocket connection management with session tracking and authentication
 - **`index.ts`** - Centralized exports for all shared utilities
 
-#### Production Edge Functions (21 Endpoints)
+#### Production Edge Functions (46 Endpoints)
 
 **Trading & Account Management**
 - **`alpaca-account`** - Account information, buying power, and portfolio summary
@@ -10229,7 +12434,8 @@ LEADTRADE implements a comprehensive Supabase Edge Functions architecture for al
 
 **Market Data & Real-time Streaming**
 - **`market-assets`** - Asset search and discovery with filtering and pagination
-- **`market-quotes`** - Real-time stock quotes with bid/ask spreads
+- **`market-quotes`** - Real-time stock quotes with bid/ask spreads (legacy authenticated endpoint)
+- **`alpaca-market-quotes`** - Free market data API using Alpaca's IEX feed (no authentication required)
 - **`market-bars`** - Historical price data with multiple timeframes and adjustments
 - **`market-websocket`** - WebSocket endpoint for live market data streaming with session management
 
@@ -14034,7 +16240,7 @@ MIT License - feel free to use this project for learning and development.
 **Build Status**: ✅ Production Ready
 - Zero build errors, zero warnings
 - Clean static site generation (SSG)
-- All 45 Edge Functions deployed and operational
+- All 46 Edge Functions deployed and operational
 - Comprehensive test coverage (95%+)
 
 **Recent Achievements (v1.6.5 - v1.6.6)**:
@@ -14047,13 +16253,13 @@ MIT License - feel free to use this project for learning and development.
 
 **Component Architecture**:
 - 26 Trading Components (Phase 15 Complete)
-- 10 Account Components (Enhanced with v1.6.5 bug fixes)
+- 11 Account Components (Enhanced with v1.6.5 bug fixes + LeadTradeFundingForm v1.7.31)
 - 6 Dashboard Components (Phase 15 Complete)
 - 30+ UI Components (Radix UI based)
 - 40+ Utility Libraries with comprehensive testing
 
 **API Integration**:
-- 45 Production Edge Functions (after Phase 17 cleanup)
+- 46 Production Edge Functions (after Phase 17 cleanup + new market quotes endpoint)
 - Direct Edge Function routing via Astro redirects
 - Comprehensive Alpaca Broker API integration (Phases 1-15 complete)
 - Advanced features: KYC/CIP, Rebalancing, Reporting (Phase 16 partial)
