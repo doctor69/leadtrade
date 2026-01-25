@@ -43,32 +43,28 @@ serve(async (req: Request) => {
         
         // Handle GET requests
         if (req.method === 'GET') {
-          // If no account ID in path, list all accounts with optional filtering
+          // If no account ID in path, return the user's account from auth context
           if (!accountIdFromPath) {
-            const params: Record<string, string> = {}
+            // Use the account ID from auth context (user's linked account)
+            if (!authContext.alpacaAccountId) {
+              return createErrorResponse(
+                {
+                  code: 'NO_ACCOUNT',
+                  message: 'No Alpaca account linked to this user',
+                  details: { userId: authContext.userId }
+                },
+                404
+              )
+            }
             
-            // Extract query parameters for filtering
-            const query = url.searchParams.get('query')
-            const createdAfter = url.searchParams.get('created_after')
-            const createdBefore = url.searchParams.get('created_before')
-            const status = url.searchParams.get('status')
-            const sort = url.searchParams.get('sort')
-            const entities = url.searchParams.get('entities')
-            
-            if (query) params.query = query
-            if (createdAfter) params.created_after = createdAfter
-            if (createdBefore) params.created_before = createdBefore
-            if (status) params.status = status
-            if (sort) params.sort = sort
-            if (entities) params.entities = entities
-            
-            const response = await alpacaClient.getAccounts(Object.keys(params).length > 0 ? params : undefined)
+            // Get the user's specific account
+            const response = await alpacaClient.getAccount(authContext.alpacaAccountId)
             
             if (!response.success) {
               return createErrorResponse(
                 {
                   code: response.error?.code || 'ALPACA_API_ERROR',
-                  message: response.error?.message || 'Failed to fetch accounts',
+                  message: response.error?.message || 'Failed to fetch account data',
                   details: response.error?.details
                 },
                 response.error?.status || 400

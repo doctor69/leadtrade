@@ -198,7 +198,7 @@ export class MarketDataFallbackService {
 
     try {
       const symbolsParam = this.config.symbols.join(',');
-      const response = await fetch(`/api/market-quotes?symbols=${symbolsParam}&feed=iex`);
+      const response = await fetch(`${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-market-quotes?symbols=${symbolsParam}&feed=iex`);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);

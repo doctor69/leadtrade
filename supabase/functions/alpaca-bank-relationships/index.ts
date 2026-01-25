@@ -5,7 +5,7 @@ import {
   createSuccessResponse, 
   createErrorResponse,
   AlpacaClient,
-  corsHeaders
+  getCorsHeaders
 } from '../_shared/index.ts'
 import type { AuthContext } from '../_shared/auth.ts'
 
@@ -22,7 +22,7 @@ serve(async (req: Request) => {
   return processRequest(req, async () => {
     // Handle CORS preflight requests
     if (req.method === 'OPTIONS') {
-      return new Response('ok', { headers: corsHeaders })
+      return new Response('ok', { headers: getCorsHeaders(req) })
     }
 
     return withAuth(req, async (authContext: AuthContext) => {

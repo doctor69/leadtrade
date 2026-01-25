@@ -48,25 +48,52 @@ function createErrorResponse(message: string, status: number = 500) {
  * All steps are atomic - if any step fails, everything rolls back
  */
 serve(async (req: Request) => {
+  const requestId = crypto.randomUUID();
+  const startTime = Date.now();
+  
   // Handle CORS preflight requests first
   if (req.method === 'OPTIONS') {
-    console.log('Handling CORS preflight request')
+    console.log(`[${requestId}] Handling CORS preflight request`)
     return new Response('ok', { 
       status: 200, 
       headers: corsHeaders 
     })
   }
 
+  // Comprehensive logging object
+  const signupLog = {
+    requestId,
+    timestamp: new Date().toISOString(),
+    steps: [] as Array<{step: string, status: 'started' | 'success' | 'failed', timestamp: string, details?: any, error?: string}>,
+    rollback: null as {reason: string, steps: string[], timestamp: string} | null,
+  };
+
+  function logStep(step: string, status: 'started' | 'success' | 'failed', details?: any, error?: string) {
+    const logEntry = {
+      step,
+      status,
+      timestamp: new Date().toISOString(),
+      ...(details && { details }),
+      ...(error && { error }),
+    };
+    signupLog.steps.push(logEntry);
+    console.log(`[${requestId}] ${step}: ${status}`, details || '');
+  }
+
   try {
     if (req.method !== 'POST') {
+      logStep('method_validation', 'failed', { method: req.method }, 'Method not allowed');
       return createErrorResponse('Method not allowed', 405)
     }
 
+    logStep('initialization', 'started');
+    
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('Missing Supabase environment variables')
+      logStep('initialization', 'failed', null, 'Missing Supabase environment variables');
+      console.error(`[${requestId}] Missing Supabase environment variables`)
       return createErrorResponse('Server configuration error', 500)
     }
 
@@ -81,13 +108,16 @@ serve(async (req: Request) => {
 
     // Validate required fields
     if (!body.email || !body.password || !body.given_name || !body.family_name) {
+      logStep('validation', 'failed', { providedFields: Object.keys(body) }, 'Missing required fields');
       return createErrorResponse('Missing required fields: email, password, given_name, family_name', 400)
     }
 
-    console.log(`🚀 Starting streamlined signup for: ${body.email}`)
+    logStep('initialization', 'success', { email: body.email });
+    console.log(`[${requestId}] 🚀 Starting streamlined signup for: ${body.email}`)
 
     // Step 1: Create Supabase user
-    console.log('📝 Step 1: Creating Supabase user...')
+    logStep('create_supabase_user', 'started');
+    console.log(`[${requestId}] 📝 Step 1: Creating Supabase user...`)
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: body.email,
       password: body.password,
@@ -100,15 +130,18 @@ serve(async (req: Request) => {
     })
 
     if (authError || !authData.user) {
-      console.error('❌ Supabase user creation failed:', authError)
+      logStep('create_supabase_user', 'failed', { error: authError?.message }, authError?.message);
+      console.error(`[${requestId}] ❌ Supabase user creation failed:`, authError)
       return createErrorResponse(`Failed to create user account: ${authError?.message}`, 400)
     }
 
     const userId = authData.user.id
-    console.log(`✅ Supabase user created: ${userId}`)
+    logStep('create_supabase_user', 'success', { userId });
+    console.log(`[${requestId}] ✅ Supabase user created: ${userId}`)
 
     // Step 2: Create user profile (use upsert to handle existing profiles)
-    console.log('👤 Step 2: Creating user profile...')
+    logStep('create_user_profile', 'started');
+    console.log(`[${requestId}] 👤 Step 2: Creating user profile...`)
     const { error: profileError } = await supabase
       .from('profiles')
       .upsert({
@@ -125,16 +158,29 @@ serve(async (req: Request) => {
       })
 
     if (profileError) {
-      console.error('❌ Profile creation failed:', profileError)
-      // Cleanup: Delete the created user
+      logStep('create_user_profile', 'failed', { error: profileError.message }, profileError.message);
+      console.error(`[${requestId}] ❌ Profile creation failed:`, profileError)
+      
+      // Rollback: Delete the created user
+      logStep('rollback_supabase_user', 'started', { reason: 'Profile creation failed' });
+      signupLog.rollback = {
+        reason: 'Profile creation failed',
+        steps: ['delete_supabase_user'],
+        timestamp: new Date().toISOString(),
+      };
+      
       await supabase.auth.admin.deleteUser(userId)
+      logStep('rollback_supabase_user', 'success');
+      
       return createErrorResponse(`Failed to create user profile: ${profileError.message}`, 500)
     }
 
-    console.log('✅ User profile created')
+    logStep('create_user_profile', 'success');
+    console.log(`[${requestId}] ✅ User profile created`)
 
     // Step 3: Create Alpaca account
-    console.log('🏦 Step 3: Creating Alpaca account...')
+    logStep('create_alpaca_account', 'started');
+    console.log(`[${requestId}] 🏦 Step 3: Creating Alpaca account...`)
     
     // Get Alpaca API configuration
     const alpacaConfig = {
@@ -143,7 +189,7 @@ serve(async (req: Request) => {
       brokerApiSecret: Deno.env.get('PUBLIC_ALPACA_BROKER_SANDBOX_API_SECRET'),
     }
 
-    console.log('🔧 Alpaca config check:', {
+    console.log(`[${requestId}] 🔧 Alpaca config check:`, {
       baseUrl: alpacaConfig.brokerBaseUrl,
       hasApiKey: !!alpacaConfig.brokerApiKey,
       hasApiSecret: !!alpacaConfig.brokerApiSecret,
@@ -151,12 +197,28 @@ serve(async (req: Request) => {
     })
 
     if (!alpacaConfig.brokerApiKey || !alpacaConfig.brokerApiSecret) {
-      console.error('❌ Missing Alpaca API credentials:', {
+      logStep('create_alpaca_account', 'failed', {
+        hasApiKey: !!alpacaConfig.brokerApiKey,
+        hasApiSecret: !!alpacaConfig.brokerApiSecret,
+      }, 'Missing Alpaca API credentials');
+      
+      console.error(`[${requestId}] ❌ Missing Alpaca API credentials:`, {
         hasApiKey: !!alpacaConfig.brokerApiKey,
         hasApiSecret: !!alpacaConfig.brokerApiSecret,
         envVars: Object.keys(Deno.env.toObject()).filter(key => key.includes('ALPACA'))
       })
+      
+      // Rollback: Delete Supabase user
+      logStep('rollback_supabase_user', 'started', { reason: 'Missing Alpaca credentials' });
+      signupLog.rollback = {
+        reason: 'Missing Alpaca API credentials',
+        steps: ['delete_supabase_user'],
+        timestamp: new Date().toISOString(),
+      };
+      
       await supabase.auth.admin.deleteUser(userId)
+      logStep('rollback_supabase_user', 'success');
+      
       return createErrorResponse('Alpaca API credentials not configured', 500)
     }
 
@@ -218,14 +280,14 @@ serve(async (req: Request) => {
     }
 
     // Create Alpaca account (using exact format from working create-alpaca-account function)
-    console.log(`Creating Alpaca account for ${body.email}...`)
-    console.log('Tax ID being sent:', alpacaAccountData.tax_id)
-    console.log('Alpaca payload identity section:', JSON.stringify(alpacaPayload.identity, null, 2))
+    console.log(`[${requestId}] Creating Alpaca account for ${body.email}...`)
+    console.log(`[${requestId}] Tax ID being sent:`, alpacaAccountData.tax_id)
+    console.log(`[${requestId}] Alpaca payload identity section:`, JSON.stringify(alpacaPayload.identity, null, 2))
 
     const credentials = `${alpacaConfig.brokerApiKey}:${alpacaConfig.brokerApiSecret}`
     const encodedCredentials = btoa(credentials)
 
-    console.log('Using HTTP Basic auth for Broker API')
+    console.log(`[${requestId}] Using HTTP Basic auth for Broker API`)
 
     const alpacaResponse = await fetch(`${alpacaConfig.brokerBaseUrl}/v1/accounts`, {
       method: 'POST',
@@ -238,7 +300,7 @@ serve(async (req: Request) => {
 
     if (!alpacaResponse.ok) {
       const errorText = await alpacaResponse.text()
-      console.error('Alpaca API error:', {
+      console.error(`[${requestId}] Alpaca API error:`, {
         status: alpacaResponse.status,
         statusText: alpacaResponse.statusText,
         body: errorText
@@ -257,15 +319,36 @@ serve(async (req: Request) => {
         errorMessage = errorText
       }
 
+      logStep('create_alpaca_account', 'failed', {
+        status: alpacaResponse.status,
+        error: errorMessage,
+      }, errorMessage);
+      
+      // Rollback: Delete Supabase user
+      logStep('rollback_supabase_user', 'started', { reason: 'Alpaca account creation failed' });
+      signupLog.rollback = {
+        reason: `Alpaca account creation failed: ${errorMessage}`,
+        steps: ['delete_supabase_user'],
+        timestamp: new Date().toISOString(),
+      };
+      
       await supabase.auth.admin.deleteUser(userId)
+      logStep('rollback_supabase_user', 'success');
+      
       return createErrorResponse(errorMessage, alpacaResponse.status)
     }
 
     const alpacaAccount = await alpacaResponse.json()
-    console.log(`✅ Alpaca account created: ${alpacaAccount.id}`)
+    logStep('create_alpaca_account', 'success', {
+      alpacaAccountId: alpacaAccount.id,
+      accountNumber: alpacaAccount.account_number,
+      status: alpacaAccount.status,
+    });
+    console.log(`[${requestId}] ✅ Alpaca account created: ${alpacaAccount.id}`)
 
     // Step 4: Save Alpaca account to database
-    console.log('💾 Step 4: Saving Alpaca account to database...')
+    logStep('save_alpaca_account', 'started');
+    console.log(`[${requestId}] 💾 Step 4: Saving Alpaca account to database...`)
     const { error: alpacaError } = await supabase
       .from('alpaca_accounts')
       .insert({
@@ -284,15 +367,31 @@ serve(async (req: Request) => {
       })
 
     if (alpacaError) {
-      console.error('❌ Failed to save Alpaca account:', alpacaError)
+      logStep('save_alpaca_account', 'failed', { error: alpacaError.message }, alpacaError.message);
+      console.error(`[${requestId}] ❌ Failed to save Alpaca account:`, alpacaError)
+      
+      // Rollback: Delete Supabase user (Alpaca account will remain orphaned but logged)
+      logStep('rollback_supabase_user', 'started', { reason: 'Failed to save Alpaca account to database' });
+      signupLog.rollback = {
+        reason: `Failed to save Alpaca account: ${alpacaError.message}`,
+        steps: ['delete_supabase_user', 'orphaned_alpaca_account'],
+        timestamp: new Date().toISOString(),
+      };
+      
+      console.warn(`[${requestId}] ⚠️ Orphaned Alpaca account: ${alpacaAccount.id} - Manual cleanup may be required`);
+      
       await supabase.auth.admin.deleteUser(userId)
+      logStep('rollback_supabase_user', 'success');
+      
       return createErrorResponse(`Failed to save Alpaca account: ${alpacaError.message}`, 500)
     }
 
-    console.log('✅ Alpaca account saved to database')
+    logStep('save_alpaca_account', 'success');
+    console.log(`[${requestId}] ✅ Alpaca account saved to database`)
 
     // Step 5: Fund account with $1000 for testing
-    console.log('💰 Step 5: Funding account with $1000 for testing...')
+    logStep('fund_account', 'started');
+    console.log(`[${requestId}] 💰 Step 5: Funding account with $1000 for testing...`)
     
     try {
       // Use Alpaca funding API to add $1000 to the account
@@ -319,16 +418,22 @@ serve(async (req: Request) => {
       })
 
       if (fundingResponse.ok) {
-        console.log('✅ Test funding setup completed')
+        logStep('fund_account', 'success');
+        console.log(`[${requestId}] ✅ Test funding setup completed`)
       } else {
-        console.log('⚠️ Funding setup skipped (sandbox limitation)')
+        logStep('fund_account', 'failed', { status: fundingResponse.status }, 'Funding setup skipped (sandbox limitation)');
+        console.log(`[${requestId}] ⚠️ Funding setup skipped (sandbox limitation)`)
       }
     } catch (fundingError) {
-      console.log('⚠️ Funding setup skipped:', fundingError)
+      logStep('fund_account', 'failed', null, fundingError instanceof Error ? fundingError.message : 'Unknown error');
+      console.log(`[${requestId}] ⚠️ Funding setup skipped:`, fundingError)
       // Don't fail the signup for funding issues in sandbox
     }
 
-    console.log('🎉 Streamlined signup completed successfully!')
+    const duration = Date.now() - startTime;
+    logStep('signup_complete', 'success', { durationMs: duration });
+    console.log(`[${requestId}] 🎉 Streamlined signup completed successfully in ${duration}ms!`)
+    console.log(`[${requestId}] Signup log:`, JSON.stringify(signupLog, null, 2));
 
     return createSuccessResponse({
       success: true,
@@ -341,11 +446,17 @@ serve(async (req: Request) => {
         alpaca_account_number: alpacaAccount.account_number,
         trading_mode: 'paper',
         initial_funding: '$1000 (paper trading)',
-      }
+      },
+      requestId,
+      durationMs: duration,
     })
 
   } catch (error) {
-    console.error('❌ Streamlined signup error:', error)
+    const duration = Date.now() - startTime;
+    logStep('unexpected_error', 'failed', null, error instanceof Error ? error.message : 'Unknown error');
+    console.error(`[${requestId}] ❌ Streamlined signup error:`, error)
+    console.error(`[${requestId}] Signup log:`, JSON.stringify(signupLog, null, 2));
+    
     return createErrorResponse(
       error instanceof Error ? error.message : 'Unknown error occurred',
       500

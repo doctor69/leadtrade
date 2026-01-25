@@ -47,6 +47,7 @@ export const isValidRoute = (href: string): boolean => {
     '/',
     '/dashboard',
     '/trade',
+    '/funding',
     '/leaderboard',
     '/settings',
     '/signin',
