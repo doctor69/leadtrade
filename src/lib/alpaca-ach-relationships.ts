@@ -1,5 +1,4 @@
 // Alpaca ACH Relationship Management Service
-import { getAlpacaConfig } from './trading-config';
 
 export interface ACHRelationship {
   id: string;
@@ -72,37 +71,26 @@ export async function createACHRelationship(
       }
     }
 
-    const config = getAlpacaConfig(tradingMode);
-    
-    const headers = {
-      'Content-Type': 'application/json',
-      'APCA-API-KEY-ID': config.brokerApiKey,
-      'APCA-API-SECRET-KEY': config.brokerApiSecret,
-    };
-
     console.log(`Creating ACH relationship for account ${accountId} in ${tradingMode} mode`);
 
-    const response = await fetch(`${config.brokerBaseUrl}/accounts/${accountId}/ach_relationships`, {
+    const edgeFunctionUrl = `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-ach-relationships/${accountId}`;
+
+    const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(achData),
+      credentials: 'include',
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('ACH relationship creation failed:', errorText);
+      const errorData = await response.json().catch(() => ({ error: 'Failed to create ACH relationship' }));
+      console.error('ACH relationship creation failed:', errorData);
       
-      let errorMessage = 'Failed to create ACH relationship';
-      try {
-        const errorData = JSON.parse(errorText);
-        errorMessage = errorData.message || errorData.error || errorMessage;
-      } catch {
-        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-      }
-
       return {
         success: false,
-        error: errorMessage,
+        error: errorData.error || errorData.message || 'Failed to create ACH relationship',
       };
     }
 
@@ -133,13 +121,6 @@ export async function listACHRelationships(
   tradingMode: 'paper' | 'live' = 'paper'
 ): Promise<{ success: boolean; relationships?: ACHRelationship[]; error?: string }> {
   try {
-    const config = getAlpacaConfig(tradingMode);
-    
-    const headers = {
-      'APCA-API-KEY-ID': config.brokerApiKey,
-      'APCA-API-SECRET-KEY': config.brokerApiSecret,
-    };
-
     // Build query string
     const queryParams = new URLSearchParams();
     if (params?.status) {
@@ -147,18 +128,18 @@ export async function listACHRelationships(
     }
 
     const queryString = queryParams.toString();
-    const url = `${config.brokerBaseUrl}/accounts/${accountId}/ach_relationships${queryString ? `?${queryString}` : ''}`;
+    const edgeFunctionUrl = `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-ach-relationships/${accountId}${queryString ? `?${queryString}` : ''}`;
 
-    const response = await fetch(url, {
+    const response = await fetch(edgeFunctionUrl, {
       method: 'GET',
-      headers,
+      credentials: 'include',
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
+      const errorData = await response.json().catch(() => ({ error: 'Failed to list ACH relationships' }));
       return {
         success: false,
-        error: `Failed to list ACH relationships: ${response.status} ${response.statusText}`,
+        error: errorData.error || errorData.message || 'Failed to list ACH relationships',
       };
     }
 
@@ -188,31 +169,20 @@ export async function deleteACHRelationship(
   tradingMode: 'paper' | 'live' = 'paper'
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const config = getAlpacaConfig(tradingMode);
-    
-    const headers = {
-      'APCA-API-KEY-ID': config.brokerApiKey,
-      'APCA-API-SECRET-KEY': config.brokerApiSecret,
-    };
+    const edgeFunctionUrl = `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-ach-relationships/${accountId}/${achRelationshipId}`;
 
-    const response = await fetch(`${config.brokerBaseUrl}/accounts/${accountId}/ach_relationships/${achRelationshipId}`, {
+    const response = await fetch(edgeFunctionUrl, {
       method: 'DELETE',
-      headers,
+      credentials: 'include',
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      let errorMessage = 'Failed to delete ACH relationship';
-      try {
-        const errorData = JSON.parse(errorText);
-        errorMessage = errorData.message || errorData.error || errorMessage;
-        
-        // Check if error is due to pending transfers
-        if (errorMessage.toLowerCase().includes('pending transfer')) {
-          errorMessage = 'Cannot delete ACH relationship with pending transfers. Please wait for transfers to complete or cancel them first.';
-        }
-      } catch {
-        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      const errorData = await response.json().catch(() => ({ error: 'Failed to delete ACH relationship' }));
+      let errorMessage = errorData.error || errorData.message || 'Failed to delete ACH relationship';
+      
+      // Check if error is due to pending transfers
+      if (errorMessage.toLowerCase().includes('pending transfer')) {
+        errorMessage = 'Cannot delete ACH relationship with pending transfers. Please wait for transfers to complete or cancel them first.';
       }
 
       return {

@@ -59,7 +59,7 @@ export async function createBankRelationship(
       }
     }
 
-    const edgeFunctionUrl = `${import.meta.env.SUPABASE_URL}/functions/v1/alpaca-bank-relationships/${accountId}`
+    const edgeFunctionUrl = `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-bank-relationships/${accountId}`
 
     const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
@@ -117,7 +117,7 @@ export async function listBankRelationships(
     }
 
     const queryString = queryParams.toString()
-    const edgeFunctionUrl = `${import.meta.env.SUPABASE_URL}/functions/v1/alpaca-bank-relationships/${accountId}${queryString ? `?${queryString}` : ''}`
+    const edgeFunctionUrl = `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-bank-relationships/${accountId}${queryString ? `?${queryString}` : ''}`
 
     const response = await fetch(edgeFunctionUrl, {
       method: 'GET',
@@ -170,7 +170,7 @@ export async function deleteBankRelationship(
       }
     }
 
-    const edgeFunctionUrl = `${import.meta.env.SUPABASE_URL}/functions/v1/alpaca-bank-relationships/${accountId}/${bankId}`
+    const edgeFunctionUrl = `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-bank-relationships/${accountId}/${bankId}`
 
     const response = await fetch(edgeFunctionUrl, {
       method: 'DELETE',
