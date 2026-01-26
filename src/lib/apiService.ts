@@ -161,7 +161,7 @@ class ApiService {
 
 
   // Account & Trading APIs
-  async getAccount(): Promise<ApiResponse<AccountData>> {
+  async getAccount(forceRefresh = false): Promise<ApiResponse<AccountData>> {
     try {
       // Check authentication first
       const isAuthenticated = await this.checkAuthentication();
@@ -172,11 +172,20 @@ class ApiService {
         };
       }
 
+      // Clear cache if force refresh requested
+      if (forceRefresh) {
+        await userDataCache.delete('account:current');
+      }
+
       // Use caching for account data (1 minute TTL for account info)
       const cachedData = await userDataCache.getOrSet(
         'account:current',
         async () => {
+          console.log('Fetching fresh account data from API...');
           const response = await edgeFunctionClient.get<AccountData>('alpaca-account');
+          
+          console.log('Account API response:', response);
+          
           if (!response.success) {
             throw new Error(response.error?.message || 'Failed to fetch account data');
           }
@@ -184,7 +193,7 @@ class ApiService {
           // Normalize account data - convert string numbers to actual numbers
           const data = response.data;
           if (data) {
-            return {
+            const normalized = {
               ...data,
               buying_power: typeof data.buying_power === 'string' ? parseFloat(data.buying_power) : data.buying_power,
               regt_buying_power: typeof data.regt_buying_power === 'string' ? parseFloat(data.regt_buying_power) : data.regt_buying_power,
@@ -198,6 +207,14 @@ class ApiService {
               maintenance_margin: typeof data.maintenance_margin === 'string' ? parseFloat(data.maintenance_margin) : data.maintenance_margin,
               sma: typeof data.sma === 'string' ? parseFloat(data.sma) : data.sma,
             };
+            
+            console.log('Normalized account data:', {
+              cash: normalized.cash,
+              portfolio_value: normalized.portfolio_value,
+              buying_power: normalized.buying_power
+            });
+            
+            return normalized;
           }
           return data;
         },
@@ -206,6 +223,7 @@ class ApiService {
 
       return { success: true, data: cachedData };
     } catch (error) {
+      console.error('getAccount error:', error);
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Failed to fetch account data' 
