@@ -136,11 +136,28 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
         price = selectedStock.price || 0;
       }
       
+      // Debug logging
+      console.log('Price calculation:', {
+        orderType,
+        limitPrice,
+        selectedStockPrice: selectedStock.price,
+        calculatedPrice: price,
+        quantity: qty,
+        estimatedCost: qty * price
+      });
+      
       if (isNaN(price) || price < 0) return 0;
       return qty * price;
     } else if (tradeType === 'option' && selectedOption) {
       const premium = selectedOption.premium || 0;
       const contractSize = selectedOption.contract_size || 100;
+      
+      console.log('Option price calculation:', {
+        premium,
+        contractSize,
+        quantity: qty,
+        estimatedCost: qty * premium * contractSize
+      });
       
       if (isNaN(premium) || isNaN(contractSize) || premium < 0 || contractSize <= 0) return 0;
       return qty * premium * contractSize;
