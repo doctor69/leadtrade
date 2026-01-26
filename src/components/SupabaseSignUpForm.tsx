@@ -406,9 +406,9 @@ export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: Supabas
         }));
 
         const alpacaAccountData = {
-          user_id: userData.user_id,
+          user_id: userId,
           email: formData.email,
-          full_name: formData.fullName,
+          full_name: formData.fullName || `${formData.givenName} ${formData.familyName}`,
           given_name: formData.givenName,
           family_name: formData.familyName,
           date_of_birth: formData.dateOfBirth,
