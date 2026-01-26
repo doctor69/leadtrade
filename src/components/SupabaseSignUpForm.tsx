@@ -210,22 +210,24 @@ export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: Supabas
   };
 
   const validateForm = (): string | null => {
-    // Basic validation
-    if (!formData.email || !formData.password || !formData.fullName) {
-      return 'Please fill in all required fields';
-    }
+    // Skip email/password validation for OAuth users
+    if (!isOAuthUser) {
+      if (!formData.email || !formData.password || !formData.fullName) {
+        return 'Please fill in all required fields';
+      }
 
-    if (formData.password.length < 6) {
-      return 'Password must be at least 6 characters long';
-    }
+      if (formData.password.length < 6) {
+        return 'Password must be at least 6 characters long';
+      }
 
-    if (formData.password !== formData.confirmPassword) {
-      return 'Passwords do not match';
-    }
+      if (formData.password !== formData.confirmPassword) {
+        return 'Passwords do not match';
+      }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      return 'Please enter a valid email address';
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        return 'Please enter a valid email address';
+      }
     }
 
     // Alpaca required fields validation
