@@ -46,20 +46,30 @@ import Layout from "../../layouts/Layout.astro";
         window.dispatchEvent(new Event('storage'));
 
         // Check if user has an Alpaca account in our database
-        const { data: profileData } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('id')
           .eq('id', data.session.user.id)
           .single();
         
-        const { data: alpacaAccount } = await supabase
+        if (profileError) {
+          console.error('Profile query error:', profileError);
+        }
+        
+        const { data: alpacaAccount, error: alpacaError } = await supabase
           .from('alpaca_accounts')
-          .select('id')
+          .select('id, alpaca_account_id')
           .eq('user_id', data.session.user.id)
           .single();
         
+        if (alpacaError && alpacaError.code !== 'PGRST116') {
+          // PGRST116 is "not found" which is expected for new users
+          console.error('Alpaca account query error:', alpacaError);
+        }
+        
         console.log('Profile exists:', !!profileData);
         console.log('Alpaca account exists:', !!alpacaAccount);
+        console.log('Alpaca account data:', alpacaAccount);
         
         // If no Alpaca account, redirect to setup
         if (!alpacaAccount) {
@@ -97,10 +107,8 @@ import Layout from "../../layouts/Layout.astro";
         
         console.log('Redirecting to:', returnUrl);
         
-        // Redirect to dashboard or specified return URL
-        setTimeout(() => {
-          window.location.href = returnUrl;
-        }, 1000); // Small delay to show the loading state
+        // Redirect immediately for existing users
+        window.location.href = returnUrl;
         
       } else {
         console.log('No session found, redirecting to sign-in');
