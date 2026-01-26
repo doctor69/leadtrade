@@ -369,24 +369,26 @@ export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: Supabas
       // Step 2: Auto-sign in the user (skip for OAuth users - already signed in)
       if (!isOAuthUser) {
         console.log('🔐 Step 2: Auto-signing in user...');
-      // Step 2: Auto-sign in the user
-      console.log('🔐 Step 2: Auto-signing in user...');
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
 
-      if (signInError || !signInData.session) {
-        console.error('Auto sign-in error:', signInError);
-        setError(`Account created successfully, but auto sign-in failed: ${signInError?.message || 'Unknown error'}. Please sign in manually.`);
-        // Don't redirect immediately on error - let user see the error
-        setTimeout(() => {
-          safeNavigate('/signin');
-        }, 5000);
-        return;
+        if (signInError || !signInData.session) {
+          console.error('Auto sign-in error:', signInError);
+          setError(`Account created successfully, but auto sign-in failed: ${signInError?.message || 'Unknown error'}. Please sign in manually.`);
+          // Don't redirect immediately on error - let user see the error
+          setTimeout(() => {
+            safeNavigate('/signin');
+          }, 5000);
+          setLoading(false);
+          return;
+        }
+
+        console.log('✅ User signed in successfully');
+      } else {
+        console.log('✅ OAuth user already signed in, skipping auto sign-in');
       }
-
-      console.log('✅ User signed in successfully');
 
       // Step 3: Create Alpaca account with KYC data
       console.log('🏦 Step 3: Creating Alpaca brokerage account...');
