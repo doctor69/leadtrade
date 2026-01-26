@@ -1,6 +1,7 @@
 // Comprehensive API service for all endpoints
 import { edgeFunctionClient } from './edgeFunctionClient';
 import { marketDataCache, userDataCache, cacheKeys, cacheUtils } from './cache';
+import logger from './logger';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -150,10 +151,10 @@ class ApiService {
 
       // Check Supabase auth status
       const supabaseAuth = checkAuthStatus();
-      console.log('ApiService Supabase auth check:', supabaseAuth);
+      logger.log('ApiService Supabase auth check:', supabaseAuth);
       return supabaseAuth;
     } catch (error) {
-      console.error('Authentication check error:', error);
+      logger.error('Authentication check error:', error);
       return false;
     }
   }
@@ -172,58 +173,62 @@ class ApiService {
         };
       }
 
-      // Clear cache if force refresh requested
-      if (forceRefresh) {
-        await userDataCache.delete('account:current');
-      }
+      // ALWAYS clear cache for now to debug
+      await userDataCache.delete('account:current');
 
       // Use caching for account data (1 minute TTL for account info)
       const cachedData = await userDataCache.getOrSet(
         'account:current',
         async () => {
-          console.log('Fetching fresh account data from API...');
+          logger.log('Fetching fresh account data from API...');
           const response = await edgeFunctionClient.get<AccountData>('alpaca-account');
           
-          console.log('Account API response:', response);
+          logger.log('Account API response:', response);
           
           if (!response.success) {
             throw new Error(response.error?.message || 'Failed to fetch account data');
           }
           
-          // Normalize account data - convert string numbers to actual numbers
-          const data = response.data;
-          if (data) {
-            const normalized = {
-              ...data,
-              buying_power: typeof data.buying_power === 'string' ? parseFloat(data.buying_power) : data.buying_power,
-              regt_buying_power: typeof data.regt_buying_power === 'string' ? parseFloat(data.regt_buying_power) : data.regt_buying_power,
-              daytrading_buying_power: typeof data.daytrading_buying_power === 'string' ? parseFloat(data.daytrading_buying_power) : data.daytrading_buying_power,
-              cash: typeof data.cash === 'string' ? parseFloat(data.cash) : data.cash,
-              portfolio_value: typeof data.portfolio_value === 'string' ? parseFloat(data.portfolio_value) : data.portfolio_value,
-              equity: typeof data.equity === 'string' ? parseFloat(data.equity) : data.equity,
-              last_equity: typeof data.last_equity === 'string' ? parseFloat(data.last_equity) : data.last_equity,
-              multiplier: typeof data.multiplier === 'string' ? parseFloat(data.multiplier) : data.multiplier,
-              initial_margin: typeof data.initial_margin === 'string' ? parseFloat(data.initial_margin) : data.initial_margin,
-              maintenance_margin: typeof data.maintenance_margin === 'string' ? parseFloat(data.maintenance_margin) : data.maintenance_margin,
-              sma: typeof data.sma === 'string' ? parseFloat(data.sma) : data.sma,
-            };
-            
-            console.log('Normalized account data:', {
-              cash: normalized.cash,
-              portfolio_value: normalized.portfolio_value,
-              buying_power: normalized.buying_power
-            });
-            
-            return normalized;
+          // The response.data already contains the account data directly
+          const accountData = response.data;
+          
+          logger.log('Raw account data from API:', accountData);
+          logger.log('Account data keys:', accountData ? Object.keys(accountData) : 'null');
+          
+          if (!accountData) {
+            throw new Error('No account data returned from API');
           }
-          return data;
+          
+          // Normalize account data - convert string numbers to actual numbers
+          const normalized = {
+            ...accountData,
+            buying_power: typeof accountData.buying_power === 'string' ? parseFloat(accountData.buying_power) : accountData.buying_power,
+            regt_buying_power: typeof accountData.regt_buying_power === 'string' ? parseFloat(accountData.regt_buying_power) : accountData.regt_buying_power,
+            daytrading_buying_power: typeof accountData.daytrading_buying_power === 'string' ? parseFloat(accountData.daytrading_buying_power) : accountData.daytrading_buying_power,
+            cash: typeof accountData.cash === 'string' ? parseFloat(accountData.cash) : accountData.cash,
+            portfolio_value: typeof accountData.portfolio_value === 'string' ? parseFloat(accountData.portfolio_value) : accountData.portfolio_value,
+            equity: typeof accountData.equity === 'string' ? parseFloat(accountData.equity) : accountData.equity,
+            last_equity: typeof accountData.last_equity === 'string' ? parseFloat(accountData.last_equity) : accountData.last_equity,
+            multiplier: typeof accountData.multiplier === 'string' ? parseFloat(accountData.multiplier) : accountData.multiplier,
+            initial_margin: typeof accountData.initial_margin === 'string' ? parseFloat(accountData.initial_margin) : accountData.initial_margin,
+            maintenance_margin: typeof accountData.maintenance_margin === 'string' ? parseFloat(accountData.maintenance_margin) : accountData.maintenance_margin,
+            sma: typeof accountData.sma === 'string' ? parseFloat(accountData.sma) : accountData.sma,
+          };
+          
+          logger.log('Normalized account data:', {
+            cash: normalized.cash,
+            portfolio_value: normalized.portfolio_value,
+            buying_power: normalized.buying_power
+          });
+          
+          return normalized;
         },
         60 * 1000 // 1 minute cache
       );
 
       return { success: true, data: cachedData };
     } catch (error) {
-      console.error('getAccount error:', error);
+      logger.error('getAccount error:', error);
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Failed to fetch account data' 

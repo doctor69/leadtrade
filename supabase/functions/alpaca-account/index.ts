@@ -57,8 +57,8 @@ serve(async (req: Request) => {
               )
             }
             
-            // Get the user's specific account
-            const response = await alpacaClient.getAccount(authContext.alpacaAccountId)
+            // Get the user's trading account with full financial details
+            const response = await alpacaClient.getTradingAccount(authContext.alpacaAccountId)
             
             if (!response.success) {
               return createErrorResponse(
@@ -74,8 +74,8 @@ serve(async (req: Request) => {
             return createSuccessResponse(response.data)
           }
           
-          // Get specific account by ID
-          const response = await alpacaClient.getAccount(accountIdFromPath)
+          // Get specific account by ID (trading account with financial details)
+          const response = await alpacaClient.getTradingAccount(accountIdFromPath)
           
           if (!response.success) {
             return createErrorResponse(

@@ -465,11 +465,20 @@ export class AlpacaClient {
   }
 
   /**
-   * Get account information
+   * Get account information (basic metadata only)
    * GET /v1/accounts/{account_id}
    */
   async getAccount(accountId: string): Promise<AlpacaResponse<AlpacaAccount>> {
     return this.brokerRequest<AlpacaAccount>(`/v1/accounts/${accountId}`)
+  }
+
+  /**
+   * Get trading account details with financial information (Broker API)
+   * GET /v1/trading/accounts/{account_id}/account
+   * This returns buying_power, cash, portfolio_value, equity, etc.
+   */
+  async getTradingAccount(accountId: string): Promise<AlpacaResponse<AlpacaAccount>> {
+    return this.brokerRequest<AlpacaAccount>(`/v1/trading/accounts/${accountId}/account`)
   }
 
   /**
