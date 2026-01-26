@@ -7,6 +7,7 @@ import TradingConfigPanel from "@/components/account/TradingConfigPanel";
 import PDTStatusPanel from "@/components/account/PDTStatusPanel";
 import KYCStatus from "@/components/account/KYCStatus";
 import TradingModeIndicator from "@/components/admin/TradingModeIndicator";
+import OptionsTradingSettings from "@/components/settings/OptionsTradingSettings";
 
 // Social media metadata for settings page
 const pageTitle = "Account Settings - LEADTRADE";
@@ -33,27 +34,22 @@ const pageKeywords = "account settings, trading preferences, privacy settings, u
         </div>
         
         <div class="space-y-8">
-          {/* App Trading Mode Indicator */}
-          <div id="trading-mode">
-            <TradingModeIndicator client:load />
-          </div>
-          
           {/* User Profile & Privacy Settings */}
           <UserSettings client:load />
           
           {/* KYC Verification Status */}
           <div id="kyc-status">
-            <KYCStatus client:load accountId="PLACEHOLDER_ACCOUNT_ID" />
+            <KYCStatus client:load />
           </div>
           
           {/* Trading Configuration */}
           <div id="trading-config">
-            <TradingConfigPanel client:load accountId="PLACEHOLDER_ACCOUNT_ID" />
+            <TradingConfigPanel client:load />
           </div>
           
           {/* PDT Status */}
           <div id="pdt-status">
-            <PDTStatusPanel client:load accountId="PLACEHOLDER_ACCOUNT_ID" />
+            <PDTStatusPanel client:load />
           </div>
           
           {/* Link to Funding Page */}

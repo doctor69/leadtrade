@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
 import { Switch } from './switch';
 import { Button } from './button';
-import { AlertCircle, User, Shield, Palette } from 'lucide-react';
+import { AlertCircle, User, Shield, Palette, TrendingUp, RefreshCw } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { ThemeCustomizer } from './ThemeCustomizer';
+import { apiService } from '@/lib/apiService';
 
 interface UserProfile {
   id: string;
@@ -25,6 +26,8 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [updatingStats, setUpdatingStats] = useState(false);
+  const [statsMessage, setStatsMessage] = useState<string | null>(null);
 
   // Load user profile
   useEffect(() => {
@@ -95,6 +98,27 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
 
   const handlePrivacyToggle = async (field: 'share_trades' | 'show_asset_amounts', value: boolean) => {
     await updateProfile({ [field]: value });
+  };
+
+  const handleUpdateLeaderboardStats = async () => {
+    try {
+      setUpdatingStats(true);
+      setStatsMessage(null);
+      
+      const result = await apiService.updateLeaderboardStats();
+      
+      if (result.success) {
+        setStatsMessage('Leaderboard stats updated successfully!');
+      } else {
+        setStatsMessage(result.error || 'Failed to update stats');
+      }
+    } catch (err) {
+      setStatsMessage(err instanceof Error ? err.message : 'Failed to update stats');
+    } finally {
+      setUpdatingStats(false);
+      // Clear message after 5 seconds
+      setTimeout(() => setStatsMessage(null), 5000);
+    }
   };
 
   if (loading) {
@@ -233,6 +257,49 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
               You can disable portfolio value visibility while still allowing trade copying.
             </div>
           </div>
+
+          {profile?.share_trades && (
+            <div className="pt-4 border-t">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" />
+                    Leaderboard Stats
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    Update your performance metrics to appear on the leaderboard
+                  </div>
+                </div>
+                <Button
+                  onClick={handleUpdateLeaderboardStats}
+                  disabled={updatingStats}
+                  size="sm"
+                  variant="outline"
+                >
+                  {updatingStats ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Update Stats
+                    </>
+                  )}
+                </Button>
+              </div>
+              {statsMessage && (
+                <div className={`mt-3 text-sm p-2 rounded ${
+                  statsMessage.includes('success') 
+                    ? 'bg-green-50 dark:bg-green-950 text-green-800 dark:text-green-200' 
+                    : 'bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-200'
+                }`}>
+                  {statsMessage}
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
