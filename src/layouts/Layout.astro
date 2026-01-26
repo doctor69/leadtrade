@@ -1,6 +1,5 @@
 ---
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { WebSocketProvider } from "@/components/WebSocketProvider";
 import MetaTags from "@/components/MetaTags.astro";
 import "../styles/global.css";
 import NavigationBar from "@/components/ui/navbar";
@@ -407,32 +406,32 @@ const {
 				console.warn('Failed to suppress React key warnings:', error);
 			}
 		</script>
+		
+		<!-- Initialize logger with trading mode -->
+		<script>
+			import { logger } from '@/lib/logger';
+			import { getAppTradingMode } from '@/lib/trading-config';
+			
+			// Initialize logger when DOM is ready
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', async () => {
+					const mode = await getAppTradingMode();
+					logger.initLogger(mode);
+				});
+			} else {
+				getAppTradingMode().then((mode: 'paper' | 'live') => {
+					logger.initLogger(mode);
+				});
+			}
+		</script>
 	</head>
 	<body class="min-h-screen bg-background text-foreground antialiased">
-		<!-- WebSocketProvider wraps ThemeProvider and all children -->
-		<WebSocketProvider client:load>
-			<ThemeProvider client:load>
-				{showNavigation && <NavigationBar client:load />}
-				<main id="main-content" class="container mx-auto px-4 py-6">
-					<slot />
-				</main>
-			</ThemeProvider>
-		</WebSocketProvider>
-		
-		<!-- Load performance monitoring after critical content -->
-		<script>
-			// Initialize WebSocket for static pages (with error handling)
-			window.addEventListener('load', () => {
-				// Small delay to prioritize critical rendering
-				setTimeout(async () => {
-					try {
-						const { webSocketUtils } = await import('@/lib/websocket-client');
-						webSocketUtils.initializeForStaticPage(['AAPL', 'TSLA', 'MSFT', 'GOOGL', 'AMZN']);
-					} catch (error) {
-						console.warn('WebSocket initialization failed:', error);
-					}
-				}, 2000);
-			});
-		</script>
+		<!-- ThemeProvider wraps all children -->
+		<ThemeProvider client:load>
+			{showNavigation && <NavigationBar client:load />}
+			<main id="main-content" class="container mx-auto px-4 py-6">
+				<slot />
+			</main>
+		</ThemeProvider>
 	</body>
 </html>

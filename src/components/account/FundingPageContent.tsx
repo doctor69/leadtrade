@@ -5,7 +5,6 @@ import { Card, CardContent } from '../ui/card';
 import ACHTransferForm from './ACHTransferForm';
 import TransferHistory from './TransferHistory';
 import BankLinking from './BankLinking';
-import QuickSandboxFunding from './QuickSandboxFunding';
 import { apiService } from '../../lib/apiService';
 
 export default function FundingPageContent() {
@@ -165,17 +164,6 @@ export default function FundingPageContent() {
         </div>
         
         <div className="space-y-8">
-          {/* Quick Sandbox Funding - Instant test funds */}
-          <div id="quick-funding">
-            <QuickSandboxFunding 
-              accountId={accountId} 
-              onFundingComplete={() => {
-                // Reload the page to show updated balance
-                window.location.reload();
-              }}
-            />
-          </div>
-          
           {/* Bank Linking - Add bank accounts */}
           <div id="bank-linking">
             <BankLinking accountId={accountId} />
