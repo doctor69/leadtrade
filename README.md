@@ -6,7 +6,7 @@ A sophisticated trading platform built with **Astro 5.2+**, **React 19**, **Type
 
 ## 🎯 Project Status: MVP Complete + Advanced Features + Limited Live Tech Requirements
 
-**Current Version**: v1.7.42  
+**Current Version**: v1.7.43  
 **Last Updated**: January 2026  
 **Build Status**: ✅ MVP Complete - All 15 Core Phases + Advanced Features (Phases 16-17) + **Limited Live Tech Requirements ALL 14 PHASES COMPLETE (70/70 tasks)** 🎉  
 **Alpaca Broker API**: ✅ Phases 1-15 Complete - All MVP features implemented (Account Management, Documents, Banking, Transfers, Trading Config, PDT, Options, Corporate Actions, Watchlists, SSE Events, Journals, Instant Funding, Funding Wallets, OAuth)  
@@ -73,6 +73,50 @@ A sophisticated trading platform built with **Astro 5.2+**, **React 19**, **Type
 **Copy Trading**: ✅ Complete trader profile interface with real-time notifications and WebSocket integration
 
 ## 🎉 Recent Updates (January 2026)
+
+### Supabase Client: Static Build Optimization (v1.7.43) ✅
+
+**Enhanced Static Site Generation Compatibility**
+
+Improved the Supabase client initialization to support static builds without environment variable validation errors:
+
+- ✅ **Runtime Validation**: Moved environment variable validation from build-time to runtime
+  - Prevents build failures when environment variables are not available during static generation
+  - Uses placeholder values during build that are replaced at runtime
+  - Enables successful static builds for deployment to CDN/static hosts
+
+- ✅ **Graceful Degradation**: Client-side validation helper
+  - New `validateSupabaseConfig()` function for runtime checks
+  - Components can validate configuration before making API calls
+  - Clear console error messages when configuration is missing
+  - Prevents runtime errors with proper error handling
+
+- ✅ **Static Build Support**: Optimized for SSG workflows
+  - Compatible with Astro's static site generation
+  - Works with Netlify, Vercel, and other static hosting platforms
+  - Environment variables injected at runtime via build configuration
+  - No build-time dependencies on environment variables
+
+- ✅ **Developer Experience**: Better error handling
+  - Build succeeds even without environment variables
+  - Runtime validation provides clear feedback
+  - Console warnings guide developers to configuration issues
+  - Maintains security with client-side validation
+
+**Technical Details:**
+- **File Modified**: `src/lib/supabase.ts`
+- **Build-Time**: Uses placeholder values (`https://placeholder.supabase.co`, `placeholder-key`)
+- **Runtime**: Validates actual environment variables when components use Supabase
+- **Validation Helper**: `validateSupabaseConfig()` returns boolean for configuration status
+
+**Benefits:**
+- Successful static builds without environment variables
+- Better compatibility with CI/CD pipelines
+- Cleaner separation of build-time and runtime concerns
+- Improved developer experience with clear error messages
+- Production-ready static deployment support
+
+---
 
 ### Quick Sandbox Funding: Journals API Integration (v1.7.42) ✅
 
@@ -7467,6 +7511,9 @@ The project includes 40+ specialized testing and debugging scripts for streamlin
 ## 📁 Project Structure
 
 ```
+.cloudflare/                   # Cloudflare Pages configuration
+├── pages.json                 # Build and deployment settings
+
 src/
 ├── components/                 # React components
 │   ├── trading/               # Trading-specific components
@@ -9185,6 +9232,10 @@ LEADTRADE features advanced build optimization specifically designed for Progres
 LEADTRADE implements a comprehensive authentication system built on Supabase Auth with enhanced security and OAuth integration:
 
 **Enhanced Supabase Client Configuration**
+- **Runtime Validation**: Environment variable validation moved from build-time to runtime for static build compatibility (v1.7.43)
+- **Static Build Support**: Uses placeholder values during build that are replaced at runtime, enabling successful static site generation
+- **Validation Helper**: New `validateSupabaseConfig()` function for runtime configuration checks in components
+- **Graceful Degradation**: Clear console error messages when configuration is missing, preventing runtime errors
 - **Environment Validation**: Automatic validation of required Supabase environment variables with clear error messaging for missing configuration
 - **PKCE Flow**: Proof Key for Code Exchange (PKCE) authentication flow for enhanced security in static deployments and OAuth flows
 - **Session Management**: Persistent sessions with automatic token refresh, URL-based session detection, and seamless authentication state handling
@@ -13357,6 +13408,36 @@ npm run preview
 npm run deploy:static
 ```
 
+### Cloudflare Pages Configuration
+
+The project includes a Cloudflare Pages configuration file (`.cloudflare/pages.json`) for seamless deployment:
+
+```json
+{
+  "build": {
+    "command": "npm run build",
+    "output": "dist"
+  }
+}
+```
+
+**Deployment to Cloudflare Pages:**
+
+1. **Connect Repository**: Link your Git repository to Cloudflare Pages
+2. **Automatic Detection**: Cloudflare will automatically detect the configuration
+3. **Environment Variables**: Add required environment variables in Cloudflare dashboard
+4. **Deploy**: Push to your branch and Cloudflare will build and deploy automatically
+
+**Benefits:**
+- ✅ Automatic build configuration detection
+- ✅ Global CDN distribution with edge caching
+- ✅ Automatic HTTPS with Cloudflare SSL
+- ✅ Zero-downtime deployments with instant rollback
+- ✅ Preview deployments for all branches
+- ✅ Built-in analytics and performance monitoring
+
+See [CLOUDFLARE_DEPLOYMENT.md](./CLOUDFLARE_DEPLOYMENT.md) for detailed setup instructions.
+
 ### Supabase Edge Functions Deployment
 
 Deploy the Edge Functions to Supabase:
@@ -13388,6 +13469,7 @@ npm run deploy:full
 - [ ] Domain configured and SSL enabled
 - [ ] Database migrations applied
 - [ ] API endpoints tested and functional
+- [ ] Cloudflare Pages configuration verified (if using Cloudflare)
 
 ### 3. Set Up Alpaca Markets
 
