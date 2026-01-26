@@ -33,6 +33,8 @@ import Layout from "../../layouts/Layout.astro";
 
       if (data.session && data.session.user) {
         console.log('OAuth successful, user:', data.session.user.email);
+        console.log('User created at:', data.session.user.created_at);
+        console.log('Last sign in at:', data.session.user.last_sign_in_at);
         
         // Store tokens in localStorage
         localStorage.setItem('sb-access-token', data.session.access_token);
@@ -43,43 +45,56 @@ import Layout from "../../layouts/Layout.astro";
         // Trigger storage event to update navbar
         window.dispatchEvent(new Event('storage'));
 
-        // Check if this is a new user (first time OAuth)
-        const userCreatedAt = new Date(data.session.user.created_at);
-        const lastSignInAt = new Date(data.session.user.last_sign_in_at || '');
-        const isNewUser = Math.abs(userCreatedAt.getTime() - lastSignInAt.getTime()) < 5000; // Within 5 seconds
+        // Check if user has an Alpaca account in our database
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', data.session.user.id)
+          .single();
         
-        if (isNewUser) {
-          console.log('New Google user detected, creating Alpaca account...');
+        const { data: alpacaAccount } = await supabase
+          .from('alpaca_accounts')
+          .select('id')
+          .eq('user_id', data.session.user.id)
+          .single();
+        
+        console.log('Profile exists:', !!profileData);
+        console.log('Alpaca account exists:', !!alpacaAccount);
+        
+        // If no Alpaca account, redirect to setup
+        if (!alpacaAccount) {
+          console.log('No Alpaca account found, redirecting to account setup...');
           
-          // Store basic info for Google users - they'll need to complete KYC later
+          // Mark user as needing KYC completion
           try {
-            console.log('Google OAuth user detected - storing basic info');
-            
-            // Mark user as needing KYC completion
             const { error: metadataError } = await supabase.auth.updateUser({
               data: {
                 ...data.session.user.user_metadata,
                 needs_kyc_completion: true,
-                oauth_provider: 'google',
+                oauth_provider: data.session.user.app_metadata.provider || 'google',
                 signup_completed_at: new Date().toISOString()
               }
             });
             
-            if (signupError) {
-              console.error('Failed to create comprehensive account setup:', signupError);
-            } else if (signupResult?.success) {
-              console.log('Account setup completed for Google user:', signupResult.data?.user_id);
-            } else {
-              console.error('Account setup failed:', signupResult?.error);
+            if (metadataError) {
+              console.error('Failed to update user metadata:', metadataError);
             }
           } catch (setupError) {
-            console.error('Error creating account setup for Google user:', setupError);
+            console.error('Error updating user metadata:', setupError);
           }
+          
+          // Redirect to account setup page
+          setTimeout(() => {
+            window.location.href = '/settings#kyc-status';
+          }, 1000);
+          return;
         }
 
         // Get return URL from query params or default to dashboard
         const urlParams = new URLSearchParams(window.location.search);
         const returnUrl = urlParams.get('returnUrl') || '/dashboard';
+        
+        console.log('Redirecting to:', returnUrl);
         
         // Redirect to dashboard or specified return URL
         setTimeout(() => {

@@ -243,8 +243,11 @@ serve(async (req: Request) => {
                 )
               }
               
+              logger.info('Processing options order')
+              
               // Construct option symbol in OCC format for Alpaca
               const optionSymbol = constructOptionSymbol(validatedOrder.symbol, validatedOrder.option_details)
+              logger.info(`Constructed option symbol: ${optionSymbol}`)
               validatedOrder.symbol = optionSymbol
             }
             
@@ -267,8 +270,12 @@ serve(async (req: Request) => {
             
             // Add options-specific fields
             if (validatedOrder.trade_type === 'option') {
-              orderPayload.class = 'option'
+              // For options, the symbol is already in OCC format
+              // Set order_class to simple for options
+              orderPayload.order_class = 'simple'
             }
+            
+            logger.info('Creating order', { orderPayload, tradeType: validatedOrder.trade_type });
             
             // Make request to Alpaca Broker API
             const response = await alpacaClient.createOrder(accountId, orderPayload)

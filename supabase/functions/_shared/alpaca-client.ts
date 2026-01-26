@@ -344,7 +344,7 @@ export class AlpacaClient {
       }
 
       // Add body if provided
-      if (body && (method === 'POST' || method === 'PUT')) {
+      if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
         requestOptions.body = JSON.stringify(body)
       }
 
@@ -535,16 +535,28 @@ export class AlpacaClient {
   /**
    * Request options approval for an account
    * POST /v1/accounts/{account_id}/options_approval
+   * 
+   * @param accountId The account ID
+   * @param level Options approval level (0-3)
+   * @param fixtures Optional sandbox fixtures for testing (sandbox only)
    */
   async requestOptionsApproval(
     accountId: string,
-    level: number
+    level: number,
+    fixtures?: { status: 'APPROVED' | 'REJECTED' | 'LOWER_LEVEL_APPROVED'; level?: number }
   ): Promise<AlpacaResponse<{ status: string; level: number }>> {
+    const body: any = { level }
+    
+    // Add fixtures for sandbox testing
+    if (fixtures) {
+      body.fixtures = fixtures
+    }
+    
     return this.brokerRequest<{ status: string; level: number }>(
-      `/v1/accounts/${accountId}/options_approval`,
+      `/v1/accounts/${accountId}/options/approval`,
       {
         method: 'POST',
-        body: { level }
+        body
       }
     )
   }

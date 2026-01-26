@@ -162,23 +162,29 @@ serve(async (req: Request) => {
         
         // Handle POST requests (options approval)
         if (req.method === 'POST') {
-          if (!accountIdFromPath) {
-            return createErrorResponse(
-              {
-                code: 'MISSING_ACCOUNT_ID',
-                message: 'Account ID is required for options approval request'
-              },
-              400
-            )
-          }
+          // Check if this is an options approval request
+          const isOptionsApprovalRequest = isOptionsApproval || url.pathname.includes('options_approval')
           
-          if (!isOptionsApproval) {
+          if (!isOptionsApprovalRequest) {
             return createErrorResponse(
               {
                 code: 'INVALID_ENDPOINT',
                 message: 'POST requests are only supported for /options_approval endpoint'
               },
               400
+            )
+          }
+          
+          // Use account ID from path or from auth context
+          const targetAccountId = accountIdFromPath || authContext.alpacaAccountId
+          
+          if (!targetAccountId) {
+            return createErrorResponse(
+              {
+                code: 'MISSING_ACCOUNT_ID',
+                message: 'No Alpaca account found for this user'
+              },
+              404
             )
           }
           
@@ -194,7 +200,20 @@ serve(async (req: Request) => {
             )
           }
           
-          const response = await alpacaClient.requestOptionsApproval(accountIdFromPath, body.level)
+          console.log(`Requesting options approval level ${body.level} for account ${targetAccountId}`)
+          
+          // For sandbox, pass fixtures to simulate approval
+          // In paper/sandbox mode, we can use fixtures to instantly approve
+          const fixtures = authContext.tradingMode === 'paper' ? { status: 'APPROVED' as const } : undefined
+          
+          console.log('Options approval request:', {
+            accountId: targetAccountId,
+            level: body.level,
+            fixtures,
+            tradingMode: authContext.tradingMode
+          })
+          
+          const response = await alpacaClient.requestOptionsApproval(targetAccountId, body.level, fixtures)
           
           if (!response.success) {
             return createErrorResponse(

@@ -44,6 +44,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create trigger to automatically update updated_at
+DROP TRIGGER IF EXISTS trigger_update_securities_cache_updated_at ON securities_cache;
 CREATE TRIGGER trigger_update_securities_cache_updated_at
   BEFORE UPDATE ON securities_cache
   FOR EACH ROW
@@ -53,11 +54,13 @@ CREATE TRIGGER trigger_update_securities_cache_updated_at
 ALTER TABLE securities_cache ENABLE ROW LEVEL SECURITY;
 
 -- Allow read access to all authenticated users (securities data is public)
+DROP POLICY IF EXISTS "Allow read access to securities cache" ON securities_cache;
 CREATE POLICY "Allow read access to securities cache" ON securities_cache
   FOR SELECT TO authenticated
   USING (true);
 
 -- Allow insert/update only to service role (for syncing data)
+DROP POLICY IF EXISTS "Allow service role to manage securities cache" ON securities_cache;
 CREATE POLICY "Allow service role to manage securities cache" ON securities_cache
   FOR ALL TO service_role
   USING (true);

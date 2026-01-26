@@ -1,16 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trophy, TrendingUp, TrendingDown, Medal, Award, Search, Filter, Eye, Users, BarChart3 } from 'lucide-react';
-import { apiService, type LeaderboardEntry } from '@/lib/apiService';
-import TraderProfileModal from './TraderProfileModal';
+import { apiService } from '@/lib/apiService';
+import type { LeaderboardEntry } from '@/lib/apiService';
 
 type SortOption = 'return' | 'winRate' | 'trades' | 'portfolio';
 type FilterOption = 'all' | 'profitable' | 'highVolume' | 'consistent';
+
+// Simple Avatar component to avoid Radix UI module loading issues
+const SimpleAvatar = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
+  <div className={`rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary ${className}`}>
+    {children}
+  </div>
+);
 
 export default function Leaderboard() {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
@@ -212,11 +218,9 @@ export default function Leaderboard() {
                   {getRankIcon(trader.rank)}
                 </div>
                 
-                <Avatar className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-3 sm:mb-4">
-                  <AvatarFallback className="text-sm sm:text-lg font-bold">
-                    {getInitials(trader.username)}
-                  </AvatarFallback>
-                </Avatar>
+                <SimpleAvatar className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-3 sm:mb-4 text-sm sm:text-lg">
+                  {getInitials(trader.username)}
+                </SimpleAvatar>
                 
                 <h3 className="font-semibold text-base sm:text-lg mb-2 truncate">{trader.username}</h3>
                 
@@ -295,9 +299,9 @@ export default function Leaderboard() {
                       )}
                     </div>
                     
-                    <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
-                      <AvatarFallback className="text-xs sm:text-sm">{getInitials(trader.username)}</AvatarFallback>
-                    </Avatar>
+                    <SimpleAvatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 text-xs sm:text-sm">
+                      {getInitials(trader.username)}
+                    </SimpleAvatar>
                     
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold text-sm sm:text-base truncate">{trader.username}</h4>
@@ -336,11 +340,69 @@ export default function Leaderboard() {
         </CardContent>
       </Card>
 
-      {/* Trader Profile Modal/Detail View */}
+      {/* Trader Profile Modal - Coming Soon */}
       {selectedTrader && (
-        <TraderProfileModal 
-          trader={selectedTrader} 
-          onClose={() => setSelectedTrader(null)} 
+        <Card className="fixed inset-4 z-50 max-w-2xl mx-auto my-auto h-fit">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Trader Profile</CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedTrader(null)}>
+                ✕
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <SimpleAvatar className="h-16 w-16 text-lg">
+                  {selectedTrader.username.slice(0, 2).toUpperCase()}
+                </SimpleAvatar>
+                <div>
+                  <h3 className="text-xl font-bold">{selectedTrader.username}</h3>
+                  <p className="text-muted-foreground">Rank #{selectedTrader.rank}</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-muted-foreground">Total Return</div>
+                  <div className="text-lg font-bold">
+                    {selectedTrader.totalReturnPercent.toFixed(2)}%
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-muted-foreground">Win Rate</div>
+                  <div className="text-lg font-bold">
+                    {selectedTrader.winRate.toFixed(1)}%
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-muted-foreground">Trades</div>
+                  <div className="text-lg font-bold">
+                    {selectedTrader.tradesCount}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-muted-foreground">Followers</div>
+                  <div className="text-lg font-bold">
+                    {selectedTrader.followers || 0}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="pt-4">
+                <p className="text-sm text-muted-foreground text-center">
+                  Full trader profiles and copy trading coming soon!
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {selectedTrader && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40" 
+          onClick={() => setSelectedTrader(null)}
         />
       )}
     </div>

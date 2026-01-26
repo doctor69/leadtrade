@@ -57,49 +57,59 @@ export default function PortfolioChart() {
   const fetchPortfolioHistory = async () => {
     try {
       setLoading(true);
+      console.log('Fetching portfolio history with timeframe:', timeframe);
+      
       const result = await apiService.getPortfolioHistory({
         period: timeframe,
         timeframe: '1D'
       });
       
+      console.log('Portfolio history result:', result);
+      
       if (result.success && result.data) {
         const historyData = result.data;
+        console.log('Portfolio history data:', historyData);
         
-        if (historyData.timestamp && historyData.equity) {
-          const formattedData: PortfolioData[] = historyData.timestamp.map((timestamp: string, index: number) => ({
-            date: new Date(timestamp).toISOString().split('T')[0],
-            value: historyData.equity[index] || 0,
-            change: index > 0 ? (historyData.equity[index] - historyData.equity[index - 1]) : 0,
-          }));
-          setPortfolioData(formattedData);
-        } else {
-          // Try to get current account value if no history
-          const accountResult = await apiService.getAccount();
-          if (accountResult.success && accountResult.data) {
-            const currentValue = accountResult.data.portfolio_value || 0;
-            setPortfolioData([{
-              date: new Date().toISOString().split('T')[0],
-              value: currentValue,
-              change: 0,
-            }]);
+        if (historyData.timestamp && historyData.equity && historyData.timestamp.length > 0) {
+          // Check if all equity values are zero
+          const hasNonZeroData = historyData.equity.some((val: number) => val > 0);
+          
+          if (hasNonZeroData) {
+            const formattedData: PortfolioData[] = historyData.timestamp.map((timestamp: number | string, index: number) => {
+              // Alpaca returns Unix timestamps in seconds, convert to milliseconds
+              const timestampMs = typeof timestamp === 'number' ? timestamp * 1000 : parseInt(timestamp) * 1000;
+              return {
+                date: new Date(timestampMs).toISOString().split('T')[0],
+                value: historyData.equity[index] || 0,
+                change: index > 0 ? (historyData.equity[index] - historyData.equity[index - 1]) : 0,
+              };
+            });
+            console.log('Formatted portfolio data:', formattedData);
+            setPortfolioData(formattedData);
+            return; // Successfully loaded data
           } else {
-            setPortfolioData([]);
+            console.log('Portfolio history contains all zeros, falling back to current account value');
           }
         }
+      }
+      
+      // If we get here, either the API failed or returned no data
+      // Fall back to current account value
+      console.log('No portfolio history available, fetching current account value');
+      const accountResult = await apiService.getAccount();
+      console.log('Account result:', accountResult);
+      
+      if (accountResult.success && accountResult.data) {
+        const currentValue = parseFloat(accountResult.data.portfolio_value || '0');
+        console.log('Using current portfolio value:', currentValue);
+        setPortfolioData([{
+          date: new Date().toISOString().split('T')[0],
+          value: currentValue,
+          change: 0,
+        }]);
       } else {
-        // Handle 404 or other errors gracefully - try to get current account value
-        console.log('Portfolio history not available, using current account value');
-        const accountResult = await apiService.getAccount();
-        if (accountResult.success && accountResult.data) {
-          const currentValue = accountResult.data.portfolio_value || 0;
-          setPortfolioData([{
-            date: new Date().toISOString().split('T')[0],
-            value: currentValue,
-            change: 0,
-          }]);
-        } else {
-          setPortfolioData([]);
-        }
+        console.error('Failed to fetch account data:', accountResult.error);
+        setPortfolioData([]);
       }
     } catch (error) {
       console.error('Failed to fetch portfolio history:', error);
@@ -107,7 +117,7 @@ export default function PortfolioChart() {
       try {
         const accountResult = await apiService.getAccount();
         if (accountResult.success && accountResult.data) {
-          const currentValue = accountResult.data.portfolio_value || 0;
+          const currentValue = parseFloat(accountResult.data.portfolio_value || '0');
           setPortfolioData([{
             date: new Date().toISOString().split('T')[0],
             value: currentValue,
