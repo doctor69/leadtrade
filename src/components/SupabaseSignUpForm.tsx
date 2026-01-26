@@ -200,9 +200,9 @@ export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: Supabas
         break;
       
       case 5:
-        // Document validation - at least identity verification required unless skipped
-        if (!skipDocuments && !documents.some(doc => doc.type === 'identity_verification' && doc.uploaded)) {
-          return 'Please upload an identity verification document or choose to skip';
+        // Document validation - allow skipping if checkbox is checked
+        if (!skipDocuments && documents.length === 0) {
+          return 'Please upload at least one document or click "Skip for Now"';
         }
         break;
     }
@@ -1209,12 +1209,34 @@ export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: Supabas
 
             {/* Step 5: Document Upload */}
             {currentStep === 5 && (
-              <DocumentUpload
-                documents={documents}
-                onDocumentsChange={setDocuments}
-                allowSkip={true}
-                onSkip={() => setSkipDocuments(true)}
-              />
+              <div>
+                {skipDocuments ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Documents Skipped</CardTitle>
+                      <CardDescription>
+                        You've chosen to skip document upload. You can upload documents later from your account settings.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setSkipDocuments(false)}
+                      >
+                        Upload Documents Now
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <DocumentUpload
+                    documents={documents}
+                    onDocumentsChange={setDocuments}
+                    allowSkip={true}
+                    onSkip={() => setSkipDocuments(true)}
+                  />
+                )}
+              </div>
             )}
 
             {/* Navigation Buttons */}
