@@ -6,7 +6,7 @@ A sophisticated trading platform built with **Astro 5.2+**, **React 19**, **Type
 
 ## 🎯 Project Status: MVP Complete + Advanced Features + Limited Live Tech Requirements
 
-**Current Version**: v1.7.78  
+**Current Version**: v1.7.80  
 **Last Updated**: January 2026  
 **Build Status**: ✅ MVP Complete - All 15 Core Phases + Advanced Features (Phases 16-17) + **Limited Live Tech Requirements ALL 14 PHASES COMPLETE (70/70 tasks)** 🎉  
 **Alpaca Broker API**: ✅ Phases 1-15 Complete - All MVP features implemented (Account Management, Documents, Banking, Transfers, Trading Config, PDT, Options, Corporate Actions, Watchlists, SSE Events, Journals, Instant Funding, Funding Wallets, OAuth)  
@@ -74,11 +74,35 @@ A sophisticated trading platform built with **Astro 5.2+**, **React 19**, **Type
 
 ## 🎉 Recent Updates (January 2026)
 
-### OAuth Callback: Database-Based New User Detection (v1.7.78) ✅
+### OAuth Callback: Improved Signup Flow Redirect (v1.7.79) ✅
 
-**Enhanced Reliability with Database-Driven Decision Making**
+**Seamless OAuth User Onboarding with Account Creation Form**
 
-Improved the OAuth callback handler to use database queries instead of timestamp comparison for detecting new users, providing more reliable onboarding flow and handling edge cases gracefully:
+Enhanced the OAuth callback handler to redirect new users to the signup page with proper parameters, ensuring OAuth users complete the account creation process through the same streamlined interface as email/password users:
+
+- ✅ **Signup Page Redirect**: Consistent onboarding experience
+  - Redirects to `/signup?oauth=true&step=2` for new OAuth users
+  - Shows account creation form (step 2) directly
+  - Skips email/password step (step 1) for OAuth users
+  - Maintains consistent UI/UX across signup methods
+  - Leverages existing signup form validation
+  - Professional onboarding flow
+
+- ✅ **OAuth Parameter Handling**: Smart form behavior
+  - `oauth=true` parameter indicates OAuth authentication
+  - `step=2` parameter shows account creation form
+  - Form recognizes OAuth users and adjusts accordingly
+  - No duplicate authentication required
+  - Seamless transition from OAuth to account setup
+  - User-friendly experience
+
+- ✅ **User Metadata Tracking**: Enhanced user context
+  - Sets `needs_kyc_completion: true` flag
+  - Stores OAuth provider (google, github, etc.)
+  - Records `signup_completed_at` timestamp
+  - Enables follow-up workflows
+  - Supports analytics and tracking
+  - Production-ready metadata management
 
 - ✅ **Database-Based Detection**: Reliable user state checking
   - Queries profiles table for user profile existence

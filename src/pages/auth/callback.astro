@@ -83,9 +83,10 @@ import Layout from "../../layouts/Layout.astro";
             console.error('Error updating user metadata:', setupError);
           }
           
-          // Redirect to account setup page
+          // Redirect to signup page with oauth=true parameter
+          // This will show the account creation form for OAuth users
           setTimeout(() => {
-            window.location.href = '/settings#kyc-status';
+            window.location.href = '/signup?oauth=true&step=2';
           }, 1000);
           return;
         }
