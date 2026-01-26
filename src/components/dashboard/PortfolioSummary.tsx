@@ -14,18 +14,29 @@ interface PortfolioSummary {
 }
 
 // Fetch real portfolio data from Alpaca API
-const fetchPortfolioSummary = async (): Promise<PortfolioSummary | null> => {
+const fetchPortfolioSummary = async (forceRefresh = false): Promise<PortfolioSummary | null> => {
   try {
     // Import apiService dynamically to avoid SSR issues
     const { apiService } = await import('@/lib/apiService');
     
-    // Get account data from Alpaca
-    const accountResult = await apiService.getAccount();
+    // Get account data from Alpaca with optional force refresh
+    const accountResult = await apiService.getAccount(forceRefresh);
+    
+    console.log('Portfolio Summary - Account Result:', accountResult);
+    
     if (!accountResult.success || !accountResult.data) {
-      throw new Error('Failed to fetch account data');
+      console.error('Failed to fetch account data:', accountResult.error);
+      throw new Error(accountResult.error || 'Failed to fetch account data');
     }
 
     const account = accountResult.data;
+    
+    console.log('Portfolio Summary - Account Data:', {
+      cash: account.cash,
+      portfolio_value: account.portfolio_value,
+      buying_power: account.buying_power,
+      equity: account.equity
+    });
     
     // Get positions to count them
     const positionsResult = await apiService.getPositions();
@@ -33,8 +44,10 @@ const fetchPortfolioSummary = async (): Promise<PortfolioSummary | null> => {
 
     return {
       totalValue: Number(account.portfolio_value || 0),
-      dayChange: Number(account.day_trade_buying_power || 0) - Number(account.portfolio_value || 0),
-      dayChangePercent: 0, // Calculate from portfolio history if available
+      dayChange: Number(account.equity || 0) - Number(account.last_equity || 0),
+      dayChangePercent: Number(account.last_equity || 0) > 0 
+        ? ((Number(account.equity || 0) - Number(account.last_equity || 0)) / Number(account.last_equity || 0)) * 100 
+        : 0,
       totalGainLoss: Number(account.portfolio_value || 0) - Number(account.cash || 0),
       totalGainLossPercent: 0, // Calculate from initial investment
       cashBalance: Number(account.cash || 0),
@@ -51,6 +64,7 @@ export default function PortfolioSummary() {
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -58,16 +72,28 @@ export default function PortfolioSummary() {
 
   useEffect(() => {
     if (!mounted) return;
-    
-    const loadSummary = async () => {
-      setLoading(true);
-      const portfolioData = await fetchPortfolioSummary();
-      setSummary(portfolioData);
-      setLoading(false);
-    };
-
     loadSummary();
   }, [mounted]);
+
+  const loadSummary = async (forceRefresh = false) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const portfolioData = await fetchPortfolioSummary(forceRefresh);
+      
+      if (!portfolioData) {
+        setError('Unable to load portfolio data');
+      } else {
+        setSummary(portfolioData);
+      }
+    } catch (err) {
+      console.error('Error loading portfolio summary:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load portfolio data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!mounted || loading) {
     return (
@@ -76,8 +102,8 @@ export default function PortfolioSummary() {
           <Card key={`loading-card-${i}`}>
             <CardContent className="p-6">
               <div className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
               </div>
             </CardContent>
           </Card>
@@ -86,13 +112,19 @@ export default function PortfolioSummary() {
     );
   }
 
-  if (!summary) {
+  if (error || !summary) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
+        <Card className="col-span-full">
           <CardContent className="p-6 text-center">
-            <p className="text-muted-foreground">Unable to load portfolio data</p>
-            <p className="text-sm text-muted-foreground mt-1">Please check your connection to Alpaca</p>
+            <p className="text-muted-foreground mb-2">Unable to load portfolio data</p>
+            {error && <p className="text-sm text-red-600 dark:text-red-400 mb-4">{error}</p>}
+            <button
+              onClick={() => loadSummary(true)}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            >
+              Retry
+            </button>
           </CardContent>
         </Card>
       </div>

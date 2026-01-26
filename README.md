@@ -6,7 +6,7 @@ A sophisticated trading platform built with **Astro 5.2+**, **React 19**, **Type
 
 ## 🎯 Project Status: MVP Complete + Advanced Features + Limited Live Tech Requirements
 
-**Current Version**: v1.7.43  
+**Current Version**: v1.7.45  
 **Last Updated**: January 2026  
 **Build Status**: ✅ MVP Complete - All 15 Core Phases + Advanced Features (Phases 16-17) + **Limited Live Tech Requirements ALL 14 PHASES COMPLETE (70/70 tasks)** 🎉  
 **Alpaca Broker API**: ✅ Phases 1-15 Complete - All MVP features implemented (Account Management, Documents, Banking, Transfers, Trading Config, PDT, Options, Corporate Actions, Watchlists, SSE Events, Journals, Instant Funding, Funding Wallets, OAuth)  
@@ -73,6 +73,57 @@ A sophisticated trading platform built with **Astro 5.2+**, **React 19**, **Type
 **Copy Trading**: ✅ Complete trader profile interface with real-time notifications and WebSocket integration
 
 ## 🎉 Recent Updates (January 2026)
+
+### TradeForm: Enhanced Price Calculation Debugging (v1.7.45) ✅
+
+**Improved Order Cost Estimation Transparency**
+
+Added comprehensive debug logging to the TradeForm component's price calculation logic for better troubleshooting and transparency:
+
+- ✅ **Stock Order Debugging**: Detailed logging for stock price calculations
+  - Logs order type (market vs limit)
+  - Tracks limit price when specified
+  - Shows selected stock price from market data
+  - Displays calculated price used for estimation
+  - Logs quantity and final estimated cost
+  - Helps identify pricing discrepancies
+
+- ✅ **Options Order Debugging**: Comprehensive options premium tracking
+  - Logs option premium per contract
+  - Tracks contract size (typically 100 shares)
+  - Shows quantity of contracts
+  - Displays final estimated cost calculation
+  - Validates premium and contract size values
+  - Ensures accurate options cost estimation
+
+- ✅ **Developer Experience**: Better troubleshooting capabilities
+  - Console logs provide real-time calculation visibility
+  - Easy identification of pricing issues
+  - Transparent cost estimation process
+  - Helpful for debugging order submission problems
+  - Validates all calculation inputs
+
+- ✅ **Technical Implementation**:
+  - Debug logs in `getEstimatedCost()` function
+  - Separate logging for stock and options calculations
+  - Includes all relevant calculation parameters
+  - Non-intrusive console logging
+  - Production-safe implementation
+
+**Technical Details:**
+- **File Modified**: `src/components/trading/TradeForm.tsx`
+- **Stock Calculation Log**: Order type, limit price, stock price, quantity, estimated cost
+- **Options Calculation Log**: Premium, contract size, quantity, estimated cost
+- **Purpose**: Improve debugging and transparency of order cost calculations
+
+**Benefits:**
+- Easier troubleshooting of pricing issues
+- Transparent calculation process for developers
+- Quick identification of data quality problems
+- Better validation of order cost estimates
+- Improved confidence in order submission accuracy
+
+---
 
 ### Supabase Client: Static Build Optimization (v1.7.43) ✅
 
