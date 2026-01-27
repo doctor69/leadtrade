@@ -331,22 +331,24 @@ export default function Leaderboard() {
                       <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                       View
                     </Button>
-                    <Button 
-                      size="sm" 
-                      className="flex-1 min-h-[36px] text-xs"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMirrorTrades(trader.id, trader.username);
-                      }}
-                      disabled={mirroringTrader === trader.id || currentUserId === trader.id}
-                    >
-                      {mirroringTrader === trader.id ? (
-                        <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
-                      ) : (
-                        <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                      )}
-                      Mirror
-                    </Button>
+                    {currentUserId !== trader.id && (
+                      <Button 
+                        size="sm" 
+                        className="flex-1 min-h-[36px] text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMirrorTrades(trader.id, trader.username);
+                        }}
+                        disabled={mirroringTrader === trader.id}
+                      >
+                        {mirroringTrader === trader.id ? (
+                          <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
+                        ) : (
+                          <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        )}
+                        Mirror
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -424,26 +426,36 @@ export default function Leaderboard() {
                       </div>
                     </div>
                     
-                    <Button size="sm" variant="outline" className="min-h-[36px] text-xs">
-                      <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                      <span className="hidden sm:inline">View</span>
-                    </Button>
                     <Button 
                       size="sm" 
+                      variant="outline" 
                       className="min-h-[36px] text-xs"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleMirrorTrades(trader.id, trader.username);
+                        setSelectedTrader(trader);
                       }}
-                      disabled={mirroringTrader === trader.id || currentUserId === trader.id}
                     >
-                      {mirroringTrader === trader.id ? (
-                        <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
-                      ) : (
-                        <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                      )}
-                      <span className="hidden sm:inline">Mirror</span>
+                      <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">View</span>
                     </Button>
+                    {currentUserId !== trader.id && (
+                      <Button 
+                        size="sm" 
+                        className="min-h-[36px] text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMirrorTrades(trader.id, trader.username);
+                        }}
+                        disabled={mirroringTrader === trader.id}
+                      >
+                        {mirroringTrader === trader.id ? (
+                          <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
+                        ) : (
+                          <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        )}
+                        <span className="hidden sm:inline">Mirror</span>
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
