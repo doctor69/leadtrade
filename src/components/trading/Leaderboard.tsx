@@ -4,8 +4,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trophy, TrendingUp, TrendingDown, Medal, Award, Search, Filter, Eye, Users, BarChart3 } from 'lucide-react';
+import { Trophy, TrendingUp, TrendingDown, Medal, Award, Search, Filter, Eye, Users, BarChart3, Copy, Loader2 } from 'lucide-react';
 import { apiService } from '@/lib/apiService';
+import { CopyTradingService } from '@/lib/copy-trading-service';
+import { checkAuthStatus } from '@/lib/auth';
 import type { LeaderboardEntry } from '@/lib/apiService';
 
 type SortOption = 'return' | 'winRate' | 'trades' | 'portfolio';
@@ -27,6 +29,23 @@ export default function Leaderboard() {
   const [sortBy, setSortBy] = useState<SortOption>('return');
   const [filterBy, setFilterBy] = useState<FilterOption>('all');
   const [selectedTrader, setSelectedTrader] = useState<LeaderboardEntry | null>(null);
+  const [mirroringTrader, setMirroringTrader] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // Get current user ID
+  useEffect(() => {
+    const getUserId = async () => {
+      const isAuth = checkAuthStatus();
+      if (isAuth && typeof window !== 'undefined') {
+        const { supabase } = await import('@/lib/supabase');
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setCurrentUserId(user.id);
+        }
+      }
+    };
+    getUserId();
+  }, []);
 
   // Fetch real leaderboard data from Supabase
   useEffect(() => {
@@ -119,6 +138,57 @@ export default function Leaderboard() {
 
   const getInitials = (username: string) => {
     return username.slice(0, 2).toUpperCase();
+  };
+
+  const handleMirrorTrades = async (leaderId: string, leaderUsername: string) => {
+    if (!currentUserId) {
+      alert('Please sign in to mirror trades');
+      return;
+    }
+
+    if (currentUserId === leaderId) {
+      alert('You cannot mirror your own trades');
+      return;
+    }
+
+    setMirroringTrader(leaderId);
+
+    try {
+      // Default allocation of 10% for MVP
+      const defaultAllocation = 10;
+
+      // Check if can follow
+      const canFollow = await CopyTradingService.canFollowTrader(
+        currentUserId,
+        leaderId,
+        defaultAllocation
+      );
+
+      if (!canFollow.canFollow) {
+        alert(canFollow.reason || 'Cannot follow this trader');
+        return;
+      }
+
+      // Create subscription
+      const result = await CopyTradingService.createSubscription(
+        currentUserId,
+        leaderId,
+        defaultAllocation
+      );
+
+      if (result.success) {
+        alert(`Successfully started mirroring ${leaderUsername}'s trades with ${defaultAllocation}% allocation!`);
+        // Refresh leaderboard to update follower counts
+        fetchLeaderboardData();
+      } else {
+        alert(result.error || 'Failed to start mirroring trades');
+      }
+    } catch (error) {
+      console.error('Error mirroring trades:', error);
+      alert('Failed to start mirroring trades. Please try again.');
+    } finally {
+      setMirroringTrader(null);
+    }
   };
 
   if (loading) {
@@ -248,10 +318,36 @@ export default function Leaderboard() {
                     Win Rate: {trader.winRate.toFixed(1)}%
                   </div>
 
-                  <Button size="sm" className="mt-2 min-h-[36px] text-xs">
-                    <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                    View Profile
-                  </Button>
+                  <div className="flex gap-2 mt-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      className="flex-1 min-h-[36px] text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTrader(trader);
+                      }}
+                    >
+                      <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      View
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      className="flex-1 min-h-[36px] text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMirrorTrades(trader.id, trader.username);
+                      }}
+                      disabled={mirroringTrader === trader.id || currentUserId === trader.id}
+                    >
+                      {mirroringTrader === trader.id ? (
+                        <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
+                      ) : (
+                        <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      )}
+                      Mirror
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -331,6 +427,22 @@ export default function Leaderboard() {
                     <Button size="sm" variant="outline" className="min-h-[36px] text-xs">
                       <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                       <span className="hidden sm:inline">View</span>
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      className="min-h-[36px] text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMirrorTrades(trader.id, trader.username);
+                      }}
+                      disabled={mirroringTrader === trader.id || currentUserId === trader.id}
+                    >
+                      {mirroringTrader === trader.id ? (
+                        <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
+                      ) : (
+                        <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      )}
+                      <span className="hidden sm:inline">Mirror</span>
                     </Button>
                   </div>
                 </div>

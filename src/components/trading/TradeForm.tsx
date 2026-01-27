@@ -33,6 +33,8 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
   const [useSlider, setUseSlider] = useState(false);
   const [sliderValue, setSliderValue] = useState([1]);
   const [optionsEnabled, setOptionsEnabled] = useState(false);
+  const [currentPosition, setCurrentPosition] = useState<number>(0);
+  const [loadingPosition, setLoadingPosition] = useState(false);
 
   // Check if options trading is enabled
   useEffect(() => {
@@ -45,6 +47,34 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
     };
     checkOptionsEnabled();
   }, []);
+
+  // Fetch current position when stock changes or side changes to sell
+  useEffect(() => {
+    const fetchPosition = async () => {
+      if (!selectedStock || side !== 'sell' || tradeType !== 'stock') {
+        setCurrentPosition(0);
+        return;
+      }
+
+      setLoadingPosition(true);
+      try {
+        const result = await apiService.getPositions(selectedStock.symbol);
+        if (result.success && result.data && result.data.length > 0) {
+          const position = result.data[0];
+          setCurrentPosition(Math.abs(position.qty || 0));
+        } else {
+          setCurrentPosition(0);
+        }
+      } catch (error) {
+        console.error('Error fetching position:', error);
+        setCurrentPosition(0);
+      } finally {
+        setLoadingPosition(false);
+      }
+    };
+
+    fetchPosition();
+  }, [selectedStock, side, tradeType]);
 
   // Mobile detection and keyboard optimization
   useEffect(() => {
@@ -88,6 +118,19 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
       return;
     }
 
+    // Validate sell quantity doesn't exceed position
+    if (side === 'sell' && tradeType === 'stock') {
+      const sellQty = parseInt(quantity);
+      if (sellQty > currentPosition) {
+        alert(`Cannot sell ${sellQty} shares. You only own ${currentPosition} shares of ${selectedStock.symbol}`);
+        return;
+      }
+      if (currentPosition === 0) {
+        alert(`You don't own any shares of ${selectedStock.symbol} to sell`);
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
@@ -111,6 +154,15 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
         setLimitPrice('');
         if (tradeType === 'option') {
           setSelectedOption(undefined);
+        }
+        // Refresh position after successful sell
+        if (side === 'sell' && tradeType === 'stock') {
+          const posResult = await apiService.getPositions(selectedStock.symbol);
+          if (posResult.success && posResult.data && posResult.data.length > 0) {
+            setCurrentPosition(Math.abs(posResult.data[0].qty || 0));
+          } else {
+            setCurrentPosition(0);
+          }
         }
       } else {
         alert(`Failed to place order: ${result.error || 'Unknown error'}`);
@@ -308,6 +360,22 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
                 )}
               </div>
               
+              {/* Show current position when selling */}
+              {side === 'sell' && tradeType === 'stock' && selectedStock && (
+                <div className="flex items-center gap-2 p-2 bg-muted rounded text-xs md:text-sm">
+                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                  <span>
+                    {loadingPosition ? (
+                      'Loading position...'
+                    ) : currentPosition > 0 ? (
+                      <>You own <strong>{currentPosition}</strong> shares of {selectedStock.symbol}</>
+                    ) : (
+                      <>You don't own any shares of {selectedStock.symbol}</>
+                    )}
+                  </span>
+                </div>
+              )}
+              
               {useSlider && isMobile ? (
                 <div className="space-y-3">
                   <div className="px-2">
@@ -344,6 +412,7 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
                     min="1"
+                    max={side === 'sell' && tradeType === 'stock' && currentPosition > 0 ? currentPosition : undefined}
                     required
                     className="text-center md:text-left"
                     inputMode="numeric"
