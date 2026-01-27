@@ -295,8 +295,9 @@ class ApiService {
       const cachedData = await userDataCache.getOrSet(
         cacheKey,
         async () => {
-          const edgeParams: Record<string, string> = {};
-          if (params?.status) edgeParams.status = params.status;
+          const edgeParams: Record<string, string> = {
+            status: params?.status || 'all'  // Default to 'all' if not specified
+          };
           if (params?.limit) edgeParams.limit = params.limit.toString();
           if (params?.symbols) edgeParams.symbols = params.symbols;
 

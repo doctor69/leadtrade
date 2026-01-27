@@ -5,7 +5,7 @@ export interface ACHRelationship {
   account_id: string;
   status: 'queued' | 'approved' | 'pending' | 'sent_to_clearing' | 'rejected' | 'canceled';
   account_owner_name: string;
-  bank_account_type: 'checking' | 'savings';
+  bank_account_type: 'CHECKING' | 'SAVINGS'; // Alpaca uses uppercase
   bank_account_number: string;
   bank_routing_number: string;
   nickname?: string;
@@ -16,7 +16,7 @@ export interface ACHRelationship {
 
 export interface CreateACHRelationshipRequest {
   account_owner_name: string;
-  bank_account_type: 'checking' | 'savings';
+  bank_account_type: 'checking' | 'savings'; // Accept lowercase from user
   bank_account_number?: string; // Required for manual entry
   bank_routing_number?: string; // Required for manual entry
   nickname?: string;
@@ -90,6 +90,12 @@ export async function createACHRelationship(
 
     const edgeFunctionUrl = `${supabaseUrl}/functions/v1/alpaca-ach-relationships/${accountId}`;
 
+    // Normalize bank_account_type to uppercase for Alpaca API
+    const requestData = {
+      ...achData,
+      bank_account_type: achData.bank_account_type.toUpperCase() as 'CHECKING' | 'SAVINGS'
+    };
+
     const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
       headers: {
@@ -97,7 +103,7 @@ export async function createACHRelationship(
         'Authorization': `Bearer ${session.access_token}`,
         'apikey': supabaseAnonKey,
       },
-      body: JSON.stringify(achData),
+      body: JSON.stringify(requestData),
     });
 
     if (!response.ok) {

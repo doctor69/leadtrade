@@ -952,21 +952,28 @@ export class AlpacaClient {
   /**
    * Create an ACH relationship for an account
    * POST /v1/accounts/{account_id}/ach_relationships
+   * Note: Alpaca requires bank_account_type to be uppercase (CHECKING or SAVINGS)
    */
   async createACHRelationship(
     accountId: string,
     achData: {
       account_owner_name: string
-      bank_account_type: 'checking' | 'savings'
+      bank_account_type: 'CHECKING' | 'SAVINGS' | 'checking' | 'savings'
       bank_account_number: string
       bank_routing_number: string
       nickname?: string
       processor_token?: string // For Plaid integration
     }
   ): Promise<AlpacaResponse<any>> {
+    // Normalize bank_account_type to uppercase for Alpaca API
+    const normalizedData = {
+      ...achData,
+      bank_account_type: achData.bank_account_type.toUpperCase() as 'CHECKING' | 'SAVINGS'
+    }
+    
     return this.brokerRequest(`/v1/accounts/${accountId}/ach_relationships`, {
       method: 'POST',
-      body: achData
+      body: normalizedData
     })
   }
 
