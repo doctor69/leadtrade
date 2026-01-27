@@ -113,32 +113,36 @@ serve(async (req: Request) => {
         const account = accountResponse.data
         const portfolioValue = parseFloat(account.equity || account.portfolio_value || '0')
         
-        // Calculate total return from account data
-        // For paper trading, we start with $100,000
-        const initialBalance = 100000
-        let totalReturn = portfolioValue - initialBalance
-        let totalReturnPercent = ((portfolioValue - initialBalance) / initialBalance) * 100
-        
-        // Try to get more accurate data from portfolio history
+        // Fetch portfolio history to calculate returns
         const historyResponse = await alpacaClient.brokerRequest(
           `/v1/trading/accounts/${accountId}/account/portfolio/history`,
           { params: { period: 'all', timeframe: '1D' } }
         )
         
+        let totalReturn = 0
+        let totalReturnPercent = 0
+        
         if (historyResponse.success && historyResponse.data) {
           const history = historyResponse.data
+          console.log(`Portfolio history data:`, JSON.stringify(history))
+          
           if (history.equity && history.equity.length > 1) {
             const initialValue = history.equity[0]
             const currentValue = history.equity[history.equity.length - 1]
             
+            console.log(`Initial value: ${initialValue}, Current value: ${currentValue}`)
+            
             if (initialValue > 0 && currentValue > 0) {
               totalReturn = currentValue - initialValue
               totalReturnPercent = ((currentValue - initialValue) / initialValue) * 100
+              console.log(`Calculated return: ${totalReturn}, Return %: ${totalReturnPercent}`)
             }
+          } else {
+            console.log(`Insufficient equity data: ${history.equity?.length || 0} points`)
           }
+        } else {
+          console.log(`Portfolio history fetch failed or no data`)
         }
-        
-        console.log(`Portfolio stats - Value: ${portfolioValue}, Return: ${totalReturn}, Return %: ${totalReturnPercent}`)
         
         // Fetch activities to calculate trade statistics (limit to recent 100 for performance)
         const activitiesResponse = await alpacaClient.brokerRequest(
