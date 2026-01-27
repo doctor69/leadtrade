@@ -73,9 +73,27 @@ serve(async (req: Request) => {
         // Get Alpaca account data
         const alpacaClient = new AlpacaClient(authContext)
         
+        // Get account ID from auth context or fetch from database
+        let accountId = authContext.alpacaAccountId
+        if (!accountId) {
+          const accountsResponse = await alpacaClient.getAccounts()
+          if (!accountsResponse.success || !accountsResponse.data || accountsResponse.data.length === 0) {
+            return createErrorResponse(
+              {
+                code: 'NO_ALPACA_ACCOUNT',
+                message: 'No Alpaca account found for this user'
+              },
+              404
+            )
+          }
+          accountId = accountsResponse.data[0].id
+        }
+        
+        console.log(`Using Alpaca account ID: ${accountId}`)
+        
         // Fetch account info
         const accountResponse = await alpacaClient.brokerRequest(
-          `/v1/trading/accounts/${authContext.alpacaAccountId}/account`
+          `/v1/trading/accounts/${accountId}/account`
         )
         
         if (!accountResponse.success || !accountResponse.data) {
@@ -93,7 +111,7 @@ serve(async (req: Request) => {
         
         // Fetch portfolio history to calculate returns
         const historyResponse = await alpacaClient.brokerRequest(
-          `/v1/trading/accounts/${authContext.alpacaAccountId}/account/portfolio/history`,
+          `/v1/trading/accounts/${accountId}/account/portfolio/history`,
           { params: { period: 'all', timeframe: '1D' } }
         )
         
@@ -115,7 +133,7 @@ serve(async (req: Request) => {
         
         // Fetch activities to calculate trade statistics
         const activitiesResponse = await alpacaClient.brokerRequest(
-          `/v1/trading/accounts/${authContext.alpacaAccountId}/account/activities`,
+          `/v1/trading/accounts/${accountId}/account/activities`,
           { params: { activity_types: 'FILL', page_size: '500' } }
         )
         
