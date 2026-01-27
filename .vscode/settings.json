@@ -21,5 +21,6 @@
     "http",
     "net"
   ],
-  "typescript.autoClosingTags": false
+  "typescript.autoClosingTags": false,
+  "kiroAgent.configureMCP": "Disabled"
 }
