@@ -54,6 +54,11 @@ serve(async (req: Request) => {
         if (req.method === 'POST') {
           const body = await req.json()
           
+          // Normalize bank_account_type to uppercase for Alpaca API
+          if (body.bank_account_type) {
+            body.bank_account_type = body.bank_account_type.toUpperCase()
+          }
+          
           // Validate required fields for manual entry
           if (!body.processor_token) {
             // Manual entry validation
@@ -67,12 +72,12 @@ serve(async (req: Request) => {
               )
             }
             
-            // Validate bank_account_type
-            if (body.bank_account_type !== 'checking' && body.bank_account_type !== 'savings') {
+            // Validate bank_account_type (Alpaca requires uppercase)
+            if (body.bank_account_type !== 'CHECKING' && body.bank_account_type !== 'SAVINGS') {
               return createErrorResponse(
                 {
                   code: 'INVALID_ACCOUNT_TYPE',
-                  message: 'bank_account_type must be either "checking" or "savings"'
+                  message: 'bank_account_type must be either "CHECKING" or "SAVINGS"'
                 },
                 400
               )
