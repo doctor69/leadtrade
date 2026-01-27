@@ -1,12 +1,12 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 import { 
   withAuth, 
   processRequest, 
   createSuccessResponse, 
   createErrorResponse,
   AlpacaClient,
-  corsHeaders,
-  createSupabaseClient
+  corsHeaders
 } from '../_shared/index.ts'
 import type { AuthContext } from '../_shared/auth.ts'
 
@@ -43,7 +43,11 @@ serve(async (req: Request) => {
         console.log(`Updating leaderboard stats for user ${authContext.userId}`)
         
         // Check if user has share_trades enabled
-        const supabase = createSupabaseClient(req)
+        const supabase = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        )
+        
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('share_trades, show_asset_amounts')
@@ -131,89 +135,35 @@ serve(async (req: Request) => {
           }
         }
         
-        // Fetch activities to calculate trade statistics
+        // Fetch activities to calculate trade statistics (limit to recent 100 for performance)
         const activitiesResponse = await alpacaClient.brokerRequest(
           `/v1/trading/accounts/${accountId}/account/activities`,
-          { params: { activity_types: 'FILL', page_size: '500' } }
+          { params: { activity_types: 'FILL', page_size: '100' } }
         )
         
         let tradesCount = 0
         let winningTrades = 0
         let losingTrades = 0
-        let totalHoldTimeHours = 0
-        let completedPositions = 0
         
+        // Simplified trade counting - just count fills
         if (activitiesResponse.success && activitiesResponse.data) {
           const activities = activitiesResponse.data
+          tradesCount = activities.length
           
-          // Group fills by symbol to calculate P&L per position
-          const positionMap = new Map<string, any[]>()
-          
+          // Estimate win rate from profitable vs unprofitable fills
           for (const activity of activities) {
             if (activity.type === 'FILL') {
-              const symbol = activity.symbol
-              if (!positionMap.has(symbol)) {
-                positionMap.set(symbol, [])
-              }
-              positionMap.get(symbol)!.push(activity)
-            }
-          }
-          
-          // Calculate statistics for each position
-          for (const [symbol, fills] of positionMap.entries()) {
-            if (fills.length < 2) continue // Need at least entry and exit
-            
-            // Sort by timestamp
-            fills.sort((a, b) => new Date(a.transaction_time).getTime() - new Date(b.transaction_time).getTime())
-            
-            let position = 0
-            let costBasis = 0
-            let entryTime: Date | null = null
-            
-            for (const fill of fills) {
-              const qty = parseFloat(fill.qty)
-              const price = parseFloat(fill.price)
-              const side = fill.side
-              
-              if (side === 'buy') {
-                if (position === 0) {
-                  entryTime = new Date(fill.transaction_time)
-                }
-                position += qty
-                costBasis += qty * price
-              } else if (side === 'sell') {
-                if (position > 0) {
-                  const exitTime = new Date(fill.transaction_time)
-                  const avgCost = costBasis / position
-                  const pnl = (price - avgCost) * Math.min(qty, position)
-                  
-                  if (pnl > 0) winningTrades++
-                  else if (pnl < 0) losingTrades++
-                  
-                  if (entryTime) {
-                    const holdTimeMs = exitTime.getTime() - entryTime.getTime()
-                    totalHoldTimeHours += holdTimeMs / (1000 * 60 * 60)
-                    completedPositions++
-                  }
-                  
-                  position -= qty
-                  if (position <= 0) {
-                    position = 0
-                    costBasis = 0
-                    entryTime = null
-                  } else {
-                    costBasis = (costBasis / (position + qty)) * position
-                  }
-                }
+              // Simple heuristic: if it's a sell with profit info
+              if (activity.side === 'sell' && activity.net_amount) {
+                const netAmount = parseFloat(activity.net_amount)
+                if (netAmount > 0) winningTrades++
+                else if (netAmount < 0) losingTrades++
               }
             }
           }
-          
-          tradesCount = winningTrades + losingTrades
         }
         
         const winRate = tradesCount > 0 ? (winningTrades / tradesCount) * 100 : 0
-        const avgHoldTimeHours = completedPositions > 0 ? totalHoldTimeHours / completedPositions : null
         
         // Determine risk level and trading style
         let riskLevel: 'low' | 'medium' | 'high' = 'medium'
@@ -243,7 +193,7 @@ serve(async (req: Request) => {
             winning_trades: winningTrades,
             losing_trades: losingTrades,
             win_rate: winRate,
-            avg_hold_time_hours: avgHoldTimeHours,
+            avg_hold_time_hours: null,
             risk_level: riskLevel,
             trading_style: tradingStyle,
             followers_count: followersCount || 0,
