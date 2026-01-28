@@ -1,24 +1,62 @@
-name: Deploy Function
+name: Deploy Supabase Functions
 
 on:
   push:
     branches:
       - kiro
+    paths:
+      - 'supabase/functions/**'
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      PROJECT_ID: bfbqlzpbkivyrnjkvqgl
-
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
 
       - uses: supabase/setup-cli@v1
         with:
           version: latest
 
-      - run: supabase functions deploy --project-ref $PROJECT_ID
+      - name: Get changed functions
+        id: changed-functions
+        run: |
+          # Get list of changed files in supabase/functions
+          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep '^supabase/functions/' || true)
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No function changes detected"
+            echo "functions=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Extract unique function names (exclude _shared)
+          FUNCTIONS=$(echo "$CHANGED_FILES" | grep -oP 'supabase/functions/\K[^/]+' | grep -v '^_shared$' | sort -u | tr '\n' ' ')
+          
+          # If _shared was changed, deploy all functions
+          if echo "$CHANGED_FILES" | grep -q 'supabase/functions/_shared'; then
+            echo "Shared code changed, deploying all functions"
+            FUNCTIONS="all"
+          fi
+          
+          echo "Changed functions: $FUNCTIONS"
+          echo "functions=$FUNCTIONS" >> $GITHUB_OUTPUT
+
+      - name: Deploy all functions (shared code changed)
+        if: steps.changed-functions.outputs.functions == 'all'
+        run: supabase functions deploy --project-ref bfbqlzpbkivyrnjkvqgl
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Deploy specific functions
+        if: steps.changed-functions.outputs.functions != '' && steps.changed-functions.outputs.functions != 'all'
+        run: |
+          for func in ${{ steps.changed-functions.outputs.functions }}; do
+            echo "Deploying function: $func"
+            supabase functions deploy $func --project-ref bfbqlzpbkivyrnjkvqgl
+          done
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
