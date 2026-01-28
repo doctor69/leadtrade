@@ -117,7 +117,66 @@ serve(async (req) => {
             // Follower trades: 5% of 20% = 1% of total portfolio
             const followerTradePercentage = (leaderTradePercentage * followerAllocationPercentage) / 100
             const followerTradeValue = (followerPortfolioValue * followerTradePercentage) / 100
-            const followerQty = Math.floor(followerTradeValue / estimatedPrice)
+            let followerQty = Math.floor(followerTradeValue / estimatedPrice)
+            
+            // For SELL orders, check if follower has enough shares
+            if (orderData.side === 'sell') {
+              try {
+                // Get follower's positions
+                const positionsResponse = await followerAlpacaClient.brokerRequest(
+                  `/v1/trading/accounts/${followerAccountId}/positions`
+                )
+                
+                if (positionsResponse.success && positionsResponse.data) {
+                  const positions = Array.isArray(positionsResponse.data) ? positionsResponse.data : []
+                  const position = positions.find((p: any) => p.symbol === orderData.symbol)
+                  
+                  if (!position) {
+                    console.log(`Skipping follower ${followerId}: no position in ${orderData.symbol} to sell`)
+                    copyResults.push({
+                      followerId,
+                      success: false,
+                      error: `No position in ${orderData.symbol} to sell`
+                    })
+                    continue
+                  }
+                  
+                  const availableQty = parseFloat(position.qty || position.available_qty || '0')
+                  
+                  if (availableQty <= 0) {
+                    console.log(`Skipping follower ${followerId}: no available shares of ${orderData.symbol} to sell`)
+                    copyResults.push({
+                      followerId,
+                      success: false,
+                      error: `No available shares of ${orderData.symbol} to sell`
+                    })
+                    continue
+                  }
+                  
+                  // Limit sell quantity to available shares
+                  if (followerQty > availableQty) {
+                    console.log(`Follower ${followerId}: reducing sell qty from ${followerQty} to ${availableQty} (available shares)`)
+                    followerQty = Math.floor(availableQty)
+                  }
+                } else {
+                  console.error(`Failed to get positions for follower ${followerId}:`, positionsResponse.error)
+                  copyResults.push({
+                    followerId,
+                    success: false,
+                    error: 'Failed to verify position for sell order'
+                  })
+                  continue
+                }
+              } catch (error) {
+                console.error(`Error checking positions for follower ${followerId}:`, error)
+                copyResults.push({
+                  followerId,
+                  success: false,
+                  error: 'Error verifying position for sell order'
+                })
+                continue
+              }
+            }
             
             console.log(`Follower ${followerId}: Portfolio $${followerPortfolioValue.toFixed(2)}, ` +
               `Allocation ${followerAllocationPercentage}%, ` +
