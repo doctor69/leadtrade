@@ -1,15 +1,18 @@
-name: Deploy Supabase Functions
+name: Deploy Function
 
 on:
   push:
     branches:
       - kiro
-      - main
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_ID: bfbqlzpbkivyrnjkvqgl
 
     steps:
       - uses: actions/checkout@v3
@@ -18,12 +21,4 @@ jobs:
         with:
           version: latest
 
-      - name: Deploy Execute Copy Trades Function
-        run: supabase functions deploy execute-copy-trades --project-ref bfbqlzpbkivyrnjkvqgl
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
-      - name: Deploy Alpaca Orders Function
-        run: supabase functions deploy alpaca-orders --project-ref bfbqlzpbkivyrnjkvqgl
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      - run: supabase functions deploy github-action-deploy --project-ref $PROJECT_ID
