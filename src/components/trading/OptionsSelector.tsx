@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TrendingUp, TrendingDown, Calendar, DollarSign } from 'lucide-react';
+import { apiService } from '@/lib/apiService';
 import type { OptionChain, OptionContract, OptionDetails } from '@/types/trading';
 
 interface OptionsSelectorProps {
@@ -32,18 +33,90 @@ export default function OptionsSelector({ symbol, onOptionSelect, selectedOption
     setError('');
     
     try {
-      const response = await fetch(`/api/alpaca/options/chain?symbol=${symbol}`);
+      // Fetch options contracts for the symbol
+      // Get contracts expiring in the next 60 days
+      const today = new Date();
+      const futureDate = new Date();
+      futureDate.setDate(today.getDate() + 60);
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch option chain');
+      const result = await apiService.getOptionsContracts({
+        underlying_symbols: symbol,
+        status: 'active',
+        expiration_date_gte: today.toISOString().split('T')[0],
+        expiration_date_lte: futureDate.toISOString().split('T')[0],
+        limit: 1000
+      });
+      
+      if (!result.success || !result.data) {
+        throw new Error(result.error || 'Failed to fetch option chain');
       }
       
-      const data = await response.json();
-      setOptionChain(data);
+      // Transform the response into our OptionChain format
+      const contracts = result.data.option_contracts || result.data.contracts || result.data;
+      
+      if (!Array.isArray(contracts) || contracts.length === 0) {
+        setError('No options available for this symbol');
+        setLoading(false);
+        return;
+      }
+      
+      // Group contracts by expiration date and strike
+      const expirationDates = new Set<string>();
+      const strikesByExpiration: Record<string, { calls: OptionContract[], puts: OptionContract[] }> = {};
+      
+      contracts.forEach((contract: any) => {
+        const expiration = contract.expiration_date;
+        expirationDates.add(expiration);
+        
+        if (!strikesByExpiration[expiration]) {
+          strikesByExpiration[expiration] = { calls: [], puts: [] };
+        }
+        
+        const optionContract: OptionContract = {
+          symbol: contract.symbol,
+          underlying_symbol: contract.underlying_symbol,
+          strike: parseFloat(contract.strike_price),
+          expiration: contract.expiration_date,
+          option_type: contract.type,
+          bid: parseFloat(contract.close_price || 0),
+          ask: parseFloat(contract.close_price || 0),
+          last: parseFloat(contract.close_price || 0),
+          volume: parseInt(contract.volume || 0),
+          open_interest: parseInt(contract.open_interest || 0),
+          implied_volatility: parseFloat(contract.implied_volatility || 0),
+          delta: parseFloat(contract.greeks?.delta || 0),
+          gamma: parseFloat(contract.greeks?.gamma || 0),
+          theta: parseFloat(contract.greeks?.theta || 0),
+          vega: parseFloat(contract.greeks?.vega || 0)
+        };
+        
+        if (contract.type === 'call') {
+          strikesByExpiration[expiration].calls.push(optionContract);
+        } else {
+          strikesByExpiration[expiration].puts.push(optionContract);
+        }
+      });
+      
+      // Sort expiration dates
+      const sortedExpirations = Array.from(expirationDates).sort();
+      
+      // Sort strikes within each expiration
+      Object.keys(strikesByExpiration).forEach(expiration => {
+        strikesByExpiration[expiration].calls.sort((a, b) => a.strike - b.strike);
+        strikesByExpiration[expiration].puts.sort((a, b) => a.strike - b.strike);
+      });
+      
+      const chainData: OptionChain = {
+        symbol,
+        expiration_dates: sortedExpirations,
+        strikes: strikesByExpiration
+      };
+      
+      setOptionChain(chainData);
       
       // Auto-select first expiration date
-      if (data.expiration_dates && data.expiration_dates.length > 0) {
-        setSelectedExpiration(data.expiration_dates[0]);
+      if (sortedExpirations.length > 0) {
+        setSelectedExpiration(sortedExpirations[0]);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load options data');

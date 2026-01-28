@@ -1,6 +1,7 @@
 // Comprehensive API service for all endpoints
 import { edgeFunctionClient } from './edgeFunctionClient';
 import { marketDataCache, userDataCache, cacheKeys, cacheUtils } from './cache';
+import logger from './logger';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -150,10 +151,10 @@ class ApiService {
 
       // Check Supabase auth status
       const supabaseAuth = checkAuthStatus();
-      console.log('ApiService Supabase auth check:', supabaseAuth);
+      logger.log('ApiService Supabase auth check:', supabaseAuth);
       return supabaseAuth;
     } catch (error) {
-      console.error('Authentication check error:', error);
+      logger.error('Authentication check error:', error);
       return false;
     }
   }
@@ -161,7 +162,7 @@ class ApiService {
 
 
   // Account & Trading APIs
-  async getAccount(): Promise<ApiResponse<AccountData>> {
+  async getAccount(forceRefresh = false): Promise<ApiResponse<AccountData>> {
     try {
       // Check authentication first
       const isAuthenticated = await this.checkAuthentication();
@@ -172,40 +173,62 @@ class ApiService {
         };
       }
 
+      // ALWAYS clear cache for now to debug
+      await userDataCache.delete('account:current');
+
       // Use caching for account data (1 minute TTL for account info)
       const cachedData = await userDataCache.getOrSet(
         'account:current',
         async () => {
+          logger.log('Fetching fresh account data from API...');
           const response = await edgeFunctionClient.get<AccountData>('alpaca-account');
+          
+          logger.log('Account API response:', response);
+          
           if (!response.success) {
             throw new Error(response.error?.message || 'Failed to fetch account data');
           }
           
-          // Normalize account data - convert string numbers to actual numbers
-          const data = response.data;
-          if (data) {
-            return {
-              ...data,
-              buying_power: typeof data.buying_power === 'string' ? parseFloat(data.buying_power) : data.buying_power,
-              regt_buying_power: typeof data.regt_buying_power === 'string' ? parseFloat(data.regt_buying_power) : data.regt_buying_power,
-              daytrading_buying_power: typeof data.daytrading_buying_power === 'string' ? parseFloat(data.daytrading_buying_power) : data.daytrading_buying_power,
-              cash: typeof data.cash === 'string' ? parseFloat(data.cash) : data.cash,
-              portfolio_value: typeof data.portfolio_value === 'string' ? parseFloat(data.portfolio_value) : data.portfolio_value,
-              equity: typeof data.equity === 'string' ? parseFloat(data.equity) : data.equity,
-              last_equity: typeof data.last_equity === 'string' ? parseFloat(data.last_equity) : data.last_equity,
-              multiplier: typeof data.multiplier === 'string' ? parseFloat(data.multiplier) : data.multiplier,
-              initial_margin: typeof data.initial_margin === 'string' ? parseFloat(data.initial_margin) : data.initial_margin,
-              maintenance_margin: typeof data.maintenance_margin === 'string' ? parseFloat(data.maintenance_margin) : data.maintenance_margin,
-              sma: typeof data.sma === 'string' ? parseFloat(data.sma) : data.sma,
-            };
+          // The response.data already contains the account data directly
+          const accountData = response.data;
+          
+          logger.log('Raw account data from API:', accountData);
+          logger.log('Account data keys:', accountData ? Object.keys(accountData) : 'null');
+          
+          if (!accountData) {
+            throw new Error('No account data returned from API');
           }
-          return data;
+          
+          // Normalize account data - convert string numbers to actual numbers
+          const normalized = {
+            ...accountData,
+            buying_power: typeof accountData.buying_power === 'string' ? parseFloat(accountData.buying_power) : accountData.buying_power,
+            regt_buying_power: typeof accountData.regt_buying_power === 'string' ? parseFloat(accountData.regt_buying_power) : accountData.regt_buying_power,
+            daytrading_buying_power: typeof accountData.daytrading_buying_power === 'string' ? parseFloat(accountData.daytrading_buying_power) : accountData.daytrading_buying_power,
+            cash: typeof accountData.cash === 'string' ? parseFloat(accountData.cash) : accountData.cash,
+            portfolio_value: typeof accountData.portfolio_value === 'string' ? parseFloat(accountData.portfolio_value) : accountData.portfolio_value,
+            equity: typeof accountData.equity === 'string' ? parseFloat(accountData.equity) : accountData.equity,
+            last_equity: typeof accountData.last_equity === 'string' ? parseFloat(accountData.last_equity) : accountData.last_equity,
+            multiplier: typeof accountData.multiplier === 'string' ? parseFloat(accountData.multiplier) : accountData.multiplier,
+            initial_margin: typeof accountData.initial_margin === 'string' ? parseFloat(accountData.initial_margin) : accountData.initial_margin,
+            maintenance_margin: typeof accountData.maintenance_margin === 'string' ? parseFloat(accountData.maintenance_margin) : accountData.maintenance_margin,
+            sma: typeof accountData.sma === 'string' ? parseFloat(accountData.sma) : accountData.sma,
+          };
+          
+          logger.log('Normalized account data:', {
+            cash: normalized.cash,
+            portfolio_value: normalized.portfolio_value,
+            buying_power: normalized.buying_power
+          });
+          
+          return normalized;
         },
         60 * 1000 // 1 minute cache
       );
 
       return { success: true, data: cachedData };
     } catch (error) {
+      logger.error('getAccount error:', error);
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Failed to fetch account data' 
@@ -272,8 +295,9 @@ class ApiService {
       const cachedData = await userDataCache.getOrSet(
         cacheKey,
         async () => {
-          const edgeParams: Record<string, string> = {};
-          if (params?.status) edgeParams.status = params.status;
+          const edgeParams: Record<string, string> = {
+            status: params?.status || 'all'  // Default to 'all' if not specified
+          };
           if (params?.limit) edgeParams.limit = params.limit.toString();
           if (params?.symbols) edgeParams.symbols = params.symbols;
 
@@ -597,6 +621,121 @@ class ApiService {
 
   // Note: Leaderboard, Auth, and User Profile APIs would be implemented as Edge Functions when needed
 
+  // =============================================================================
+  // OPTIONS TRADING APIs
+  // =============================================================================
+
+  /**
+   * Get options contracts with filtering
+   * @param params Query parameters for filtering options
+   */
+  async getOptionsContracts(params?: {
+    underlying_symbols?: string;
+    status?: 'active' | 'inactive';
+    expiration_date?: string;
+    expiration_date_gte?: string;
+    expiration_date_lte?: string;
+    root_symbol?: string;
+    type?: 'call' | 'put';
+    style?: 'american' | 'european';
+    strike_price_gte?: string;
+    strike_price_lte?: string;
+    limit?: number;
+    page_token?: string;
+  }): Promise<ApiResponse<any>> {
+    try {
+      const edgeParams: Record<string, string> = {};
+      if (params?.underlying_symbols) edgeParams.underlying_symbols = params.underlying_symbols;
+      if (params?.status) edgeParams.status = params.status;
+      if (params?.expiration_date) edgeParams.expiration_date = params.expiration_date;
+      if (params?.expiration_date_gte) edgeParams.expiration_date_gte = params.expiration_date_gte;
+      if (params?.expiration_date_lte) edgeParams.expiration_date_lte = params.expiration_date_lte;
+      if (params?.root_symbol) edgeParams.root_symbol = params.root_symbol;
+      if (params?.type) edgeParams.type = params.type;
+      if (params?.style) edgeParams.style = params.style;
+      if (params?.strike_price_gte) edgeParams.strike_price_gte = params.strike_price_gte;
+      if (params?.strike_price_lte) edgeParams.strike_price_lte = params.strike_price_lte;
+      if (params?.limit) edgeParams.limit = params.limit.toString();
+      if (params?.page_token) edgeParams.page_token = params.page_token;
+
+      const response = await edgeFunctionClient.get<any>('alpaca-options-contracts', edgeParams);
+      
+      if (response.success) {
+        return { success: true, data: response.data };
+      } else {
+        return { success: false, error: response.error?.message || 'Failed to fetch options contracts' };
+      }
+    } catch (error) {
+      return { success: false, error: 'Failed to fetch options contracts' };
+    }
+  }
+
+  /**
+   * Get specific options contract by ID
+   * @param contractId The contract ID
+   */
+  async getOptionsContract(contractId: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await edgeFunctionClient.get<any>(`alpaca-options-contracts/${contractId}`);
+      
+      if (response.success) {
+        return { success: true, data: response.data };
+      } else {
+        return { success: false, error: response.error?.message || 'Failed to fetch options contract' };
+      }
+    } catch (error) {
+      return { success: false, error: 'Failed to fetch options contract' };
+    }
+  }
+
+  /**
+   * Request options trading approval for an account
+   * @param level Options approval level (0-3)
+   *   0 = No options trading
+   *   1 = Covered calls and cash-secured puts
+   *   2 = Long calls and puts
+   *   3 = Spreads
+   */
+  async requestOptionsApproval(level: number): Promise<ApiResponse<any>> {
+    try {
+      // First get the account to get the account ID
+      const accountResult = await this.getAccount();
+      if (!accountResult.success || !accountResult.data) {
+        return { success: false, error: 'Failed to get account information' };
+      }
+      
+      const accountId = accountResult.data.id;
+      
+      // Call the options approval endpoint with account ID in path
+      const response = await edgeFunctionClient.post<any>(`alpaca-account/${accountId}/options_approval`, { level });
+      
+      if (response.success) {
+        return { success: true, data: response.data };
+      } else {
+        return { success: false, error: response.error?.message || 'Failed to request options approval' };
+      }
+    } catch (error) {
+      return { success: false, error: 'Failed to request options approval' };
+    }
+  }
+
+  /**
+   * Get account configuration including options approval level
+   */
+  async getAccountConfiguration(): Promise<ApiResponse<any>> {
+    try {
+      const response = await edgeFunctionClient.get<any>('alpaca-account/configuration');
+      
+      if (response.success) {
+        return { success: true, data: response.data };
+      } else {
+        return { success: false, error: response.error?.message || 'Failed to fetch account configuration' };
+      }
+    } catch (error) {
+      return { success: false, error: 'Failed to fetch account configuration' };
+    }
+  }
+
   // Utility methods
   formatCurrency(amount: number): string {
     return new Intl.NumberFormat('en-US', {
@@ -639,6 +778,65 @@ class ApiService {
   private invalidateAccountCache(): void {
     // Clear account-related cache entries
     userDataCache.delete('account:current');
+  }
+
+  // Leaderboard APIs
+  async getLeaderboard(params?: {
+    timeframe?: 'daily' | 'weekly' | 'monthly' | 'all';
+    limit?: number;
+    sort_by?: 'return' | 'win_rate' | 'trades' | 'followers';
+  }): Promise<ApiResponse<LeaderboardEntry[]>> {
+    try {
+      const edgeParams: Record<string, string> = {};
+      if (params?.timeframe) edgeParams.timeframe = params.timeframe;
+      if (params?.limit) edgeParams.limit = params.limit.toString();
+      if (params?.sort_by) edgeParams.sort_by = params.sort_by;
+
+      const response = await edgeFunctionClient.get<LeaderboardEntry[]>('get-leaderboard', edgeParams);
+      
+      if (!response.success) {
+        return {
+          success: false,
+          error: response.error?.message || 'Failed to fetch leaderboard'
+        };
+      }
+
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to fetch leaderboard' 
+      };
+    }
+  }
+
+  async updateLeaderboardStats(): Promise<ApiResponse<any>> {
+    try {
+      // Check authentication first
+      const isAuthenticated = await this.checkAuthentication();
+      if (!isAuthenticated) {
+        return {
+          success: false,
+          error: 'Authentication required'
+        };
+      }
+
+      const response = await edgeFunctionClient.post<any>('update-leaderboard-stats', {});
+      
+      if (!response.success) {
+        return {
+          success: false,
+          error: response.error?.message || 'Failed to update leaderboard stats'
+        };
+      }
+
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to update leaderboard stats' 
+      };
+    }
   }
 
   private invalidatePortfolioCaches(): void {

@@ -3,9 +3,8 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import ACHTransferForm from './ACHTransferForm';
-import WireTransferForm from './WireTransferForm';
 import TransferHistory from './TransferHistory';
-import FundingWalletManager from './FundingWalletManager';
+import BankLinking from './BankLinking';
 import { apiService } from '../../lib/apiService';
 
 export default function FundingPageContent() {
@@ -22,16 +21,20 @@ export default function FundingPageContent() {
       setLoading(true);
       setError(null);
 
+      console.log('🔍 Loading account ID...');
       const result = await apiService.getAccount();
+      console.log('📊 Account result:', result);
 
       if (result.success && result.data?.id) {
+        console.log('✅ Account ID found:', result.data.id);
         setAccountId(result.data.id);
       } else {
+        console.log('❌ No account found:', result.error);
         // User doesn't have an Alpaca account linked
         setError('no_account');
       }
     } catch (err) {
-      console.error('Error loading account:', err);
+      console.error('💥 Error loading account:', err);
       setError(err instanceof Error ? err.message : 'Failed to load account');
     } finally {
       setLoading(false);
@@ -157,19 +160,18 @@ export default function FundingPageContent() {
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Account Funding</h1>
-          <p className="text-muted-foreground">Deposit and withdraw funds using ACH, wire transfers, or multi-currency wallets</p>
+          <p className="text-muted-foreground">Manage your trading account funds</p>
         </div>
         
         <div className="space-y-8">
-          {/* Funding Wallets - Multi-Currency Support */}
-          <div id="funding-wallets">
-            <FundingWalletManager accountId={accountId} />
+          {/* Bank Linking - Add bank accounts */}
+          <div id="bank-linking">
+            <BankLinking accountId={accountId} />
           </div>
           
-          {/* Transfer Forms - ACH and Wire */}
-          <div id="transfers" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* ACH Transfer - Deposit/Withdraw funds */}
+          <div id="ach-transfer">
             <ACHTransferForm accountId={accountId} />
-            <WireTransferForm accountId={accountId} />
           </div>
           
           {/* Transfer History */}

@@ -344,7 +344,7 @@ export class AlpacaClient {
       }
 
       // Add body if provided
-      if (body && (method === 'POST' || method === 'PUT')) {
+      if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
         requestOptions.body = JSON.stringify(body)
       }
 
@@ -465,11 +465,20 @@ export class AlpacaClient {
   }
 
   /**
-   * Get account information
+   * Get account information (basic metadata only)
    * GET /v1/accounts/{account_id}
    */
   async getAccount(accountId: string): Promise<AlpacaResponse<AlpacaAccount>> {
     return this.brokerRequest<AlpacaAccount>(`/v1/accounts/${accountId}`)
+  }
+
+  /**
+   * Get trading account details with financial information (Broker API)
+   * GET /v1/trading/accounts/{account_id}/account
+   * This returns buying_power, cash, portfolio_value, equity, etc.
+   */
+  async getTradingAccount(accountId: string): Promise<AlpacaResponse<AlpacaAccount>> {
+    return this.brokerRequest<AlpacaAccount>(`/v1/trading/accounts/${accountId}/account`)
   }
 
   /**
@@ -526,16 +535,28 @@ export class AlpacaClient {
   /**
    * Request options approval for an account
    * POST /v1/accounts/{account_id}/options_approval
+   * 
+   * @param accountId The account ID
+   * @param level Options approval level (0-3)
+   * @param fixtures Optional sandbox fixtures for testing (sandbox only)
    */
   async requestOptionsApproval(
     accountId: string,
-    level: number
+    level: number,
+    fixtures?: { status: 'APPROVED' | 'REJECTED' | 'LOWER_LEVEL_APPROVED'; level?: number }
   ): Promise<AlpacaResponse<{ status: string; level: number }>> {
+    const body: any = { level }
+    
+    // Add fixtures for sandbox testing
+    if (fixtures) {
+      body.fixtures = fixtures
+    }
+    
     return this.brokerRequest<{ status: string; level: number }>(
-      `/v1/accounts/${accountId}/options_approval`,
+      `/v1/accounts/${accountId}/options/approval`,
       {
         method: 'POST',
-        body: { level }
+        body
       }
     )
   }
@@ -931,21 +952,28 @@ export class AlpacaClient {
   /**
    * Create an ACH relationship for an account
    * POST /v1/accounts/{account_id}/ach_relationships
+   * Note: Alpaca requires bank_account_type to be uppercase (CHECKING or SAVINGS)
    */
   async createACHRelationship(
     accountId: string,
     achData: {
       account_owner_name: string
-      bank_account_type: 'checking' | 'savings'
+      bank_account_type: 'CHECKING' | 'SAVINGS' | 'checking' | 'savings'
       bank_account_number: string
       bank_routing_number: string
       nickname?: string
       processor_token?: string // For Plaid integration
     }
   ): Promise<AlpacaResponse<any>> {
+    // Normalize bank_account_type to uppercase for Alpaca API
+    const normalizedData = {
+      ...achData,
+      bank_account_type: achData.bank_account_type.toUpperCase() as 'CHECKING' | 'SAVINGS'
+    }
+    
     return this.brokerRequest(`/v1/accounts/${accountId}/ach_relationships`, {
       method: 'POST',
-      body: achData
+      body: normalizedData
     })
   }
 

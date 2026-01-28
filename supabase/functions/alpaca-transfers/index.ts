@@ -5,7 +5,7 @@ import {
   createSuccessResponse, 
   createErrorResponse,
   AlpacaClient,
-  corsHeaders
+  getCorsHeaders
 } from '../_shared/index.ts'
 import type { AuthContext } from '../_shared/auth.ts'
 
@@ -22,7 +22,7 @@ serve(async (req: Request) => {
   return processRequest(req, async () => {
     // Handle CORS preflight requests
     if (req.method === 'OPTIONS') {
-      return new Response('ok', { headers: corsHeaders })
+      return new Response('ok', { headers: getCorsHeaders(req) })
     }
 
     return withAuth(req, async (authContext: AuthContext) => {
@@ -130,31 +130,42 @@ serve(async (req: Request) => {
             }
           }
           
-          // Validate ACH transfer requires relationship_id
+          // Validate ACH transfer requires relationship_id (except for sandbox instant funding)
           if (body.transfer_type === 'ach' && !body.relationship_id) {
-            return createErrorResponse(
-              {
-                code: 'MISSING_RELATIONSHIP_ID',
-                message: 'relationship_id is required for ACH transfers'
-              },
-              400
-            )
+            // In sandbox mode, allow ACH without relationship_id for instant funding
+            if (authContext.tradingMode !== 'paper') {
+              return createErrorResponse(
+                {
+                  code: 'MISSING_RELATIONSHIP_ID',
+                  message: 'relationship_id is required for ACH transfers in live mode'
+                },
+                400
+              )
+            }
+            // For sandbox, we'll let Alpaca handle it - they support instant funding without relationship_id
+            console.log('Sandbox mode: allowing ACH transfer without relationship_id for instant funding')
           }
           
-          // Validate wire transfer requires bank_id
-          if (body.transfer_type === 'wire' && !body.bank_id) {
-            return createErrorResponse(
-              {
-                code: 'MISSING_BANK_ID',
-                message: 'bank_id is required for wire transfers'
-              },
-              400
-            )
+          // For sandbox mode, force immediate timing for instant funding
+          if (authContext.tradingMode === 'paper' && !body.timing) {
+            body.timing = 'immediate'
+            console.log('Sandbox mode: setting timing to immediate for instant funding')
           }
           
           const response = await alpacaClient.createTransfer(accountId, body)
           
           if (!response.success) {
+            // Log detailed error for debugging
+            console.error('Alpaca transfer creation failed:', {
+              status: response.error?.status,
+              code: response.error?.code,
+              message: response.error?.message,
+              details: response.error?.details,
+              requestBody: body,
+              accountId,
+              tradingMode: authContext.tradingMode
+            })
+            
             return createErrorResponse(
               {
                 code: response.error?.code || 'ALPACA_API_ERROR',

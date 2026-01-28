@@ -429,10 +429,6 @@ serve(async (req: Request) => {
       // Update user profile - Note: profiles table doesn't have alpaca_account_id column
       // The alpaca_account_id is stored in the alpaca_accounts table instead
       console.log('✅ Alpaca account info stored in database successfully')
-
-      if (profileError) {
-        console.error('Failed to update profile:', profileError)
-      }
     } else {
       console.log('⚠️ No user_id provided - skipping database storage')
       console.log('Request body keys:', Object.keys(body))

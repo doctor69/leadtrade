@@ -156,6 +156,60 @@ serve(async (req: Request) => {
               nested: validatedQuery.nested.toString()
             }
             
+            // For 'all' status, we need to make two separate requests
+            // because Alpaca's API doesn't always return both open and closed in one call
+            if (validatedQuery.status === 'all') {
+              logger.info('Fetching all orders (open + closed)');
+              
+              // Fetch both open and closed orders separately
+              const [openResponse, closedResponse] = await Promise.all([
+                alpacaClient.getOrders(accountId, {
+                  status: 'open',
+                  limit: Math.floor(validatedQuery.limit / 2),
+                  direction: validatedQuery.direction,
+                  nested: validatedQuery.nested,
+                  symbols: validatedQuery.symbols
+                }),
+                alpacaClient.getOrders(accountId, {
+                  status: 'closed',
+                  limit: Math.floor(validatedQuery.limit / 2),
+                  direction: validatedQuery.direction,
+                  nested: validatedQuery.nested,
+                  symbols: validatedQuery.symbols
+                })
+              ])
+              
+              logger.info('Open orders response', { success: openResponse.success, count: openResponse.data?.length || 0 });
+              logger.info('Closed orders response', { success: closedResponse.success, count: closedResponse.data?.length || 0 });
+              
+              if (!openResponse.success && !closedResponse.success) {
+                return createErrorResponse(
+                  {
+                    code: 'ALPACA_API_ERROR',
+                    message: 'Failed to fetch orders'
+                  },
+                  400
+                )
+              }
+              
+              // Combine results
+              const allOrders = [
+                ...(openResponse.success ? openResponse.data || [] : []),
+                ...(closedResponse.success ? closedResponse.data || [] : [])
+              ]
+              
+              logger.info('Combined orders', { total: allOrders.length });
+              
+              // Sort by created_at descending
+              allOrders.sort((a, b) => {
+                const dateA = new Date(a.created_at || 0).getTime()
+                const dateB = new Date(b.created_at || 0).getTime()
+                return validatedQuery.direction === 'desc' ? dateB - dateA : dateA - dateB
+              })
+              
+              return createSuccessResponse(allOrders.slice(0, validatedQuery.limit))
+            }
+            
             if (validatedQuery.after) params.after = validatedQuery.after
             if (validatedQuery.until) params.until = validatedQuery.until
             if (validatedQuery.symbols) params.symbols = validatedQuery.symbols
@@ -243,8 +297,11 @@ serve(async (req: Request) => {
                 )
               }
               
+              logger.info('Processing options order')
+              
               // Construct option symbol in OCC format for Alpaca
               const optionSymbol = constructOptionSymbol(validatedOrder.symbol, validatedOrder.option_details)
+              logger.info(`Constructed option symbol: ${optionSymbol}`)
               validatedOrder.symbol = optionSymbol
             }
             
@@ -267,8 +324,12 @@ serve(async (req: Request) => {
             
             // Add options-specific fields
             if (validatedOrder.trade_type === 'option') {
-              orderPayload.class = 'option'
+              // For options, the symbol is already in OCC format
+              // Set order_class to simple for options
+              orderPayload.order_class = 'simple'
             }
+            
+            logger.info('Creating order', { orderPayload, tradeType: validatedOrder.trade_type });
             
             // Make request to Alpaca Broker API
             const response = await alpacaClient.createOrder(accountId, orderPayload)
@@ -283,6 +344,38 @@ serve(async (req: Request) => {
                 },
                 response.error?.status || 400
               )
+            }
+            
+            // Trigger leaderboard stats update in the background (don't wait for it)
+            // Only if user has share_trades enabled
+            try {
+              const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.39.3');
+              const supabase = createClient(
+                Deno.env.get('SUPABASE_URL') ?? '',
+                Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+              );
+              
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('share_trades')
+                .eq('id', authContext.userId)
+                .single();
+              
+              if (profile?.share_trades) {
+                // Call update-leaderboard-stats in the background
+                fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/update-leaderboard-stats`, {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': req.headers.get('Authorization') || '',
+                    'Content-Type': 'application/json'
+                  }
+                }).catch(err => {
+                  logger.error('Failed to update leaderboard stats', err);
+                });
+              }
+            } catch (err) {
+              // Silently fail - don't block order response
+              logger.error('Error checking share_trades status', err instanceof Error ? err : undefined);
             }
             
             return createSuccessResponse(response.data, 201)

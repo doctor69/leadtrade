@@ -43,32 +43,28 @@ serve(async (req: Request) => {
         
         // Handle GET requests
         if (req.method === 'GET') {
-          // If no account ID in path, list all accounts with optional filtering
+          // If no account ID in path, return the user's account from auth context
           if (!accountIdFromPath) {
-            const params: Record<string, string> = {}
+            // Use the account ID from auth context (user's linked account)
+            if (!authContext.alpacaAccountId) {
+              return createErrorResponse(
+                {
+                  code: 'NO_ACCOUNT',
+                  message: 'No Alpaca account linked to this user',
+                  details: { userId: authContext.userId }
+                },
+                404
+              )
+            }
             
-            // Extract query parameters for filtering
-            const query = url.searchParams.get('query')
-            const createdAfter = url.searchParams.get('created_after')
-            const createdBefore = url.searchParams.get('created_before')
-            const status = url.searchParams.get('status')
-            const sort = url.searchParams.get('sort')
-            const entities = url.searchParams.get('entities')
-            
-            if (query) params.query = query
-            if (createdAfter) params.created_after = createdAfter
-            if (createdBefore) params.created_before = createdBefore
-            if (status) params.status = status
-            if (sort) params.sort = sort
-            if (entities) params.entities = entities
-            
-            const response = await alpacaClient.getAccounts(Object.keys(params).length > 0 ? params : undefined)
+            // Get the user's trading account with full financial details
+            const response = await alpacaClient.getTradingAccount(authContext.alpacaAccountId)
             
             if (!response.success) {
               return createErrorResponse(
                 {
                   code: response.error?.code || 'ALPACA_API_ERROR',
-                  message: response.error?.message || 'Failed to fetch accounts',
+                  message: response.error?.message || 'Failed to fetch account data',
                   details: response.error?.details
                 },
                 response.error?.status || 400
@@ -78,8 +74,8 @@ serve(async (req: Request) => {
             return createSuccessResponse(response.data)
           }
           
-          // Get specific account by ID
-          const response = await alpacaClient.getAccount(accountIdFromPath)
+          // Get specific account by ID (trading account with financial details)
+          const response = await alpacaClient.getTradingAccount(accountIdFromPath)
           
           if (!response.success) {
             return createErrorResponse(
@@ -166,23 +162,29 @@ serve(async (req: Request) => {
         
         // Handle POST requests (options approval)
         if (req.method === 'POST') {
-          if (!accountIdFromPath) {
-            return createErrorResponse(
-              {
-                code: 'MISSING_ACCOUNT_ID',
-                message: 'Account ID is required for options approval request'
-              },
-              400
-            )
-          }
+          // Check if this is an options approval request
+          const isOptionsApprovalRequest = isOptionsApproval || url.pathname.includes('options_approval')
           
-          if (!isOptionsApproval) {
+          if (!isOptionsApprovalRequest) {
             return createErrorResponse(
               {
                 code: 'INVALID_ENDPOINT',
                 message: 'POST requests are only supported for /options_approval endpoint'
               },
               400
+            )
+          }
+          
+          // Use account ID from path or from auth context
+          const targetAccountId = accountIdFromPath || authContext.alpacaAccountId
+          
+          if (!targetAccountId) {
+            return createErrorResponse(
+              {
+                code: 'MISSING_ACCOUNT_ID',
+                message: 'No Alpaca account found for this user'
+              },
+              404
             )
           }
           
@@ -198,7 +200,20 @@ serve(async (req: Request) => {
             )
           }
           
-          const response = await alpacaClient.requestOptionsApproval(accountIdFromPath, body.level)
+          console.log(`Requesting options approval level ${body.level} for account ${targetAccountId}`)
+          
+          // For sandbox, pass fixtures to simulate approval
+          // In paper/sandbox mode, we can use fixtures to instantly approve
+          const fixtures = authContext.tradingMode === 'paper' ? { status: 'APPROVED' as const } : undefined
+          
+          console.log('Options approval request:', {
+            accountId: targetAccountId,
+            level: body.level,
+            fixtures,
+            tradingMode: authContext.tradingMode
+          })
+          
+          const response = await alpacaClient.requestOptionsApproval(targetAccountId, body.level, fixtures)
           
           if (!response.success) {
             return createErrorResponse(

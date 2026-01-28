@@ -1,16 +1,25 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trophy, TrendingUp, TrendingDown, Medal, Award, Search, Filter, Eye, Users, BarChart3 } from 'lucide-react';
-import { apiService, type LeaderboardEntry } from '@/lib/apiService';
-import TraderProfileModal from './TraderProfileModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Trophy, TrendingUp, TrendingDown, Medal, Award, Search, Filter, Eye, Users, BarChart3, Copy, Loader2, DollarSign, Percent } from 'lucide-react';
+import { apiService } from '@/lib/apiService';
+import { CopyTradingService } from '@/lib/copy-trading-service';
+import { checkAuthStatus } from '@/lib/auth';
+import type { LeaderboardEntry } from '@/lib/apiService';
 
 type SortOption = 'return' | 'winRate' | 'trades' | 'portfolio';
 type FilterOption = 'all' | 'profitable' | 'highVolume' | 'consistent';
+
+// Simple Avatar component to avoid Radix UI module loading issues
+const SimpleAvatar = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
+  <div className={`rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary ${className}`}>
+    {children}
+  </div>
+);
 
 export default function Leaderboard() {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
@@ -21,6 +30,42 @@ export default function Leaderboard() {
   const [sortBy, setSortBy] = useState<SortOption>('return');
   const [filterBy, setFilterBy] = useState<FilterOption>('all');
   const [selectedTrader, setSelectedTrader] = useState<LeaderboardEntry | null>(null);
+  const [mirroringTrader, setMirroringTrader] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [showMirrorModal, setShowMirrorModal] = useState(false);
+  const [mirrorAllocation, setMirrorAllocation] = useState(10);
+  const [availableAllocation, setAvailableAllocation] = useState(100);
+  const [portfolioValue, setPortfolioValue] = useState(0);
+  const [traderToMirror, setTraderToMirror] = useState<LeaderboardEntry | null>(null);
+
+  // Get current user ID and portfolio value
+  useEffect(() => {
+    const getUserData = async () => {
+      const isAuth = checkAuthStatus();
+      if (isAuth && typeof window !== 'undefined') {
+        const { supabase } = await import('@/lib/supabase');
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setCurrentUserId(user.id);
+          
+          // Get user's subscription summary for available allocation
+          const summary = await CopyTradingService.getUserSubscriptions(user.id);
+          setAvailableAllocation(summary.remainingAllocation);
+          
+          // Get portfolio value
+          try {
+            const accountResult = await apiService.getAccount();
+            if (accountResult.success && accountResult.data) {
+              setPortfolioValue(parseFloat(accountResult.data.portfolio_value.toString()));
+            }
+          } catch (error) {
+            console.error('Error fetching portfolio value:', error);
+          }
+        }
+      }
+    };
+    getUserData();
+  }, []);
 
   // Fetch real leaderboard data from Supabase
   useEffect(() => {
@@ -113,6 +158,73 @@ export default function Leaderboard() {
 
   const getInitials = (username: string) => {
     return username.slice(0, 2).toUpperCase();
+  };
+
+  const handleMirrorTrades = async (leaderId: string, leaderUsername: string) => {
+    if (!currentUserId) {
+      alert('Please sign in to mirror trades');
+      return;
+    }
+
+    if (currentUserId === leaderId) {
+      alert('You cannot mirror your own trades');
+      return;
+    }
+
+    // Find the trader and open modal
+    const trader = filteredData.find(t => t.id === leaderId);
+    if (trader) {
+      setTraderToMirror(trader);
+      setMirrorAllocation(Math.min(10, availableAllocation)); // Default 10% or max available
+      setShowMirrorModal(true);
+    }
+  };
+
+  const confirmMirrorTrades = async () => {
+    if (!currentUserId || !traderToMirror) return;
+
+    setMirroringTrader(traderToMirror.id);
+
+    try {
+      // Check if can follow
+      const canFollow = await CopyTradingService.canFollowTrader(
+        currentUserId,
+        traderToMirror.id,
+        mirrorAllocation
+      );
+
+      if (!canFollow.canFollow) {
+        alert(canFollow.reason || 'Cannot follow this trader');
+        return;
+      }
+
+      // Create subscription
+      const result = await CopyTradingService.createSubscription(
+        currentUserId,
+        traderToMirror.id,
+        mirrorAllocation
+      );
+
+      if (result.success) {
+        alert(`Successfully started mirroring ${traderToMirror.username}'s trades with ${mirrorAllocation}% allocation!`);
+        setShowMirrorModal(false);
+        setTraderToMirror(null);
+        
+        // Update available allocation
+        const summary = await CopyTradingService.getUserSubscriptions(currentUserId);
+        setAvailableAllocation(summary.remainingAllocation);
+        
+        // Refresh leaderboard to update follower counts
+        fetchLeaderboardData();
+      } else {
+        alert(result.error || 'Failed to start mirroring trades');
+      }
+    } catch (error) {
+      console.error('Error mirroring trades:', error);
+      alert('Failed to start mirroring trades. Please try again.');
+    } finally {
+      setMirroringTrader(null);
+    }
   };
 
   if (loading) {
@@ -212,11 +324,9 @@ export default function Leaderboard() {
                   {getRankIcon(trader.rank)}
                 </div>
                 
-                <Avatar className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-3 sm:mb-4">
-                  <AvatarFallback className="text-sm sm:text-lg font-bold">
-                    {getInitials(trader.username)}
-                  </AvatarFallback>
-                </Avatar>
+                <SimpleAvatar className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-3 sm:mb-4 text-sm sm:text-lg">
+                  {getInitials(trader.username)}
+                </SimpleAvatar>
                 
                 <h3 className="font-semibold text-base sm:text-lg mb-2 truncate">{trader.username}</h3>
                 
@@ -244,10 +354,38 @@ export default function Leaderboard() {
                     Win Rate: {trader.winRate.toFixed(1)}%
                   </div>
 
-                  <Button size="sm" className="mt-2 min-h-[36px] text-xs">
-                    <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                    View Profile
-                  </Button>
+                  <div className="flex gap-2 mt-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      className="flex-1 min-h-[36px] text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTrader(trader);
+                      }}
+                    >
+                      <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      View
+                    </Button>
+                    {currentUserId !== trader.id && (
+                      <Button 
+                        size="sm" 
+                        className="flex-1 min-h-[36px] text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMirrorTrades(trader.id, trader.username);
+                        }}
+                        disabled={mirroringTrader === trader.id}
+                      >
+                        {mirroringTrader === trader.id ? (
+                          <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
+                        ) : (
+                          <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        )}
+                        Mirror
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -295,9 +433,9 @@ export default function Leaderboard() {
                       )}
                     </div>
                     
-                    <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
-                      <AvatarFallback className="text-xs sm:text-sm">{getInitials(trader.username)}</AvatarFallback>
-                    </Avatar>
+                    <SimpleAvatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 text-xs sm:text-sm">
+                      {getInitials(trader.username)}
+                    </SimpleAvatar>
                     
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold text-sm sm:text-base truncate">{trader.username}</h4>
@@ -324,10 +462,36 @@ export default function Leaderboard() {
                       </div>
                     </div>
                     
-                    <Button size="sm" variant="outline" className="min-h-[36px] text-xs">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="min-h-[36px] text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTrader(trader);
+                      }}
+                    >
                       <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                       <span className="hidden sm:inline">View</span>
                     </Button>
+                    {currentUserId !== trader.id && (
+                      <Button 
+                        size="sm" 
+                        className="min-h-[36px] text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMirrorTrades(trader.id, trader.username);
+                        }}
+                        disabled={mirroringTrader === trader.id}
+                      >
+                        {mirroringTrader === trader.id ? (
+                          <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
+                        ) : (
+                          <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        )}
+                        <span className="hidden sm:inline">Mirror</span>
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -336,12 +500,197 @@ export default function Leaderboard() {
         </CardContent>
       </Card>
 
-      {/* Trader Profile Modal/Detail View */}
+      {/* Trader Profile Modal */}
       {selectedTrader && (
-        <TraderProfileModal 
-          trader={selectedTrader} 
-          onClose={() => setSelectedTrader(null)} 
-        />
+        <Dialog open={true} onOpenChange={() => setSelectedTrader(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Trader Profile</DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* Profile Header */}
+              <div className="flex items-center gap-4">
+                <SimpleAvatar className="h-16 w-16 text-lg bg-primary/20 text-primary">
+                  {selectedTrader.username.slice(0, 2).toUpperCase()}
+                </SimpleAvatar>
+                <div>
+                  <h3 className="text-2xl font-bold">{selectedTrader.username}</h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant="secondary">
+                      Rank #{selectedTrader.rank}
+                    </Badge>
+                    {selectedTrader.rank <= 3 && (
+                      <span className="text-yellow-500">
+                        {selectedTrader.rank === 1 ? '🏆' : selectedTrader.rank === 2 ? '🥈' : '🥉'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-muted/50 border">
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Total Return</div>
+                  <div className={`text-2xl font-bold ${selectedTrader.totalReturnPercent >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {selectedTrader.totalReturnPercent >= 0 ? '+' : ''}{selectedTrader.totalReturnPercent.toFixed(2)}%
+                  </div>
+                </div>
+                
+                <div className="p-4 rounded-lg bg-muted/50 border">
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Win Rate</div>
+                  <div className="text-2xl font-bold">
+                    {selectedTrader.winRate.toFixed(1)}%
+                  </div>
+                </div>
+                
+                <div className="p-4 rounded-lg bg-muted/50 border">
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Total Trades</div>
+                  <div className="text-2xl font-bold">
+                    {selectedTrader.tradesCount}
+                  </div>
+                </div>
+                
+                <div className="p-4 rounded-lg bg-muted/50 border">
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Followers</div>
+                  <div className="text-2xl font-bold">
+                    {selectedTrader.followers || 0}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Mirror Trades Modal */}
+      {traderToMirror && (
+        <Dialog open={showMirrorModal} onOpenChange={(open) => {
+          setShowMirrorModal(open);
+          if (!open) setTraderToMirror(null);
+        }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Mirror Trades</DialogTitle>
+              <DialogDescription>
+                Set how much of your portfolio to allocate to mirroring {traderToMirror.username}'s trades
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* Trader Info */}
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border">
+                <SimpleAvatar className="h-12 w-12 text-sm bg-primary/20 text-primary">
+                  {traderToMirror.username.slice(0, 2).toUpperCase()}
+                </SimpleAvatar>
+                <div>
+                  <div className="font-semibold">{traderToMirror.username}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {traderToMirror.totalReturnPercent >= 0 ? '+' : ''}{traderToMirror.totalReturnPercent.toFixed(1)}% return
+                  </div>
+                </div>
+              </div>
+
+              {/* Allocation Slider */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Allocation Percentage</label>
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Percent className="h-3 w-3" />
+                    Available: {availableAllocation.toFixed(1)}%
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <input
+                    type="range"
+                    min="1"
+                    max={Math.min(100, availableAllocation)}
+                    step="0.5"
+                    value={mirrorAllocation}
+                    onChange={(e) => setMirrorAllocation(parseFloat(e.target.value))}
+                    className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                  />
+                  <div className="flex items-center justify-center gap-2">
+                    <Input
+                      type="number"
+                      min="0.1"
+                      max={Math.min(100, availableAllocation)}
+                      step="0.5"
+                      value={mirrorAllocation}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        if (!isNaN(val)) {
+                          setMirrorAllocation(Math.min(Math.max(0.1, val), availableAllocation));
+                        }
+                      }}
+                      className="w-24 text-center"
+                    />
+                    <span className="text-sm font-medium">%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Allocation Details */}
+              <div className="space-y-2 p-4 rounded-lg bg-muted/30 border">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Your Portfolio Value</span>
+                  <span className="font-medium">${portfolioValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Allocation Amount</span>
+                  <span className="font-semibold text-primary">
+                    ${((portfolioValue * mirrorAllocation) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="pt-2 border-t">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Remaining Allocation</span>
+                    <span className="font-medium">{(availableAllocation - mirrorAllocation).toFixed(1)}%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Info Message */}
+              <div className="text-xs text-muted-foreground bg-muted/20 p-3 rounded-lg">
+                <DollarSign className="h-4 w-4 inline mr-1" />
+                When {traderToMirror.username} makes a trade, the same trade will be executed in your account using {mirrorAllocation}% of your portfolio value.
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setShowMirrorModal(false);
+                    setTraderToMirror(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={confirmMirrorTrades}
+                  disabled={mirroringTrader === traderToMirror.id || mirrorAllocation <= 0 || mirrorAllocation > availableAllocation}
+                >
+                  {mirroringTrader === traderToMirror.id ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Starting...
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4 mr-2" />
+                      Start Mirroring
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

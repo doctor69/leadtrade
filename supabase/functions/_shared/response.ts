@@ -1,4 +1,4 @@
-import { corsHeaders } from './cors.ts'
+import { getCorsHeaders } from './cors.ts'
 
 export interface ErrorResponse {
   code: string
@@ -17,6 +17,26 @@ export const ERROR_CODES = {
   INTERNAL_ERROR: 'INTERNAL_ERROR'
 }
 
+// Store the current request for CORS headers
+let currentRequest: Request | null = null
+
+export function setCurrentRequest(req: Request) {
+  currentRequest = req
+}
+
+function getHeaders(): Record<string, string> {
+  if (currentRequest) {
+    return { ...getCorsHeaders(currentRequest), 'Content-Type': 'application/json' }
+  }
+  // Fallback for backward compatibility
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE',
+    'Content-Type': 'application/json'
+  }
+}
+
 /**
  * Creates a standardized success response
  * @param data The response data
@@ -32,7 +52,7 @@ export function createSuccessResponse<T = any>(data: T, status = 200): Response 
     }),
     {
       status,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: getHeaders()
     }
   )
 }
@@ -69,7 +89,7 @@ export function createErrorResponse(
     }),
     {
       status,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: getHeaders()
     }
   )
 }
@@ -78,8 +98,8 @@ export function createErrorResponse(
  * Creates a standardized CORS preflight response
  * @returns Response object for OPTIONS requests
  */
-export function createCorsResponse(): Response {
-  return new Response('ok', { headers: corsHeaders })
+export function createCorsResponse(req: Request): Response {
+  return new Response('ok', { headers: getCorsHeaders(req) })
 }
 
 /**
@@ -92,9 +112,12 @@ export async function processRequest(
   req: Request,
   handler: () => Promise<Response>
 ): Promise<Response> {
+  // Store request for CORS headers
+  setCurrentRequest(req)
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return createCorsResponse()
+    return createCorsResponse(req)
   }
 
   try {

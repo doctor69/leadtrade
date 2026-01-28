@@ -73,8 +73,22 @@ serve(async (req: Request) => {
           if (validatedQuery.asof) params.asof = validatedQuery.asof
           if (validatedQuery.page_token) params.page_token = validatedQuery.page_token
           
-          // Make request to Alpaca API
-          const response = await alpacaClient.brokerRequest('/v1/trading/accounts/portfolio/history', { params })
+          // Get account ID
+          if (!authContext.alpacaAccountId) {
+            return createErrorResponse(
+              {
+                code: 'NO_ACCOUNT',
+                message: 'No Alpaca account linked to this user'
+              },
+              404
+            )
+          }
+          
+          // Make request to Alpaca Broker API with account ID
+          const response = await alpacaClient.brokerRequest(
+            `/v1/trading/accounts/${authContext.alpacaAccountId}/account/portfolio/history`,
+            { params }
+          )
           
           if (!response.success) {
             console.error('Failed to fetch portfolio history:', response.error)
