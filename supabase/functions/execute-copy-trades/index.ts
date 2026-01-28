@@ -172,7 +172,7 @@ serve(async (req) => {
                 copyResults.push({
                   followerId,
                   success: false,
-                  error: 'Error verifying position for sell order'
+                  error: error instanceof Error ? error.message : 'Error verifying position for sell order'
                 })
                 continue
               }
@@ -235,7 +235,7 @@ serve(async (req) => {
             copyResults.push({
               followerId: subscription.follower_id,
               success: false,
-              error: error.message
+              error: error instanceof Error ? error.message : 'Unknown error processing copy trade'
             })
           }
         }
@@ -253,7 +253,7 @@ serve(async (req) => {
         console.error('Copy trading error:', error)
         return createErrorResponse({
           code: 'COPY_TRADE_ERROR',
-          message: error.message
+          message: error instanceof Error ? error.message : 'Unknown copy trading error'
         }, 500)
       }
     })
