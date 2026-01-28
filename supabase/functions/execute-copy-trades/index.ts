@@ -81,23 +81,44 @@ serve(async (req) => {
         
         console.log(`Found ${subscriptions.length} active followers`)
         
-        // Get follower profiles separately
+        // Get follower profiles and their Alpaca accounts separately
         const followerIds = subscriptions.map(sub => sub.follower_id)
-        const { data: followerProfiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, username, alpaca_account_id')
-          .in('id', followerIds)
         
-        if (profilesError) {
-          console.error('Error fetching follower profiles:', profilesError)
+        const [profilesResult, alpacaAccountsResult] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('id, username')
+            .in('id', followerIds),
+          supabase
+            .from('alpaca_accounts')
+            .select('user_id, alpaca_account_id')
+            .in('user_id', followerIds)
+        ])
+        
+        if (profilesResult.error) {
+          console.error('Error fetching follower profiles:', profilesResult.error)
           return createErrorResponse({ code: 'DB_ERROR', message: 'Failed to fetch follower profiles' }, 500)
         }
         
-        // Map profiles to subscriptions
-        const subscriptionsWithProfiles = subscriptions.map(sub => ({
-          ...sub,
-          follower: followerProfiles?.find(p => p.id === sub.follower_id)
-        }))
+        if (alpacaAccountsResult.error) {
+          console.error('Error fetching Alpaca accounts:', alpacaAccountsResult.error)
+          return createErrorResponse({ code: 'DB_ERROR', message: 'Failed to fetch Alpaca accounts' }, 500)
+        }
+        
+        // Map profiles and accounts to subscriptions
+        const subscriptionsWithProfiles = subscriptions.map(sub => {
+          const profile = profilesResult.data?.find(p => p.id === sub.follower_id)
+          const alpacaAccount = alpacaAccountsResult.data?.find(a => a.user_id === sub.follower_id)
+          
+          return {
+            ...sub,
+            follower: {
+              id: sub.follower_id,
+              username: profile?.username || 'Unknown',
+              alpaca_account_id: alpacaAccount?.alpaca_account_id
+            }
+          }
+        })
         
         // Calculate the trade size as percentage of leader's portfolio
         // Use limit_price if available, otherwise estimate with market price
