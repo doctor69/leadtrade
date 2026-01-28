@@ -378,6 +378,50 @@ serve(async (req: Request) => {
               logger.error('Error checking share_trades status', err instanceof Error ? err : undefined);
             }
             
+            // Trigger copy trades for followers if this user is a leader
+            try {
+              const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.39.3');
+              const supabase = createClient(
+                Deno.env.get('SUPABASE_URL') ?? '',
+                Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+              );
+              
+              // Check if this user has active followers
+              const { data: followers, error: followersError } = await supabase
+                .from('copy_trading_subscriptions')
+                .select('follower_id')
+                .eq('leader_id', authContext.userId)
+                .eq('is_active', true);
+              
+              if (!followersError && followers && followers.length > 0) {
+                console.log(`User ${authContext.userId} has ${followers.length} followers, triggering copy trades`);
+                
+                // Get leader's portfolio value for proportional calculation
+                const leaderPortfolioValue = parseFloat(accountData.equity || accountData.portfolio_value || '0');
+                
+                if (leaderPortfolioValue > 0) {
+                  // Trigger copy trades in background (non-blocking)
+                  fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/execute-copy-trades`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': req.headers.get('Authorization') || '',
+                      'apikey': Deno.env.get('SUPABASE_ANON_KEY') || ''
+                    },
+                    body: JSON.stringify({
+                      leaderId: authContext.userId,
+                      orderData: orderPayload,
+                      leaderPortfolioValue
+                    })
+                  }).catch(error => {
+                    console.error('Failed to trigger copy trades:', error);
+                  });
+                }
+              }
+            } catch (error) {
+              console.error('Error checking for copy trade followers:', error);
+            }
+            
             return createSuccessResponse(response.data, 201)
           } catch (error) {
             const validationError = error as Error;
