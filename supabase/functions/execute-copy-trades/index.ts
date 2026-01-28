@@ -84,6 +84,8 @@ serve(async (req) => {
         // Get follower profiles and their Alpaca accounts separately
         const followerIds = subscriptions.map(sub => sub.follower_id)
         
+        console.log(`Fetching data for ${followerIds.length} followers:`, followerIds)
+        
         const [profilesResult, alpacaAccountsResult] = await Promise.all([
           supabase
             .from('profiles')
@@ -91,9 +93,20 @@ serve(async (req) => {
             .in('id', followerIds),
           supabase
             .from('alpaca_accounts')
-            .select('user_id, alpaca_account_id')
+            .select('user_id, alpaca_account_id, account_type, account_status')
             .in('user_id', followerIds)
+            .eq('account_status', 'ACTIVE')
         ])
+        
+        console.log(`Profiles found: ${profilesResult.data?.length || 0}`)
+        console.log(`Alpaca accounts found: ${alpacaAccountsResult.data?.length || 0}`)
+        if (alpacaAccountsResult.data) {
+          console.log('Alpaca accounts:', alpacaAccountsResult.data.map(a => ({ 
+            user_id: a.user_id, 
+            account_id: a.alpaca_account_id,
+            type: a.account_type 
+          })))
+        }
         
         if (profilesResult.error) {
           console.error('Error fetching follower profiles:', profilesResult.error)
@@ -140,10 +153,16 @@ serve(async (req) => {
             
             if (!subscription.follower?.alpaca_account_id) {
               console.error(`No Alpaca account for follower ${followerId}`)
+              copyResults.push({
+                followerId,
+                success: false,
+                error: 'No Alpaca account found'
+              })
               continue
             }
             
             const followerAccountId = subscription.follower.alpaca_account_id
+            console.log(`Follower ${followerId} has Alpaca account: ${followerAccountId}`)
             
             // Create Alpaca client for follower
             const followerAlpacaClient = new AlpacaClient({
@@ -152,12 +171,24 @@ serve(async (req) => {
             })
             
             // Get follower's account info
+            console.log(`Fetching account info for follower ${followerId} from /v1/trading/accounts/${followerAccountId}/account`)
             const accountResponse = await followerAlpacaClient.brokerRequest(
               `/v1/trading/accounts/${followerAccountId}/account`
             )
             
+            console.log(`Account response for follower ${followerId}:`, { 
+              success: accountResponse.success, 
+              hasData: !!accountResponse.data,
+              error: accountResponse.error 
+            })
+            
             if (!accountResponse.success || !accountResponse.data) {
-              console.error(`Failed to get account info for follower ${followerId}`)
+              console.error(`Failed to get account info for follower ${followerId}:`, accountResponse.error)
+              copyResults.push({
+                followerId,
+                success: false,
+                error: 'Failed to get account info'
+              })
               continue
             }
             
