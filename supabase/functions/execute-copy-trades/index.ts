@@ -65,14 +65,7 @@ serve(async (req) => {
         // Get all active followers for this leader
         const { data: subscriptions, error: subsError } = await supabase
           .from('copy_trading_subscriptions')
-          .select(`
-            *,
-            follower:profiles!copy_trading_subscriptions_follower_id_fkey (
-              id,
-              username,
-              alpaca_account_id
-            )
-          `)
+          .select('*')
           .eq('leader_id', leaderId)
           .eq('is_active', true)
         
@@ -88,6 +81,24 @@ serve(async (req) => {
         
         console.log(`Found ${subscriptions.length} active followers`)
         
+        // Get follower profiles separately
+        const followerIds = subscriptions.map(sub => sub.follower_id)
+        const { data: followerProfiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, username, alpaca_account_id')
+          .in('id', followerIds)
+        
+        if (profilesError) {
+          console.error('Error fetching follower profiles:', profilesError)
+          return createErrorResponse({ code: 'DB_ERROR', message: 'Failed to fetch follower profiles' }, 500)
+        }
+        
+        // Map profiles to subscriptions
+        const subscriptionsWithProfiles = subscriptions.map(sub => ({
+          ...sub,
+          follower: followerProfiles?.find(p => p.id === sub.follower_id)
+        }))
+        
         // Calculate the trade size as percentage of leader's portfolio
         // Use limit_price if available, otherwise estimate with market price
         const estimatedPrice = orderData.limit_price || 1 // Will need actual market price for market orders
@@ -99,7 +110,7 @@ serve(async (req) => {
         const copyResults = []
         
         // Execute copy trades for each follower
-        for (const subscription of subscriptions) {
+        for (const subscription of subscriptionsWithProfiles) {
           try {
             const followerId = subscription.follower_id
             const followerAllocationPercentage = parseFloat(subscription.allocation_percentage.toString())
