@@ -396,26 +396,40 @@ serve(async (req: Request) => {
               if (!followersError && followers && followers.length > 0) {
                 console.log(`User ${authContext.userId} has ${followers.length} followers, triggering copy trades`);
                 
-                // Get leader's portfolio value for proportional calculation
-                const leaderPortfolioValue = parseFloat(accountData.equity || accountData.portfolio_value || '0');
+                // Get leader's account data to calculate portfolio value
+                const accountResponse = await alpacaClient.brokerRequest(
+                  `/v1/trading/accounts/${accountId}/account`
+                );
                 
-                if (leaderPortfolioValue > 0) {
-                  // Trigger copy trades in background (non-blocking)
-                  fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/execute-copy-trades`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': req.headers.get('Authorization') || '',
-                      'apikey': Deno.env.get('SUPABASE_ANON_KEY') || ''
-                    },
-                    body: JSON.stringify({
-                      leaderId: authContext.userId,
-                      orderData: orderPayload,
-                      leaderPortfolioValue
-                    })
-                  }).catch(error => {
-                    console.error('Failed to trigger copy trades:', error);
-                  });
+                if (accountResponse.success && accountResponse.data) {
+                  const leaderPortfolioValue = parseFloat(
+                    accountResponse.data.equity || 
+                    accountResponse.data.portfolio_value || 
+                    '0'
+                  );
+                  
+                  if (leaderPortfolioValue > 0) {
+                    // Trigger copy trades in background (non-blocking)
+                    fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/execute-copy-trades`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': req.headers.get('Authorization') || '',
+                        'apikey': Deno.env.get('SUPABASE_ANON_KEY') || ''
+                      },
+                      body: JSON.stringify({
+                        leaderId: authContext.userId,
+                        orderData: orderPayload,
+                        leaderPortfolioValue
+                      })
+                    }).catch(error => {
+                      console.error('Failed to trigger copy trades:', error);
+                    });
+                  } else {
+                    console.log('Leader portfolio value is 0, skipping copy trades');
+                  }
+                } else {
+                  console.error('Failed to get leader account data:', accountResponse.error);
                 }
               }
             } catch (error) {

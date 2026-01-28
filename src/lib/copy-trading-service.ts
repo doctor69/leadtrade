@@ -105,12 +105,13 @@ export class CopyTradingService {
 
       // Check if leader exists and shares trades
       const { data: leader, error: leaderError } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('id, share_trades')
         .eq('id', leaderId)
         .single();
 
       if (leaderError) {
+        console.error('Error fetching leader profile:', leaderError);
         return { success: false, error: 'Leader not found' };
       }
 
