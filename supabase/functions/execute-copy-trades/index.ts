@@ -28,7 +28,18 @@ serve(async (req) => {
   return processRequest(req, {
     POST: withAuth(async (req: Request, authContext: AuthContext) => {
       try {
-        const { leaderId, orderData, leaderPortfolioValue }: CopyTradeRequest = await req.json()
+        const requestBody = await req.json()
+        console.log('Request body:', JSON.stringify(requestBody))
+        
+        const { leaderId, orderData, leaderPortfolioValue } = requestBody as CopyTradeRequest
+        
+        if (!leaderId || !orderData || !leaderPortfolioValue) {
+          console.error('Missing required fields:', { leaderId, orderData: !!orderData, leaderPortfolioValue })
+          return createErrorResponse({
+            code: 'INVALID_REQUEST',
+            message: 'Missing required fields: leaderId, orderData, or leaderPortfolioValue'
+          }, 400)
+        }
         
         console.log(`Executing copy trades for leader ${leaderId}`)
         
