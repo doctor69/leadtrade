@@ -3,7 +3,7 @@ name: Deploy Function
 on:
   push:
     branches:
-      - main
+      - kiro
   workflow_dispatch:
 
 jobs:
