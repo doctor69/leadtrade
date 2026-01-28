@@ -1,0 +1,125 @@
+## Changes needed in src/components/trading/Leaderboard.tsx
+
+### 1. Add state for tracking user subscriptions (around line 40):
+```typescript
+const [userSubscriptions, setUserSubscriptions] = useState<Map<string, number>>(new Map());
+const [isEditMode, setIsEditMode] = useState(false);
+```
+
+### 2. Update getUserData useEffect to fetch subscriptions (around line 50):
+```typescript
+// Build map of leader_id -> allocation_percentage for active subscriptions
+const subsMap = new Map<string, number>();
+summary.subscriptions
+  .filter(sub => sub.is_active)
+  .forEach(sub => {
+    subsMap.set(sub.leader_id, parseFloat(sub.allocation_percentage.toString()));
+  });
+setUserSubscriptions(subsMap);
+```
+
+### 3. Update handleMirrorTrades to check if already mirroring (around line 170):
+```typescript
+// Check if already mirroring this trader
+const existingAllocation = userSubscriptions.get(leaderId);
+if (existingAllocation) {
+  setIsEditMode(true);
+  setMirrorAllocation(existingAllocation);
+} else {
+  setIsEditMode(false);
+  setMirrorAllocation(Math.min(10, availableAllocation));
+}
+```
+
+### 4. Update confirmMirrorTrades to handle edit mode (around line 190):
+```typescript
+let result;
+
+if (isEditMode) {
+  // Update existing subscription
+  const { supabase } = await import('@/lib/supabase');
+  const { data: existingSub } = await supabase
+    .from('copy_trading_subscriptions')
+    .select('id')
+    .eq('follower_id', currentUserId)
+    .eq('leader_id', traderToMirror.id)
+    .single();
+  
+  if (existingSub) {
+    result = await CopyTradingService.updateSubscription(
+      existingSub.id,
+      currentUserId,
+      { allocation_percentage: mirrorAllocation }
+    );
+  }
+} else {
+  // Create new subscription (existing code)
+}
+
+// After success, rebuild subscriptions map
+const subsMap = new Map<string, number>();
+summary.subscriptions
+  .filter(sub => sub.is_active)
+  .forEach(sub => {
+    subsMap.set(sub.leader_id, parseFloat(sub.allocation_percentage.toString()));
+  });
+setUserSubscriptions(subsMap);
+```
+
+### 5. Update the leaderboard table row (around line 473):
+Change from:
+```typescript
+{filteredData.map((trader) => (
+```
+
+To:
+```typescript
+{filteredData.map((trader) => {
+  const mirroringAllocation = userSubscriptions.get(trader.id);
+  const isMirroring = mirroringAllocation !== undefined;
+  
+  return (
+```
+
+### 6. Add mirroring column before buttons (around line 515):
+```typescript
+{isMirroring && (
+  <div className="text-center min-w-[60px]">
+    <div className="text-xs text-muted-foreground">Mirroring</div>
+    <div className="text-sm font-semibold text-primary">{mirroringAllocation.toFixed(1)}%</div>
+  </div>
+)}
+```
+
+### 7. Update Mirror button to show "Edit" when mirroring (around line 540):
+Change button variant and text:
+```typescript
+<Button 
+  size="sm" 
+  variant={isMirroring ? "outline" : "default"}
+  className="min-h-[36px] text-xs"
+  onClick={(e) => {
+    e.stopPropagation();
+    handleMirrorTrades(trader.id, trader.username);
+  }}
+  disabled={mirroringTrader === trader.id}
+>
+  {mirroringTrader === trader.id ? (
+    <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
+  ) : (
+    <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+  )}
+  <span className="hidden sm:inline">{isMirroring ? 'Edit' : 'Mirror'}</span>
+</Button>
+```
+
+### 8. Close the map function properly (around line 555):
+Change from:
+```typescript
+              ))}
+```
+
+To:
+```typescript
+              )})}
+```
