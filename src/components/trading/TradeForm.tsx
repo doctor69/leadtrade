@@ -59,9 +59,21 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
       setLoadingPosition(true);
       try {
         const result = await apiService.getPositions(selectedStock.symbol);
+        console.log('Position fetch result for', selectedStock.symbol, ':', result);
         if (result.success && result.data && result.data.length > 0) {
-          const position = result.data[0];
-          setCurrentPosition(Math.abs(position.qty || 0));
+          console.log('All positions returned:', result.data);
+          // Filter to find the position for the selected symbol
+          const position = result.data.find(p => p.symbol === selectedStock.symbol);
+          console.log('Found position for', selectedStock.symbol, ':', position);
+          if (position) {
+            // Keep fractional shares - parse as float instead of using Math.abs which converts to int
+            const qty = typeof position.qty === 'string' ? parseFloat(position.qty) : (position.qty || 0);
+            console.log('Parsed qty:', qty);
+            setCurrentPosition(Math.abs(qty));
+          } else {
+            console.log('No position found for', selectedStock.symbol);
+            setCurrentPosition(0);
+          }
         } else {
           setCurrentPosition(0);
         }
@@ -120,7 +132,7 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
 
     // Validate sell quantity doesn't exceed position
     if (side === 'sell' && tradeType === 'stock') {
-      const sellQty = parseInt(quantity);
+      const sellQty = parseFloat(quantity);
       if (sellQty > currentPosition) {
         alert(`Cannot sell ${sellQty} shares. You only own ${currentPosition} shares of ${selectedStock.symbol}`);
         return;
@@ -400,7 +412,7 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
                       variant="outline"
                       size="icon"
                       onClick={decrementQuantity}
-                      disabled={parseInt(quantity) <= 1}
+                      disabled={parseFloat(quantity) <= 0.000000001}
                       className="shrink-0"
                     >
                       <Minus className="h-4 w-4" />
@@ -411,11 +423,12 @@ export default function TradeForm({ selectedStock }: TradeFormProps) {
                     placeholder={tradeType === 'option' ? 'Number of contracts' : 'Number of shares'}
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
-                    min="1"
+                    min="0.000000001"
+                    step="any"
                     max={side === 'sell' && tradeType === 'stock' && currentPosition > 0 ? currentPosition : undefined}
                     required
                     className="text-center md:text-left"
-                    inputMode="numeric"
+                    inputMode="decimal"
                     pattern="[0-9]*"
                   />
                   {isMobile && (
