@@ -25,8 +25,21 @@ interface CopyTradeRequest {
 }
 
 serve(async (req) => {
-  return processRequest(req, {
-    POST: withAuth(async (req: Request, authContext: AuthContext) => {
+  return processRequest(req, async () => {
+    // Handle CORS preflight
+    if (req.method === 'OPTIONS') {
+      return new Response('ok', { headers: corsHeaders })
+    }
+
+    // Only allow POST
+    if (req.method !== 'POST') {
+      return createErrorResponse({
+        code: 'METHOD_NOT_ALLOWED',
+        message: 'Only POST requests are allowed'
+      }, 405)
+    }
+
+    return withAuth(req, async (authContext: AuthContext) => {
       try {
         const requestBody = await req.json()
         console.log('Request body:', JSON.stringify(requestBody))
