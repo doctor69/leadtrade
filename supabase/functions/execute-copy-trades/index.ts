@@ -128,18 +128,46 @@ serve(async (req) => {
             follower: {
               id: sub.follower_id,
               username: profile?.username || 'Unknown',
-              alpaca_account_id: alpacaAccount?.alpaca_account_id
+              alpaca_account_id: alpacaAccount?.alpaca_account_id,
+              account_type: alpacaAccount?.account_type as 'paper' | 'live' | undefined
             }
           }
         })
         
+        // Get the current market price for accurate quantity calculation
+        let estimatedPrice = orderData.limit_price || 1
+        
+        // For market orders, fetch the latest price from Alpaca
+        if (!orderData.limit_price && orderData.type === 'market') {
+          try {
+            // Use the leader's auth context to fetch market data
+            const leaderAlpacaClient = new AlpacaClient(authContext)
+            const latestQuote = await leaderAlpacaClient.dataRequest(
+              `/v2/stocks/${orderData.symbol}/quotes/latest`
+            )
+            
+            if (latestQuote.success && latestQuote.data?.quote) {
+              // Use the mid-point between bid and ask for better accuracy
+              const bid = parseFloat(latestQuote.data.quote.bp || latestQuote.data.quote.bid_price || '0')
+              const ask = parseFloat(latestQuote.data.quote.ap || latestQuote.data.quote.ask_price || '0')
+              if (bid > 0 && ask > 0) {
+                estimatedPrice = (bid + ask) / 2
+              } else if (ask > 0) {
+                estimatedPrice = ask
+              } else if (bid > 0) {
+                estimatedPrice = bid
+              }
+            }
+          } catch (error) {
+            console.warn(`Failed to fetch market price for ${orderData.symbol}, using fallback:`, error)
+          }
+        }
+        
         // Calculate the trade size as percentage of leader's portfolio
-        // Use limit_price if available, otherwise estimate with market price
-        const estimatedPrice = orderData.limit_price || 1 // Will need actual market price for market orders
         const tradeValue = parseFloat(orderData.qty.toString()) * estimatedPrice
         const leaderTradePercentage = (tradeValue / leaderPortfolioValue) * 100
         
-        console.log(`Leader trade: ${orderData.qty} shares @ ~$${estimatedPrice}, ~$${tradeValue.toFixed(2)}, ${leaderTradePercentage.toFixed(4)}% of portfolio`)
+        console.log(`Leader trade: ${orderData.qty} shares @ ~$${estimatedPrice.toFixed(2)}, ~$${tradeValue.toFixed(2)}, ${leaderTradePercentage.toFixed(4)}% of portfolio`)
         
         const copyResults = []
         
@@ -162,12 +190,22 @@ serve(async (req) => {
             }
             
             const followerAccountId = subscription.follower.alpaca_account_id
-            console.log(`Follower ${followerId} has Alpaca account: ${followerAccountId}`)
+            const followerTradingMode = (subscription.follower.account_type || 'paper') as 'paper' | 'live'
+            console.log(`Follower ${followerId} account details:`, {
+              accountId: followerAccountId,
+              accountType: subscription.follower.account_type,
+              tradingMode: followerTradingMode,
+              fullFollowerObject: subscription.follower
+            })
             
-            // Create Alpaca client for follower
+            // Create Alpaca client for follower with proper AuthContext
             const followerAlpacaClient = new AlpacaClient({
               userId: followerId,
-              alpacaAccountId: followerAccountId
+              alpacaAccountId: followerAccountId,
+              tradingMode: followerTradingMode,
+              sessionToken: '', // Not needed for broker API calls
+              isAuthenticated: true,
+              alpacaAccessToken: '' // Not needed for broker API calls
             })
             
             // Get follower's account info
@@ -204,7 +242,19 @@ serve(async (req) => {
             // Follower trades: 5% of 20% = 1% of total portfolio
             const followerTradePercentage = (leaderTradePercentage * followerAllocationPercentage) / 100
             const followerTradeValue = (followerPortfolioValue * followerTradePercentage) / 100
-            let followerQty = Math.floor(followerTradeValue / estimatedPrice)
+            
+            // Calculate quantity with fractional shares support
+            // Alpaca supports up to 9 decimal places for fractional shares
+            let followerQty = followerTradeValue / estimatedPrice
+            
+            // Round to 9 decimal places (Alpaca's precision)
+            followerQty = Math.round(followerQty * 1000000000) / 1000000000
+            
+            console.log(`Follower ${followerId}: Portfolio $${followerPortfolioValue.toFixed(2)}, ` +
+              `Allocation ${followerAllocationPercentage}%, ` +
+              `Trade ${followerTradePercentage.toFixed(4)}% = $${followerTradeValue.toFixed(2)}, ` +
+              `Price: $${estimatedPrice.toFixed(2)}, ` +
+              `Qty: ${followerQty}`)
             
             // For SELL orders, check if follower has enough shares
             if (orderData.side === 'sell') {
@@ -243,7 +293,7 @@ serve(async (req) => {
                   // Limit sell quantity to available shares
                   if (followerQty > availableQty) {
                     console.log(`Follower ${followerId}: reducing sell qty from ${followerQty} to ${availableQty} (available shares)`)
-                    followerQty = Math.floor(availableQty)
+                    followerQty = availableQty // Keep fractional shares
                   }
                 } else {
                   console.error(`Failed to get positions for follower ${followerId}:`, positionsResponse.error)
@@ -265,13 +315,9 @@ serve(async (req) => {
               }
             }
             
-            console.log(`Follower ${followerId}: Portfolio $${followerPortfolioValue.toFixed(2)}, ` +
-              `Allocation ${followerAllocationPercentage}%, ` +
-              `Trade ${followerTradePercentage.toFixed(4)}% = $${followerTradeValue.toFixed(2)}, ` +
-              `Qty: ${followerQty}`)
-            
-            if (followerQty <= 0) {
-              console.log(`Skipping follower ${followerId}: calculated quantity is ${followerQty}`)
+            // Skip if quantity is too small (less than $0.01 worth)
+            if (followerQty <= 0 || followerQty * estimatedPrice < 0.01) {
+              console.log(`Skipping follower ${followerId}: calculated quantity ${followerQty} is too small (value: $${(followerQty * estimatedPrice).toFixed(4)})`)
               continue
             }
             
