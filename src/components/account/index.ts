@@ -9,3 +9,4 @@ export { default as TransferHistory } from './TransferHistory';
 export { default as FundingWalletManager } from './FundingWalletManager';
 export { default as DocumentUpload } from './DocumentUpload';
 export { default as FundingPageContent } from './FundingPageContent';
+export { default as QuickSandboxFunding } from './QuickSandboxFunding';

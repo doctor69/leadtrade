@@ -25,18 +25,10 @@ export class CopyTradingService {
    */
   static async getUserSubscriptions(userId: string): Promise<SubscriptionSummary> {
     try {
+      // Query subscriptions and manually join with profiles
       const { data: subscriptions, error } = await supabase
         .from('copy_trading_subscriptions')
-        .select(`
-          *,
-          leader:profiles!leader_id (
-            id,
-            username,
-            full_name,
-            share_trades,
-            show_asset_amounts
-          )
-        `)
+        .select('*')
         .eq('follower_id', userId)
         .order('created_at', { ascending: false });
 
@@ -44,8 +36,39 @@ export class CopyTradingService {
         throw error;
       }
 
-      const typedSubscriptions = subscriptions as SubscriptionWithLeader[];
-      const activeSubscriptions = typedSubscriptions?.filter(sub => sub.is_active) || [];
+      if (!subscriptions || subscriptions.length === 0) {
+        return {
+          subscriptions: [],
+          totalAllocation: 0,
+          remainingAllocation: 100,
+          activeSubscriptions: 0
+        };
+      }
+
+      // Get leader profiles separately
+      const leaderIds = subscriptions.map(sub => sub.leader_id);
+      const { data: leaders, error: leadersError } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, share_trades, show_asset_amounts')
+        .in('id', leaderIds);
+
+      if (leadersError) {
+        throw leadersError;
+      }
+
+      // Combine subscriptions with leader data
+      const typedSubscriptions = subscriptions.map(sub => ({
+        ...sub,
+        leader: leaders?.find(l => l.id === sub.leader_id) || {
+          id: sub.leader_id,
+          username: 'Unknown',
+          full_name: null,
+          share_trades: false,
+          show_asset_amounts: false
+        }
+      })) as SubscriptionWithLeader[];
+
+      const activeSubscriptions = typedSubscriptions.filter(sub => sub.is_active);
       const totalAllocation = activeSubscriptions.reduce(
         (total, sub) => total + parseFloat(sub.allocation_percentage.toString()), 
         0
@@ -125,23 +148,32 @@ export class CopyTradingService {
           allocation_percentage: allocationPercentage,
           is_active: true
         })
-        .select(`
-          *,
-          leader:profiles!leader_id (
-            id,
-            username,
-            full_name,
-            share_trades,
-            show_asset_amounts
-          )
-        `)
+        .select()
         .single();
 
       if (createError) {
         throw createError;
       }
 
-      return { success: true, data: newSubscription as SubscriptionWithLeader };
+      // Get leader profile separately
+      const { data: leaderProfile } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, share_trades, show_asset_amounts')
+        .eq('id', leaderId)
+        .single();
+
+      const subscriptionWithLeader = {
+        ...newSubscription,
+        leader: leaderProfile || {
+          id: leaderId,
+          username: 'Unknown',
+          full_name: null,
+          share_trades: false,
+          show_asset_amounts: false
+        }
+      };
+
+      return { success: true, data: subscriptionWithLeader as SubscriptionWithLeader };
     } catch (error) {
       throw error;
     }
@@ -193,16 +225,7 @@ export class CopyTradingService {
         .update(updates)
         .eq('id', subscriptionId)
         .eq('follower_id', followerId)
-        .select(`
-          *,
-          leader:profiles!leader_id (
-            id,
-            username,
-            full_name,
-            share_trades,
-            show_asset_amounts
-          )
-        `)
+        .select()
         .single();
 
       if (updateError) {
@@ -210,7 +233,25 @@ export class CopyTradingService {
         return { success: false, error: 'Failed to update subscription' };
       }
 
-      return { success: true, data: updatedSubscription as SubscriptionWithLeader };
+      // Get leader profile separately
+      const { data: leaderProfile } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, share_trades, show_asset_amounts')
+        .eq('id', updatedSubscription.leader_id)
+        .single();
+
+      const subscriptionWithLeader = {
+        ...updatedSubscription,
+        leader: leaderProfile || {
+          id: updatedSubscription.leader_id,
+          username: 'Unknown',
+          full_name: null,
+          share_trades: false,
+          show_asset_amounts: false
+        }
+      };
+
+      return { success: true, data: subscriptionWithLeader as SubscriptionWithLeader };
     } catch (error) {
       console.error('Error in updateSubscription:', error);
       return { success: false, error: 'Internal server error' };

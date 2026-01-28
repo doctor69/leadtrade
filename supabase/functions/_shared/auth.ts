@@ -60,34 +60,20 @@ export async function validateAuth(req: Request): Promise<AuthContext | AuthErro
       }
     }
 
-    // Get user's trading preferences and Alpaca account info
-    const { data: profiles, error: profileError } = await supabaseClient
-      .from('profiles')
-      .select('trading_mode')
-      .eq('id', user.id)
+    // Get app-level trading mode from app_settings (not per-user)
+    const { data: appSettings, error: settingsError } = await supabaseClient
+      .from('app_settings')
+      .select('setting_value')
+      .eq('setting_key', 'trading_mode')
+      .single()
 
-    if (profileError) {
-      return {
-        status: 500,
-        message: `Failed to fetch user profile: ${profileError.message}`,
-        code: 'DATABASE_ERROR'
-      }
+    if (settingsError) {
+      console.warn(`Failed to fetch app trading mode: ${settingsError.message}, defaulting to paper`)
     }
 
-    // Handle missing or multiple profiles
-    if (!profiles || profiles.length === 0) {
-      return {
-        status: 404,
-        message: 'User profile not found. Please complete account setup.',
-        code: 'MISSING_USER_PROFILE'
-      }
-    }
-
-    if (profiles.length > 1) {
-      console.warn(`Multiple profiles found for user ${user.id}, using the first one`)
-    }
-
-    const profile = profiles[0]
+    const tradingMode = (appSettings?.setting_value === 'live' ? 'live' : 'paper') as 'paper' | 'live'
+    
+    console.log(`App-level trading mode: ${tradingMode}`)
 
     // Get Alpaca account information
     const { data: alpacaAccounts, error: alpacaError } = await supabaseClient
@@ -124,7 +110,7 @@ export async function validateAuth(req: Request): Promise<AuthContext | AuthErro
       userId: user.id,
       sessionToken,
       isAuthenticated: true,
-      tradingMode: profile.trading_mode || 'paper',
+      tradingMode, // App-level setting from database
       alpacaAccessToken: '', // We'll use API keys instead
       alpacaAccountId: alpacaAccount.alpaca_account_id,
       alpacaAccountNumber: alpacaAccount.alpaca_account_number,

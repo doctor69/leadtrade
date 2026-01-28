@@ -3,14 +3,11 @@ import Layout from "@/layouts/Layout.astro";
 import AppShell from "@/components/AppShell";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import UserSettings from "@/components/ui/UserSettings";
-import BankLinking from "@/components/account/BankLinking";
 import TradingConfigPanel from "@/components/account/TradingConfigPanel";
 import PDTStatusPanel from "@/components/account/PDTStatusPanel";
 import KYCStatus from "@/components/account/KYCStatus";
-import ACHTransferForm from "@/components/account/ACHTransferForm";
-import WireTransferForm from "@/components/account/WireTransferForm";
-import TransferHistory from "@/components/account/TransferHistory";
-import FundingWalletManager from "@/components/account/FundingWalletManager";
+import TradingModeIndicator from "@/components/admin/TradingModeIndicator";
+import OptionsTradingSettings from "@/components/settings/OptionsTradingSettings";
 
 // Social media metadata for settings page
 const pageTitle = "Account Settings - LEADTRADE";
@@ -33,7 +30,7 @@ const pageKeywords = "account settings, trading preferences, privacy settings, u
       <div class="max-w-6xl mx-auto">
         <div class="mb-8">
           <h1 class="text-3xl font-bold mb-2">Account Settings</h1>
-          <p class="text-muted-foreground">Manage your trading preferences, funding, and account settings</p>
+          <p class="text-muted-foreground">Manage your trading preferences and account settings</p>
         </div>
         
         <div class="space-y-8">
@@ -42,38 +39,30 @@ const pageKeywords = "account settings, trading preferences, privacy settings, u
           
           {/* KYC Verification Status */}
           <div id="kyc-status">
-            <KYCStatus client:load accountId="PLACEHOLDER_ACCOUNT_ID" />
+            <KYCStatus client:load />
           </div>
           
           {/* Trading Configuration */}
           <div id="trading-config">
-            <TradingConfigPanel client:load accountId="PLACEHOLDER_ACCOUNT_ID" />
+            <TradingConfigPanel client:load />
           </div>
           
           {/* PDT Status */}
           <div id="pdt-status">
-            <PDTStatusPanel client:load accountId="PLACEHOLDER_ACCOUNT_ID" />
+            <PDTStatusPanel client:load />
           </div>
           
-          {/* Bank & ACH Relationships */}
-          <div id="bank-linking">
-            <BankLinking client:load accountId="PLACEHOLDER_ACCOUNT_ID" />
-          </div>
-          
-          {/* Funding Wallets */}
-          <div id="funding-wallets">
-            <FundingWalletManager client:load accountId="PLACEHOLDER_ACCOUNT_ID" />
-          </div>
-          
-          {/* Transfer Forms */}
-          <div id="transfers" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ACHTransferForm client:load accountId="PLACEHOLDER_ACCOUNT_ID" />
-            <WireTransferForm client:load accountId="PLACEHOLDER_ACCOUNT_ID" />
-          </div>
-          
-          {/* Transfer History */}
-          <div id="transfer-history">
-            <TransferHistory client:load accountId="PLACEHOLDER_ACCOUNT_ID" />
+          {/* Link to Funding Page */}
+          <div class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 rounded-lg p-6 border border-border">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-semibold mb-2">Account Funding</h3>
+                <p class="text-muted-foreground">Manage deposits, withdrawals, and multi-currency wallets</p>
+              </div>
+              <a href="/funding" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                Go to Funding
+              </a>
+            </div>
           </div>
         </div>
       </div>

@@ -17,7 +17,6 @@ import {
   Search,
   Info
 } from 'lucide-react';
-import StockSearch from './StockSearch';
 import TradeForm from './TradeForm';
 import AccountPositions from './AccountPositions';
 import OrderHistory from './OrderHistory';
@@ -90,40 +89,51 @@ export default function TradingInterface() {
       
       if (result.success && result.data) {
         // Handle the Edge Function response format
-        // The data structure may vary, so we need to handle both possible formats
         let quote;
         
-        // Check if data has the symbol as a key (quotes object format)
-        if (result.data[symbol]) {
-          quote = result.data[symbol];
-        } 
-        // Check if data has a quotes property (nested format)
+        // Check for nested quotes structure: result.data.quotes.quotes[symbol]
+        if (result.data.quotes?.quotes && result.data.quotes.quotes[symbol]) {
+          quote = result.data.quotes.quotes[symbol];
+        }
+        // Check if data has a quotes property with the symbol
         else if (result.data.quotes && result.data.quotes[symbol]) {
           quote = result.data.quotes[symbol];
+        }
+        // Check if data has the symbol as a direct key
+        else if (result.data[symbol]) {
+          quote = result.data[symbol];
         }
         // Check if data is an array with the first element being the quote
         else if (Array.isArray(result.data) && result.data.length > 0) {
           quote = result.data[0];
         }
-        // Otherwise use the data directly
-        else {
-          quote = result.data;
+        // Otherwise try to extract from nested structure
+        else if (result.data.quotes && typeof result.data.quotes === 'object') {
+          const quotesObj = result.data.quotes.quotes || result.data.quotes;
+          const keys = Object.keys(quotesObj);
+          
+          if (keys.length > 0) {
+            quote = quotesObj[keys[0]];
+          }
         }
 
-        if (quote) {
+        if (quote && typeof quote === 'object' && !quote.quotes && !quote.metadata) {
           // Map the quote data to our StockData format
-          // Handle various possible field names from Alpaca API
+          // Alpaca quote fields: ap (ask price), bp (bid price), as (ask size), bs (bid size)
+          const price = quote.ap || quote.bp || quote.askPrice || quote.bidPrice || quote.price || quote.latestPrice || 0;
+          
           const stockData: StockData = {
             symbol: symbol,
             name: `${symbol} Inc.`, // In production, get from assets API
-            price: quote.latestPrice || quote.ap || quote.askPrice || quote.price || 0,
+            price: typeof price === 'string' ? parseFloat(price) : price,
             change: quote.change || quote.dailyChange || 0,
             changePercent: quote.changePercent || quote.dailyChangePercent || 0,
-            volume: quote.volume || quote.v || 0,
+            volume: quote.volume || quote.v || quote.as || quote.bs || 0,
           };
+          
           setSelectedStock(stockData);
         } else {
-          console.error('No quote data found for symbol:', symbol);
+          console.error('No valid quote data found for symbol:', symbol);
         }
       } else {
         console.error('Failed to fetch stock data:', result.error);
@@ -310,16 +320,6 @@ export default function TradingInterface() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Search & Select Stock</CardTitle>
-                  <CardDescription>Find stocks to trade</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <StockSearch onSelectStock={handleStockSelect} />
-                </CardContent>
-              </Card>
-              
               {selectedStock && (
                 <AssetChart 
                   symbol={selectedStock.symbol} 

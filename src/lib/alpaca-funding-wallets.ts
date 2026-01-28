@@ -99,36 +99,24 @@ export type Withdrawal = z.infer<typeof WithdrawalSchema>
 export type CreateWithdrawal = z.infer<typeof CreateWithdrawalSchema>
 
 // API Client Functions
-import { getAlpacaConfig } from './trading-config'
-
-async function makeAlpacaRequest<T>(
-  endpoint: string,
-  options: RequestInit = {},
-  tradingMode: 'paper' | 'live' = 'paper'
+async function makeEdgeFunctionRequest<T>(
+  path: string,
+  options: RequestInit = {}
 ): Promise<T> {
-  const config = getAlpacaConfig(tradingMode)
+  const url = `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-funding-wallets${path}`
 
-  const headers = {
-    'Content-Type': 'application/json',
-    'APCA-API-KEY-ID': config.brokerApiKey,
-    'APCA-API-SECRET-KEY': config.brokerApiSecret,
-    ...options.headers
-  }
-
-  const response = await fetch(`${config.brokerBaseUrl}${endpoint}`, {
+  const response = await fetch(url, {
     ...options,
-    headers
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers
+    }
   })
 
   if (!response.ok) {
-    const errorText = await response.text()
-    let errorMessage = 'Request failed'
-    try {
-      const errorData = JSON.parse(errorText)
-      errorMessage = errorData.message || errorData.error || errorMessage
-    } catch {
-      errorMessage = `HTTP ${response.status}: ${response.statusText}`
-    }
+    const errorData = await response.json().catch(() => ({ error: 'Request failed' }))
+    const errorMessage = errorData.error || errorData.message || 'Request failed'
     throw new Error(errorMessage)
   }
 
@@ -150,13 +138,12 @@ export async function createFundingWallet(
 ): Promise<FundingWallet> {
   const validated = CreateFundingWalletSchema.parse(data)
 
-  const result = await makeAlpacaRequest<FundingWallet>(
-    `/v1/accounts/${accountId}/funding_wallets`,
+  const result = await makeEdgeFunctionRequest<FundingWallet>(
+    `/${accountId}`,
     {
       method: 'POST',
       body: JSON.stringify(validated)
-    },
-    tradingMode
+    }
   )
 
   return FundingWalletSchema.parse(result)
@@ -170,12 +157,11 @@ export async function getFundingWallet(
   walletId: string,
   tradingMode: 'paper' | 'live' = 'paper'
 ): Promise<FundingWallet> {
-  const result = await makeAlpacaRequest<FundingWallet>(
-    `/v1/accounts/${accountId}/funding_wallets/${walletId}`,
+  const result = await makeEdgeFunctionRequest<FundingWallet>(
+    `/${accountId}/${walletId}`,
     {
       method: 'GET'
-    },
-    tradingMode
+    }
   )
 
   return FundingWalletSchema.parse(result)
@@ -195,14 +181,13 @@ export async function listFundingWallets(
   if (options?.currency) params.append('currency', options.currency)
 
   const queryString = params.toString()
-  const endpoint = `/v1/accounts/${accountId}/funding_wallets${queryString ? `?${queryString}` : ''}`
+  const path = `/${accountId}${queryString ? `?${queryString}` : ''}`
 
-  const result = await makeAlpacaRequest<FundingWallet[]>(
-    endpoint,
+  const result = await makeEdgeFunctionRequest<FundingWallet[]>(
+    path,
     {
       method: 'GET'
-    },
-    tradingMode
+    }
   )
 
   return z.array(FundingWalletSchema).parse(result)
@@ -216,12 +201,11 @@ export async function getPaymentInstructions(
   walletId: string,
   tradingMode: 'paper' | 'live' = 'paper'
 ): Promise<PaymentInstructions> {
-  const result = await makeAlpacaRequest<PaymentInstructions>(
-    `/v1/accounts/${accountId}/funding_wallets/${walletId}/payment-instructions`,
+  const result = await makeEdgeFunctionRequest<PaymentInstructions>(
+    `/${accountId}/${walletId}/payment-instructions`,
     {
       method: 'GET'
-    },
-    tradingMode
+    }
   )
 
   return PaymentInstructionsSchema.parse(result)
@@ -238,13 +222,12 @@ export async function createWithdrawal(
 ): Promise<Withdrawal> {
   const validated = CreateWithdrawalSchema.parse(data)
 
-  const result = await makeAlpacaRequest<Withdrawal>(
-    `/v1/accounts/${accountId}/funding_wallets/${walletId}/withdrawals`,
+  const result = await makeEdgeFunctionRequest<Withdrawal>(
+    `/${accountId}/${walletId}/withdrawals`,
     {
       method: 'POST',
       body: JSON.stringify(validated)
-    },
-    tradingMode
+    }
   )
 
   return WithdrawalSchema.parse(result)
@@ -261,13 +244,12 @@ export async function createRecipientBank(
 ): Promise<RecipientBank> {
   const validated = CreateRecipientBankSchema.parse(data)
 
-  const result = await makeAlpacaRequest<RecipientBank>(
-    `/v1/accounts/${accountId}/funding_wallets/${walletId}/recipient-banks`,
+  const result = await makeEdgeFunctionRequest<RecipientBank>(
+    `/${accountId}/${walletId}/recipient-banks`,
     {
       method: 'POST',
       body: JSON.stringify(validated)
-    },
-    tradingMode
+    }
   )
 
   return RecipientBankSchema.parse(result)
@@ -288,14 +270,13 @@ export async function listRecipientBanks(
   if (options?.status) params.append('status', options.status)
 
   const queryString = params.toString()
-  const endpoint = `/v1/accounts/${accountId}/funding_wallets/${walletId}/recipient-banks${queryString ? `?${queryString}` : ''}`
+  const path = `/${accountId}/${walletId}/recipient-banks${queryString ? `?${queryString}` : ''}`
 
-  const result = await makeAlpacaRequest<RecipientBank[]>(
-    endpoint,
+  const result = await makeEdgeFunctionRequest<RecipientBank[]>(
+    path,
     {
       method: 'GET'
-    },
-    tradingMode
+    }
   )
 
   return z.array(RecipientBankSchema).parse(result)
@@ -310,11 +291,10 @@ export async function deleteRecipientBank(
   bankId: string,
   tradingMode: 'paper' | 'live' = 'paper'
 ): Promise<void> {
-  await makeAlpacaRequest<void>(
-    `/v1/accounts/${accountId}/funding_wallets/${walletId}/recipient-banks/${bankId}`,
+  await makeEdgeFunctionRequest<void>(
+    `/${accountId}/${walletId}/recipient-banks/${bankId}`,
     {
       method: 'DELETE'
-    },
-    tradingMode
+    }
   )
 }

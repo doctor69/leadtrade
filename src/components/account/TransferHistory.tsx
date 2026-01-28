@@ -26,12 +26,16 @@ export default function TransferHistory({ accountId, onRefresh }: TransferHistor
       setLoading(true);
       setError(null);
 
+      console.log('Loading transfers for account:', accountId);
       const params = filterDirection !== 'all' ? { direction: filterDirection as 'INCOMING' | 'OUTGOING' } : undefined;
       const result = await listTransfers(accountId, params);
+      console.log('Transfers result:', result);
 
       if (result.success && result.transfers) {
+        console.log('Loaded transfers:', result.transfers);
         setTransfers(result.transfers);
       } else {
+        console.error('Failed to load transfers:', result.error);
         // Check if error is 401 (unauthorized) - user doesn't have Alpaca account linked
         if (result.error?.includes('401') || result.error?.toLowerCase().includes('unauthorized')) {
           setError('alpaca_not_linked');

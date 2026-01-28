@@ -1,13 +1,15 @@
 /// <reference lib="deno.ns" />
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
-import { corsHeaders } from '../_shared/cors.ts'
+import { getCorsHeaders } from '../_shared/cors.ts'
 import { authenticateRequest } from '../_shared/auth.ts'
 import { makeAlpacaRequest } from '../_shared/alpaca-client.ts'
 
 const ALPACA_BROKER_API_URL = Deno.env.get('ALPACA_BROKER_API_URL') || 'https://broker-api.sandbox.alpaca.markets'
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req)
+  
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })

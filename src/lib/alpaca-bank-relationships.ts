@@ -59,15 +59,31 @@ export async function createBankRelationship(
       }
     }
 
-    const edgeFunctionUrl = `${import.meta.env.SUPABASE_URL}/functions/v1/alpaca-bank-relationships/${accountId}`
+    // Get Supabase session for authentication
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
+    const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      return {
+        success: false,
+        error: 'Authentication required. Please sign in.',
+      };
+    }
+
+    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/alpaca-bank-relationships/${accountId}`
 
     const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': supabaseAnonKey,
       },
       body: JSON.stringify(bankData),
-      credentials: 'include'
     })
 
     const result = await response.json()
@@ -75,12 +91,19 @@ export async function createBankRelationship(
     if (!response.ok) {
       return {
         success: false,
-        error: result.error || 'Failed to create bank relationship'
+        error: result.error?.message || result.error || result.message || 'Failed to create bank relationship'
+      }
+    }
+
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error?.message || result.error || 'Failed to create bank relationship'
       }
     }
 
     // Validate response
-    const bankValidation = BankRelationshipSchema.safeParse(result)
+    const bankValidation = BankRelationshipSchema.safeParse(result.data)
     if (!bankValidation.success) {
       return {
         success: false,
@@ -109,6 +132,21 @@ export async function listBankRelationships(
   params?: ListBankRelationshipsParams
 ): Promise<{ success: boolean; banks?: BankRelationship[]; error?: string }> {
   try {
+    // Get Supabase session for authentication
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
+    const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      return {
+        success: false,
+        error: 'Authentication required. Please sign in.',
+      };
+    }
+
     // Build query string
     const queryParams = new URLSearchParams()
     if (params) {
@@ -117,11 +155,14 @@ export async function listBankRelationships(
     }
 
     const queryString = queryParams.toString()
-    const edgeFunctionUrl = `${import.meta.env.SUPABASE_URL}/functions/v1/alpaca-bank-relationships/${accountId}${queryString ? `?${queryString}` : ''}`
+    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/alpaca-bank-relationships/${accountId}${queryString ? `?${queryString}` : ''}`
 
     const response = await fetch(edgeFunctionUrl, {
       method: 'GET',
-      credentials: 'include'
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': supabaseAnonKey,
+      },
     })
 
     const result = await response.json()
@@ -129,12 +170,19 @@ export async function listBankRelationships(
     if (!response.ok) {
       return {
         success: false,
-        error: result.error || 'Failed to list bank relationships'
+        error: result.error?.message || result.error || result.message || 'Failed to list bank relationships'
+      }
+    }
+
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error?.message || result.error || 'Failed to list bank relationships'
       }
     }
 
     // Validate response
-    const banksValidation = z.array(BankRelationshipSchema).safeParse(result)
+    const banksValidation = z.array(BankRelationshipSchema).safeParse(result.data)
     if (!banksValidation.success) {
       return {
         success: false,
@@ -163,26 +211,36 @@ export async function deleteBankRelationship(
   bankId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    if (!accountId || !bankId) {
+    // Get Supabase session for authentication
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
+    const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
       return {
         success: false,
-        error: 'Account ID and Bank ID are required'
-      }
+        error: 'Authentication required. Please sign in.',
+      };
     }
 
-    const edgeFunctionUrl = `${import.meta.env.SUPABASE_URL}/functions/v1/alpaca-bank-relationships/${accountId}/${bankId}`
+    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/alpaca-bank-relationships/${accountId}/${bankId}`
 
     const response = await fetch(edgeFunctionUrl, {
       method: 'DELETE',
-      credentials: 'include'
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': supabaseAnonKey,
+      },
     })
 
-    const result = await response.json()
-
     if (!response.ok) {
+      const result = await response.json().catch(() => ({ error: 'Failed to delete bank relationship' }))
       return {
         success: false,
-        error: result.error || 'Failed to delete bank relationship'
+        error: result.error?.message || result.error || result.message || 'Failed to delete bank relationship'
       }
     }
 

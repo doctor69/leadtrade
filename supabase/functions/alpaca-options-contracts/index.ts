@@ -73,10 +73,11 @@ serve(async (req: Request) => {
         const isSpecificContract = contractId && contractId !== 'alpaca-options-contracts'
         
         if (isSpecificContract) {
-          // Get specific contract details
+          // Get specific contract details using Broker API
           console.log(`Fetching contract details for: ${contractId}`)
           
-          const response = await alpacaClient.dataRequest(`/v1beta1/options/contracts/${contractId}`)
+          // Broker API endpoint for options contracts
+          const response = await alpacaClient.brokerRequest(`/v1/options/contracts/${contractId}`)
           
           if (!response.success) {
             console.error(`Failed to fetch contract ${contractId}:`, response.error)
@@ -119,8 +120,8 @@ serve(async (req: Request) => {
           
           console.log('Fetching options contracts with params:', params)
           
-          // Make request to Alpaca Data API
-          const response = await alpacaClient.dataRequest('/v1beta1/options/contracts', { params })
+          // Make request to Alpaca Broker API for options contracts
+          const response = await alpacaClient.brokerRequest('/v1/options/contracts', { params })
           
           if (!response.success) {
             console.error('Failed to fetch options contracts:', response.error)

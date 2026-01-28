@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +17,10 @@ interface SupabaseSignUpFormProps {
 }
 
 export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: SupabaseSignUpFormProps) {
+  // Check if user came from OAuth (already authenticated)
+  const [isOAuthUser, setIsOAuthUser] = useState(false);
+  const [oauthUserData, setOauthUserData] = useState<any>(null);
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     // Basic account info
@@ -82,6 +86,42 @@ export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: Supabas
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  // Check if user is already authenticated via OAuth
+  useEffect(() => {
+    const checkOAuthUser = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isOAuth = urlParams.get('oauth') === 'true';
+      const startStep = urlParams.get('step');
+      
+      if (isOAuth) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          console.log('OAuth user detected:', user.email);
+          setIsOAuthUser(true);
+          setOauthUserData(user);
+          
+          // Pre-fill form with OAuth data
+          setFormData(prev => ({
+            ...prev,
+            email: user.email || '',
+            givenName: user.user_metadata?.given_name || user.user_metadata?.full_name?.split(' ')[0] || '',
+            familyName: user.user_metadata?.family_name || user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+            fullName: user.user_metadata?.full_name || '',
+          }));
+          
+          // Skip to step 2 (personal info) for OAuth users
+          if (startStep) {
+            setCurrentStep(parseInt(startStep));
+          } else {
+            setCurrentStep(2);
+          }
+        }
+      }
+    };
+    
+    checkOAuthUser();
+  }, []);
+
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
@@ -106,6 +146,10 @@ export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: Supabas
   const validateCurrentStep = (): string | null => {
     switch (currentStep) {
       case 1:
+        // Skip validation for OAuth users
+        if (isOAuthUser) {
+          return null;
+        }
         if (!formData.email || !formData.password || !formData.confirmPassword) {
           return 'Please fill in all account fields';
         }
@@ -156,9 +200,9 @@ export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: Supabas
         break;
       
       case 5:
-        // Document validation - at least identity verification required unless skipped
-        if (!skipDocuments && !documents.some(doc => doc.type === 'identity_verification' && doc.uploaded)) {
-          return 'Please upload an identity verification document or choose to skip';
+        // Document validation - allow skipping if checkbox is checked
+        if (!skipDocuments && documents.length === 0) {
+          return 'Please upload at least one document or click "Skip for Now"';
         }
         break;
     }
@@ -166,22 +210,24 @@ export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: Supabas
   };
 
   const validateForm = (): string | null => {
-    // Basic validation
-    if (!formData.email || !formData.password || !formData.fullName) {
-      return 'Please fill in all required fields';
-    }
+    // Skip email/password validation for OAuth users
+    if (!isOAuthUser) {
+      if (!formData.email || !formData.password || !formData.fullName) {
+        return 'Please fill in all required fields';
+      }
 
-    if (formData.password.length < 6) {
-      return 'Password must be at least 6 characters long';
-    }
+      if (formData.password.length < 6) {
+        return 'Password must be at least 6 characters long';
+      }
 
-    if (formData.password !== formData.confirmPassword) {
-      return 'Passwords do not match';
-    }
+      if (formData.password !== formData.confirmPassword) {
+        return 'Passwords do not match';
+      }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      return 'Please enter a valid email address';
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        return 'Please enter a valid email address';
+      }
     }
 
     // Alpaca required fields validation
@@ -240,7 +286,7 @@ export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: Supabas
     setLoading(true);
     setError('');
 
-    console.log('🚀 Starting signup process...');
+    console.log('🚀 Starting signup process...', isOAuthUser ? '(OAuth user)' : '(Email/Password user)');
 
     // Validate form
     const validationError = validateForm();
@@ -254,84 +300,97 @@ export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: Supabas
     console.log('✅ Form validation passed');
 
     try {
-      // Step 1: Call the signup Edge Function with all form data
-      console.log('📝 Step 1: Creating account via Edge Function...');
+      let userId: string;
       
-      const signupData = {
-        email: formData.email,
-        password: formData.password,
-        full_name: formData.fullName,
-        username: formData.username || formData.email.split('@')[0],
-        given_name: formData.givenName,
-        family_name: formData.familyName,
-        date_of_birth: formData.dateOfBirth,
-        tax_id: formData.taxId.replace(/[-\s]/g, ''), // Clean SSN
-        tax_id_type: formData.taxIdType,
-        phone_number: formData.phoneNumber,
-        street_address: formData.streetAddress,
-        city: formData.city,
-        state: formData.state,
-        postal_code: formData.postalCode,
-        country: formData.country,
-        annual_income_min: formData.annualIncomeMin,
-        annual_income_max: formData.annualIncomeMax,
-        total_net_worth_min: formData.totalNetWorthMin,
-        total_net_worth_max: formData.totalNetWorthMax,
-        liquid_net_worth_min: formData.liquidNetWorthMin,
-        liquid_net_worth_max: formData.liquidNetWorthMax,
-        investment_experience: formData.investmentExperience,
-        investment_objective: formData.investmentObjective,
-        risk_tolerance: formData.riskTolerance,
-        employment_status: formData.employmentStatus,
-        employer_name: formData.employerName,
-        employer_address: formData.employerAddress,
-        employment_position: formData.employmentPosition,
-        is_control_person: formData.isControlPerson,
-        is_affiliated_exchange_or_finra: formData.isAffiliatedExchangeOrFinra,
-        is_politically_exposed: formData.isPoliticallyExposed,
-        immediate_family_exposed: formData.immediateFamilyExposed,
-        share_trades: formData.shareTrades,
-        show_asset_amounts: formData.showAssetAmounts,
-      };
+      if (isOAuthUser && oauthUserData) {
+        // OAuth user - skip Supabase signup, use existing user ID
+        console.log('📝 OAuth user detected, skipping Supabase signup...');
+        userId = oauthUserData.id;
+        console.log('✅ Using OAuth user ID:', userId);
+      } else {
+        // Regular signup flow
+        console.log('📝 Step 1: Creating account via Edge Function...');
+        
+        const signupData = {
+          email: formData.email,
+          password: formData.password,
+          full_name: formData.fullName,
+          username: formData.username || formData.email.split('@')[0],
+          given_name: formData.givenName,
+          family_name: formData.familyName,
+          date_of_birth: formData.dateOfBirth,
+          tax_id: formData.taxId.replace(/[-\s]/g, ''), // Clean SSN
+          tax_id_type: formData.taxIdType,
+          phone_number: formData.phoneNumber,
+          street_address: formData.streetAddress,
+          city: formData.city,
+          state: formData.state,
+          postal_code: formData.postalCode,
+          country: formData.country,
+          annual_income_min: formData.annualIncomeMin,
+          annual_income_max: formData.annualIncomeMax,
+          total_net_worth_min: formData.totalNetWorthMin,
+          total_net_worth_max: formData.totalNetWorthMax,
+          liquid_net_worth_min: formData.liquidNetWorthMin,
+          liquid_net_worth_max: formData.liquidNetWorthMax,
+          investment_experience: formData.investmentExperience,
+          investment_objective: formData.investmentObjective,
+          risk_tolerance: formData.riskTolerance,
+          employment_status: formData.employmentStatus,
+          employer_name: formData.employerName,
+          employer_address: formData.employerAddress,
+          employment_position: formData.employmentPosition,
+          is_control_person: formData.isControlPerson,
+          is_affiliated_exchange_or_finra: formData.isAffiliatedExchangeOrFinra,
+          is_politically_exposed: formData.isPoliticallyExposed,
+          immediate_family_exposed: formData.immediateFamilyExposed,
+          share_trades: formData.shareTrades,
+          show_asset_amounts: formData.showAssetAmounts,
+        };
 
-      console.log('📤 Sending signup data:', {
-        ...signupData,
-        password: '***masked***',
-        tax_id: signupData.tax_id ? '***masked***' : 'missing'
-      });
+        console.log('📤 Sending signup data:', {
+          ...signupData,
+          password: '***masked***',
+          tax_id: signupData.tax_id ? '***masked***' : 'missing'
+        });
 
-      const signupResponse = await edgeFunctionClient.post('signup', signupData, undefined, false);
+        const signupResponse = await edgeFunctionClient.post('streamlined-signup', signupData, undefined, false);
 
-      if (!signupResponse.success) {
-        console.error('❌ Signup Edge Function failed:', signupResponse.error);
-        throw new Error(signupResponse.error?.message || 'Failed to create account');
+        if (!signupResponse.success) {
+          console.error('❌ Signup Edge Function failed:', signupResponse.error);
+          throw new Error(signupResponse.error?.message || 'Failed to create account');
+        }
+
+        console.log('✅ Account created successfully via Edge Function');
+        const userData = signupResponse.data.data; // Fix: access nested data
+        console.log('🔍 Debug - userData from signup:', userData);
+        userId = userData.user_id;
+        console.log('🔍 Debug - userId:', userId);
       }
 
-      console.log('✅ Account created successfully via Edge Function');
-      const userData = signupResponse.data.data; // Fix: access nested data
-      console.log('🔍 Debug - userData from signup:', userData);
-      console.log('🔍 Debug - userData.user_id:', userData.user_id);
+      // Step 2: Auto-sign in the user (skip for OAuth users - already signed in)
+      if (!isOAuthUser) {
+        console.log('🔐 Step 2: Auto-signing in user...');
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
 
-      // Step 2: Auto-sign in the user
-      console.log('🔐 Step 2: Auto-signing in user...');
-      // Step 2: Auto-sign in the user
-      console.log('🔐 Step 2: Auto-signing in user...');
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
+        if (signInError || !signInData.session) {
+          console.error('Auto sign-in error:', signInError);
+          setError(`Account created successfully, but auto sign-in failed: ${signInError?.message || 'Unknown error'}. Please sign in manually.`);
+          // Don't redirect immediately on error - let user see the error
+          setTimeout(() => {
+            safeNavigate('/signin');
+          }, 5000);
+          setLoading(false);
+          return;
+        }
 
-      if (signInError || !signInData.session) {
-        console.error('Auto sign-in error:', signInError);
-        setError(`Account created successfully, but auto sign-in failed: ${signInError?.message || 'Unknown error'}. Please sign in manually.`);
-        // Don't redirect immediately on error - let user see the error
-        setTimeout(() => {
-          safeNavigate('/signin');
-        }, 5000);
-        return;
+        console.log('✅ User signed in successfully');
+      } else {
+        console.log('✅ OAuth user already signed in, skipping auto sign-in');
       }
-
-      console.log('✅ User signed in successfully');
 
       // Step 3: Create Alpaca account with KYC data
       console.log('🏦 Step 3: Creating Alpaca brokerage account...');
@@ -347,9 +406,9 @@ export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: Supabas
         }));
 
         const alpacaAccountData = {
-          user_id: userData.user_id,
+          user_id: userId,
           email: formData.email,
-          full_name: formData.fullName,
+          full_name: formData.fullName || `${formData.givenName} ${formData.familyName}`,
           given_name: formData.givenName,
           family_name: formData.familyName,
           date_of_birth: formData.dateOfBirth,
@@ -386,7 +445,13 @@ export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: Supabas
           tax_id: alpacaAccountData.tax_id ? '***masked***' : 'missing'
         });
 
-        const alpacaResponse = await edgeFunctionClient.post('create-alpaca-account', alpacaAccountData, undefined, false);
+        const alpacaResponse = await edgeFunctionClient.request('create-alpaca-account', {
+          method: 'POST',
+          body: alpacaAccountData,
+          requireAuth: false,
+          timeout: 30000, // 30 seconds for Alpaca account creation
+          retries: 1 // Only retry once
+        });
 
         if (!alpacaResponse.success) {
           console.error('❌ Alpaca account creation failed:', alpacaResponse.error);
@@ -1146,12 +1211,34 @@ export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: Supabas
 
             {/* Step 5: Document Upload */}
             {currentStep === 5 && (
-              <DocumentUpload
-                documents={documents}
-                onDocumentsChange={setDocuments}
-                allowSkip={true}
-                onSkip={() => setSkipDocuments(true)}
-              />
+              <div>
+                {skipDocuments ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Documents Skipped</CardTitle>
+                      <CardDescription>
+                        You've chosen to skip document upload. You can upload documents later from your account settings.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setSkipDocuments(false)}
+                      >
+                        Upload Documents Now
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <DocumentUpload
+                    documents={documents}
+                    onDocumentsChange={setDocuments}
+                    allowSkip={true}
+                    onSkip={() => setSkipDocuments(true)}
+                  />
+                )}
+              </div>
             )}
 
             {/* Navigation Buttons */}

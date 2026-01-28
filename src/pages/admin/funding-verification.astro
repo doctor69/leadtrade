@@ -1,0 +1,71 @@
+---
+/**
+ * Funding Verification Dashboard Page
+ * 
+ * Admin page for verifying funding system functionality
+ * Requirements: 2.1, 2.2, 2.3, 2.4, 2.5
+ */
+
+import AppShell from '../../components/AppShell.tsx';
+import FundingVerificationDashboard from '../../components/admin/FundingVerificationDashboard.tsx';
+import { supabase } from '../../lib/supabase';
+
+// Check authentication
+const accessToken = Astro.cookies.get('sb-access-token')?.value;
+const refreshToken = Astro.cookies.get('sb-refresh-token')?.value;
+
+if (!accessToken || !refreshToken) {
+  return Astro.redirect('/signin?redirect=/admin/funding-verification');
+}
+
+// Set session and get user
+const { data: { user }, error: authError } = await supabase.auth.setSession({
+  access_token: accessToken,
+  refresh_token: refreshToken
+});
+
+if (authError || !user) {
+  return Astro.redirect('/signin?redirect=/admin/funding-verification');
+}
+
+// Get user profile
+const { data: profile, error: profileError } = await supabase
+  .from('user_profiles')
+  .select('alpaca_account_id, is_paper_trading')
+  .eq('id', user.id)
+  .single();
+
+if (profileError || !profile) {
+  return Astro.redirect('/settings');
+}
+
+const accountId = profile.alpaca_account_id;
+const tradingMode = profile.is_paper_trading ? 'paper' : 'live';
+---
+
+<AppShell title="Funding Verification Dashboard" client:load>
+  <div class="container mx-auto px-4 py-8">
+    {accountId ? (
+      <FundingVerificationDashboard 
+        accountId={accountId} 
+        tradingMode={tradingMode}
+        client:load 
+      />
+    ) : (
+      <div class="max-w-2xl mx-auto">
+        <div class="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
+          <h2 class="text-lg font-semibold mb-2">Alpaca Account Required</h2>
+          <p class="text-sm text-muted-foreground mb-4">
+            You need to link your Alpaca brokerage account to access the funding verification dashboard.
+          </p>
+          <a 
+            href="/settings" 
+            class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+          >
+            Go to Settings
+          </a>
+        </div>
+      </div>
+    )}
+  </div>
+</AppShell>

@@ -46,9 +46,12 @@ export default function OptionsPositions() {
       const result = await apiService.getPositions();
       
       if (result.success && result.data) {
-        // Filter for option positions (symbols typically contain option identifiers)
+        // Filter for option positions
+        // Options symbols follow OCC format: AAPL250117C00150000 (21 chars)
+        // or have asset_class === 'us_option'
         const optionPositions = result.data.filter((pos: Position) => 
-          pos.symbol.length > 10 || pos.symbol.includes('C') || pos.symbol.includes('P')
+          (pos as any).asset_class === 'us_option' || 
+          pos.symbol.length >= 15 // OCC format is typically 21 characters
         );
         setPositions(optionPositions as OptionPosition[]);
       } else {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useWebSocket } from '../WebSocketProvider';
+// import { useWebSocket } from '../WebSocketProvider'; // Removed WebSocket
 import { apiService } from '@/lib/apiService';
 import { DataTable } from '../ui/datatable';
 import { COLUMNS } from './RealTimeMarketData';
@@ -22,7 +22,10 @@ export default function SmartMarketData() {
   const [mounted, setMounted] = useState(false);
   const [userSymbols, setUserSymbols] = useState<string[] | null>(null);
   const [loading, setLoading] = useState(false);
-  const { subscribe, unsubscribe, marketData, isConnected, error } = useWebSocket();
+  // const { subscribe, unsubscribe, marketData, isConnected, error } = useWebSocket(); // Removed WebSocket
+  const marketData: any = {}; // Placeholder
+  const isConnected = false; // Placeholder
+  const error: string | null = null; // Placeholder
   const [log, setLog] = useState<string[]>([]);
 
   useEffect(() => {

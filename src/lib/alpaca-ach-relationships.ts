@@ -1,12 +1,11 @@
 // Alpaca ACH Relationship Management Service
-import { getAlpacaConfig } from './trading-config';
 
 export interface ACHRelationship {
   id: string;
   account_id: string;
   status: 'queued' | 'approved' | 'pending' | 'sent_to_clearing' | 'rejected' | 'canceled';
   account_owner_name: string;
-  bank_account_type: 'checking' | 'savings';
+  bank_account_type: 'CHECKING' | 'SAVINGS'; // Alpaca uses uppercase
   bank_account_number: string;
   bank_routing_number: string;
   nickname?: string;
@@ -17,7 +16,7 @@ export interface ACHRelationship {
 
 export interface CreateACHRelationshipRequest {
   account_owner_name: string;
-  bank_account_type: 'checking' | 'savings';
+  bank_account_type: 'checking' | 'savings'; // Accept lowercase from user
   bank_account_number?: string; // Required for manual entry
   bank_routing_number?: string; // Required for manual entry
   nickname?: string;
@@ -72,47 +71,85 @@ export async function createACHRelationship(
       }
     }
 
-    const config = getAlpacaConfig(tradingMode);
-    
-    const headers = {
-      'Content-Type': 'application/json',
-      'APCA-API-KEY-ID': config.brokerApiKey,
-      'APCA-API-SECRET-KEY': config.brokerApiSecret,
-    };
-
     console.log(`Creating ACH relationship for account ${accountId} in ${tradingMode} mode`);
 
-    const response = await fetch(`${config.brokerBaseUrl}/accounts/${accountId}/ach_relationships`, {
+    // Get Supabase session for authentication
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
+    const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      return {
+        success: false,
+        error: 'Authentication required. Please sign in.',
+      };
+    }
+
+    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/alpaca-ach-relationships/${accountId}`;
+
+    // Normalize bank_account_type to uppercase for Alpaca API
+    const requestData = {
+      ...achData,
+      bank_account_type: achData.bank_account_type.toUpperCase() as 'CHECKING' | 'SAVINGS'
+    };
+
+    const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
-      headers,
-      body: JSON.stringify(achData),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': supabaseAnonKey,
+      },
+      body: JSON.stringify(requestData),
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('ACH relationship creation failed:', errorText);
+      const errorData = await response.json().catch(() => ({ error: 'Failed to create ACH relationship' }));
+      console.error('ACH relationship creation failed:', response.status, errorData);
       
+      // Extract the most specific error message
       let errorMessage = 'Failed to create ACH relationship';
-      try {
-        const errorData = JSON.parse(errorText);
-        errorMessage = errorData.message || errorData.error || errorMessage;
-      } catch {
-        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      
+      if (errorData.error?.message) {
+        errorMessage = errorData.error.message;
+      } else if (errorData.error?.details?.message) {
+        errorMessage = errorData.error.details.message;
+      } else if (errorData.error) {
+        errorMessage = typeof errorData.error === 'string' ? errorData.error : JSON.stringify(errorData.error);
+      } else if (errorData.message) {
+        errorMessage = errorData.message;
       }
-
+      
+      // Add status code context
+      if (response.status === 422) {
+        errorMessage = `Invalid bank details: ${errorMessage}`;
+      } else if (response.status === 409) {
+        errorMessage = `Duplicate account: ${errorMessage}`;
+      }
+      
       return {
         success: false,
         error: errorMessage,
       };
     }
 
-    const ach: ACHRelationship = await response.json();
+    const result = await response.json();
     
-    console.log('ACH relationship created successfully:', ach.id);
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error?.message || result.error || 'Failed to create ACH relationship',
+      };
+    }
+    
+    console.log('ACH relationship created successfully:', result.data?.id);
 
     return {
       success: true,
-      ach,
+      ach: result.data,
     };
 
   } catch (error) {
@@ -133,12 +170,20 @@ export async function listACHRelationships(
   tradingMode: 'paper' | 'live' = 'paper'
 ): Promise<{ success: boolean; relationships?: ACHRelationship[]; error?: string }> {
   try {
-    const config = getAlpacaConfig(tradingMode);
+    // Get Supabase session for authentication
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
+    const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
-    const headers = {
-      'APCA-API-KEY-ID': config.brokerApiKey,
-      'APCA-API-SECRET-KEY': config.brokerApiSecret,
-    };
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      return {
+        success: false,
+        error: 'Authentication required. Please sign in.',
+      };
+    }
 
     // Build query string
     const queryParams = new URLSearchParams();
@@ -147,26 +192,36 @@ export async function listACHRelationships(
     }
 
     const queryString = queryParams.toString();
-    const url = `${config.brokerBaseUrl}/accounts/${accountId}/ach_relationships${queryString ? `?${queryString}` : ''}`;
+    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/alpaca-ach-relationships/${accountId}${queryString ? `?${queryString}` : ''}`;
 
-    const response = await fetch(url, {
+    const response = await fetch(edgeFunctionUrl, {
       method: 'GET',
-      headers,
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': supabaseAnonKey,
+      },
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
+      const errorData = await response.json().catch(() => ({ error: 'Failed to list ACH relationships' }));
       return {
         success: false,
-        error: `Failed to list ACH relationships: ${response.status} ${response.statusText}`,
+        error: errorData.error?.message || errorData.error || errorData.message || 'Failed to list ACH relationships',
       };
     }
 
-    const relationships: ACHRelationship[] = await response.json();
+    const result = await response.json();
+    
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error?.message || result.error || 'Failed to list ACH relationships',
+      };
+    }
     
     return {
       success: true,
-      relationships,
+      relationships: result.data,
     };
 
   } catch (error) {
@@ -188,31 +243,38 @@ export async function deleteACHRelationship(
   tradingMode: 'paper' | 'live' = 'paper'
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const config = getAlpacaConfig(tradingMode);
+    // Get Supabase session for authentication
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
+    const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
-    const headers = {
-      'APCA-API-KEY-ID': config.brokerApiKey,
-      'APCA-API-SECRET-KEY': config.brokerApiSecret,
-    };
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      return {
+        success: false,
+        error: 'Authentication required. Please sign in.',
+      };
+    }
 
-    const response = await fetch(`${config.brokerBaseUrl}/accounts/${accountId}/ach_relationships/${achRelationshipId}`, {
+    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/alpaca-ach-relationships/${accountId}/${achRelationshipId}`;
+
+    const response = await fetch(edgeFunctionUrl, {
       method: 'DELETE',
-      headers,
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': supabaseAnonKey,
+      },
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      let errorMessage = 'Failed to delete ACH relationship';
-      try {
-        const errorData = JSON.parse(errorText);
-        errorMessage = errorData.message || errorData.error || errorMessage;
-        
-        // Check if error is due to pending transfers
-        if (errorMessage.toLowerCase().includes('pending transfer')) {
-          errorMessage = 'Cannot delete ACH relationship with pending transfers. Please wait for transfers to complete or cancel them first.';
-        }
-      } catch {
-        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      const errorData = await response.json().catch(() => ({ error: 'Failed to delete ACH relationship' }));
+      let errorMessage = errorData.error?.message || errorData.error || errorData.message || 'Failed to delete ACH relationship';
+      
+      // Check if error is due to pending transfers
+      if (errorMessage.toLowerCase().includes('pending transfer')) {
+        errorMessage = 'Cannot delete ACH relationship with pending transfers. Please wait for transfers to complete or cancel them first.';
       }
 
       return {
