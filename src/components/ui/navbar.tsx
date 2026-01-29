@@ -119,7 +119,7 @@ export default function NavigationBar() {
     }
 
     return (
-        <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <nav className="border-b bg-card shadow-sm sticky top-0 z-50">
             <div className="container mx-auto px-4">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
@@ -247,7 +247,7 @@ export default function NavigationBar() {
                         />
 
                         {/* Mobile menu panel */}
-                        <div className="fixed top-16 left-0 right-0 bg-background border-b shadow-lg z-50 md:hidden animate-in slide-in-from-top-2 duration-200">
+                        <div className="fixed top-16 left-0 right-0 bg-card border-b shadow-lg z-50 md:hidden animate-in slide-in-from-top-2 duration-200">
                             <div className="px-4 py-4 space-y-2 max-h-[calc(100vh-4rem)] overflow-y-auto">
                                 {menu
                                     .filter(item => {

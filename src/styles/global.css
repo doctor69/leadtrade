@@ -135,6 +135,12 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* Subtle gradient background for depth */
+    background: linear-gradient(to bottom, hsl(var(--background)), hsl(210 20% 96%));
+  }
+  
+  .dark body {
+    background: linear-gradient(to bottom, hsl(var(--background)), hsl(222 47% 9%));
   }
   
   /* Consistent spacing system */
@@ -344,4 +350,29 @@ section {
 /* Better form inputs */
 input, textarea, select {
   @apply focus-ring;
+}
+
+/* Professional table styling */
+table {
+  @apply w-full;
+}
+
+tbody tr {
+  @apply transition-colors duration-150;
+}
+
+tbody tr:hover {
+  @apply bg-primary/5;
+}
+
+.dark tbody tr:hover {
+  @apply bg-primary/10;
+}
+
+th {
+  @apply text-left font-semibold text-sm text-muted-foreground;
+}
+
+td {
+  @apply text-sm;
 }
