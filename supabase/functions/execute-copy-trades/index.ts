@@ -95,13 +95,24 @@ serve(async (req) => {
             .from('alpaca_accounts')
             .select('user_id, alpaca_account_id, account_type, account_status')
             .in('user_id', followerIds)
-            .eq('account_status', 'ACTIVE')
         ])
         
         console.log(`Profiles found: ${profilesResult.data?.length || 0}`)
-        console.log(`Alpaca accounts found: ${alpacaAccountsResult.data?.length || 0}`)
+        console.log(`Alpaca accounts found (before status filter): ${alpacaAccountsResult.data?.length || 0}`)
         if (alpacaAccountsResult.data) {
-          console.log('Alpaca accounts:', alpacaAccountsResult.data.map(a => ({ 
+          console.log('All Alpaca accounts:', alpacaAccountsResult.data.map(a => ({ 
+            user_id: a.user_id, 
+            account_id: a.alpaca_account_id,
+            type: a.account_type,
+            status: a.account_status
+          })))
+        }
+        
+        // Filter for ACTIVE accounts
+        const activeAccounts = alpacaAccountsResult.data?.filter(a => a.account_status === 'ACTIVE') || []
+        console.log(`Active Alpaca accounts: ${activeAccounts.length}`)
+        if (activeAccounts.length > 0) {
+          console.log('Active accounts:', activeAccounts.map(a => ({ 
             user_id: a.user_id, 
             account_id: a.alpaca_account_id,
             type: a.account_type 
@@ -122,7 +133,7 @@ serve(async (req) => {
         const subscriptionsWithProfiles = subscriptions
           .map(sub => {
             const profile = profilesResult.data?.find(p => p.id === sub.follower_id)
-            const alpacaAccount = alpacaAccountsResult.data?.find(a => a.user_id === sub.follower_id)
+            const alpacaAccount = activeAccounts.find(a => a.user_id === sub.follower_id)
             
             return {
               ...sub,
