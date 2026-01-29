@@ -6,7 +6,6 @@ import ProtectedRoute from "@/components/ProtectedRoute"
 import PortfolioSummary from "@/components/dashboard/PortfolioSummary"
 import AssetGrid from "@/components/dashboard/AssetGrid"
 import OptionsPositions from "@/components/dashboard/OptionsPositions"
-import PortfolioTransferHistory from "@/components/dashboard/PortfolioTransferHistory"
 import CorporateActionImpacts from "@/components/dashboard/CorporateActionImpacts"
 
 // Social media metadata for dashboard page
@@ -40,25 +39,16 @@ const pageKeywords = "trading dashboard, portfolio management, stock positions, 
                 <PortfolioSummary client:load />
             </div>
             
-            {/* Main Content Grid with proper spacing */}
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column - 2/3 width */}
-                <div class="lg:col-span-2 space-y-6">
-                    {/* Main Asset Grid */}
-                    <AssetGrid client:load />
-                    
-                    {/* Options Positions */}
-                    <OptionsPositions client:load />
-                    
-                    {/* Corporate Action Impacts */}
-                    <CorporateActionImpacts client:load />
-                </div>
+            {/* Main Content - Full Width Layout */}
+            <div class="space-y-6">
+                {/* Main Asset Grid */}
+                <AssetGrid client:load />
                 
-                {/* Right Column - 1/3 width */}
-                <div class="space-y-6">
-                    {/* Transfer History Section */}
-                    <PortfolioTransferHistory client:load />
-                </div>
+                {/* Options Positions */}
+                <OptionsPositions client:load />
+                
+                {/* Corporate Action Impacts */}
+                <CorporateActionImpacts client:load />
             </div>
             
             {/* Trading Dashboard - Full Width */}
