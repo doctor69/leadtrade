@@ -3,7 +3,6 @@ import Layout from "@/layouts/Layout.astro"
 import AppShell from "@/components/AppShell"
 import TradingDashboard from "@/components/trading/TradingDashboard"
 import ProtectedRoute from "@/components/ProtectedRoute"
-import PortfolioSummary from "@/components/dashboard/PortfolioSummary"
 import AssetGrid from "@/components/dashboard/AssetGrid"
 import OptionsPositions from "@/components/dashboard/OptionsPositions"
 import CorporateActionImpacts from "@/components/dashboard/CorporateActionImpacts"
@@ -32,11 +31,6 @@ const pageKeywords = "trading dashboard, portfolio management, stock positions, 
                     <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Dashboard</h1>
                     <p class="text-muted-foreground mt-1">Monitor your portfolio and trading activity</p>
                 </div>
-            </div>
-            
-            {/* Portfolio Summary Cards with elevation */}
-            <div>
-                <PortfolioSummary client:load />
             </div>
             
             {/* Main Content - Full Width Layout */}
