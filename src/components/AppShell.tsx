@@ -9,10 +9,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <ThemeProvider>
       <div className="min-h-screen bg-background">
         <NavigationBar />
-        <main className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8 max-w-7xl">
-          <div className="w-full">
-            {children}
-          </div>
+        <main className="container mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 max-w-7xl">
+          {children}
         </main>
         <PWAInstallPrompt />
       </div>
