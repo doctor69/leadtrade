@@ -255,6 +255,8 @@ export function clearAuthData(): void {
 
 export async function handleAuthStateChange(): Promise<void> {
   supabase.auth.onAuthStateChange(async (event, session) => {
+    console.log('Auth state changed:', event, session?.user?.id);
+    
     if (event === 'SIGNED_IN' && session) {
       // Store tokens with expiration tracking
       if (typeof window !== 'undefined') {
@@ -266,7 +268,16 @@ export async function handleAuthStateChange(): Promise<void> {
       
       // Sync Alpaca account status on login
       try {
-        const response = await fetch(`${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/sync-alpaca-accounts`, {
+        const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+        console.log('Syncing Alpaca accounts for user:', session.user.id);
+        console.log('Supabase URL:', supabaseUrl);
+        
+        if (!supabaseUrl) {
+          console.error('PUBLIC_SUPABASE_URL not configured');
+          return;
+        }
+        
+        const response = await fetch(`${supabaseUrl}/functions/v1/sync-alpaca-accounts`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
@@ -275,11 +286,14 @@ export async function handleAuthStateChange(): Promise<void> {
           body: JSON.stringify({ userId: session.user.id })
         });
         
+        console.log('Sync response status:', response.status);
+        
         if (response.ok) {
           const result = await response.json();
           console.log('Alpaca account sync completed:', result);
         } else {
-          console.warn('Failed to sync Alpaca accounts:', await response.text());
+          const errorText = await response.text();
+          console.warn('Failed to sync Alpaca accounts:', response.status, errorText);
         }
       } catch (error) {
         console.error('Error syncing Alpaca accounts:', error);

@@ -1,6 +1,6 @@
 # LEADTRADE - Social Trading Platform
 
-**Version**: v1.7.110.21  
+**Version**: v1.7.110.22  
 **Last Updated**: January 29, 2026  
 **Status**: ✅ Production Ready
 
@@ -130,6 +130,15 @@ npm run astro check     # Type checking
 - **Documentation**: JSDoc comments for public APIs, inline comments for complex logic
 
 ## Recent Updates
+
+### v1.7.110.22 - Sync Alpaca Accounts Enhancement (January 29, 2026)
+Enhanced account synchronization with dual-mode operation:
+- **Dual-Mode Sync**: Supports both batch (all users) and targeted (single user) synchronization
+- **Login Integration**: Can sync specific user's accounts on login for fresh data
+- **Flexible Operation**: Backward compatible with existing cron jobs
+- **Enhanced Logging**: Clear visibility into sync mode and target user
+- **Performance**: Faster single-user sync (~100-200ms) vs batch sync
+- **Use Cases**: Scheduled maintenance, login refresh, troubleshooting, account actions
 
 ### v1.7.110.21 - Execute Copy Trades Follower Filtering (January 29, 2026)
 Enhanced copy trading system to filter out followers without Alpaca accounts before processing:
@@ -324,6 +333,7 @@ followerQty = followerTradeValue / estimatedPrice
 
 ### Account Management
 - `create-alpaca-account`: Brokerage account creation
+- `sync-alpaca-accounts`: Account status synchronization (batch or single-user)
 - `alpaca-kyc-cip`: KYC/CIP verification
 - `alpaca-documents`: Document upload and management
 - `alpaca-funding-enhanced`: ACH transfers and funding
