@@ -108,11 +108,11 @@ serve(async (req) => {
           })))
         }
         
-        // Filter for ACTIVE or SUBMITTED accounts (SUBMITTED accounts can still trade in paper mode)
+        // Filter for ACTIVE accounts only
         const activeAccounts = alpacaAccountsResult.data?.filter(a => 
-          a.account_status === 'ACTIVE' || a.account_status === 'SUBMITTED'
+          a.account_status === 'ACTIVE'
         ) || []
-        console.log(`Active/Submitted Alpaca accounts: ${activeAccounts.length}`)
+        console.log(`Active Alpaca accounts: ${activeAccounts.length}`)
         if (activeAccounts.length > 0) {
           console.log('Active accounts:', activeAccounts.map(a => ({ 
             user_id: a.user_id, 
