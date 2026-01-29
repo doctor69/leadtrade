@@ -12,7 +12,7 @@ import {
 
 /**
  * Syncs Alpaca account statuses from Alpaca API to local database
- * Should be run daily via cron job
+ * Can sync all accounts (cron) or a specific user's accounts (on login)
  */
 serve(async (req: Request) => {
   return processRequest(req, async () => {
@@ -28,7 +28,11 @@ serve(async (req: Request) => {
     }
 
     try {
-      console.log('Starting Alpaca account sync...')
+      // Get user_id from request body if provided (for single user sync)
+      const body = await req.json().catch(() => ({}))
+      const userId = body.userId
+      
+      console.log(userId ? `Starting Alpaca account sync for user ${userId}...` : 'Starting Alpaca account sync for all users...')
       
       // Create Supabase client with service role
       const supabase = createClient(
@@ -36,10 +40,16 @@ serve(async (req: Request) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       )
       
-      // Get all Alpaca accounts from database
-      const { data: accounts, error: fetchError } = await supabase
+      // Get Alpaca accounts from database (filtered by user if provided)
+      let query = supabase
         .from('alpaca_accounts')
         .select('id, user_id, alpaca_account_id, account_type, account_status')
+      
+      if (userId) {
+        query = query.eq('user_id', userId)
+      }
+      
+      const { data: accounts, error: fetchError } = await query
       
       if (fetchError) {
         console.error('Error fetching accounts:', fetchError)
