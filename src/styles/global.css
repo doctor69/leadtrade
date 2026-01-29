@@ -135,12 +135,12 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
-    /* Subtle gradient background for depth */
-    background: linear-gradient(to bottom, hsl(var(--background)), hsl(210 20% 96%));
+    /* Subtle background for depth */
+    background-color: hsl(210 20% 96%);
   }
   
   .dark body {
-    background: linear-gradient(to bottom, hsl(var(--background)), hsl(222 47% 9%));
+    background-color: hsl(222 47% 9%);
   }
   
   /* Consistent spacing system */
