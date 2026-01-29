@@ -1,0 +1,19 @@
+name: Sync Alpaca Accounts Daily
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Sync Alpaca Account Statuses
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            https://bfbqlzpbkivyrnjkvqgl.supabase.co/functions/v1/sync-alpaca-accounts
