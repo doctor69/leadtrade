@@ -26,8 +26,8 @@ const pageKeywords = "trading dashboard, portfolio management, stock positions, 
     <AppShell client:only="react">
         <ProtectedRoute client:load>
         <div class="content-spacing">
-            {/* Page Header with better spacing */}
-            <div class="flex items-center justify-between pb-2 border-b">
+            {/* Page Header */}
+            <div class="flex items-center justify-between pb-6">
                 <div>
                     <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Dashboard</h1>
                     <p class="text-muted-foreground mt-1">Monitor your portfolio and trading activity</p>
@@ -35,7 +35,7 @@ const pageKeywords = "trading dashboard, portfolio management, stock positions, 
             </div>
             
             {/* Portfolio Summary Cards with elevation */}
-            <div class="pt-2">
+            <div>
                 <PortfolioSummary client:load />
             </div>
             
