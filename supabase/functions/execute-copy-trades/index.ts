@@ -108,14 +108,17 @@ serve(async (req) => {
           })))
         }
         
-        // Filter for ACTIVE accounts
-        const activeAccounts = alpacaAccountsResult.data?.filter(a => a.account_status === 'ACTIVE') || []
-        console.log(`Active Alpaca accounts: ${activeAccounts.length}`)
+        // Filter for ACTIVE or SUBMITTED accounts (SUBMITTED accounts can still trade in paper mode)
+        const activeAccounts = alpacaAccountsResult.data?.filter(a => 
+          a.account_status === 'ACTIVE' || a.account_status === 'SUBMITTED'
+        ) || []
+        console.log(`Active/Submitted Alpaca accounts: ${activeAccounts.length}`)
         if (activeAccounts.length > 0) {
           console.log('Active accounts:', activeAccounts.map(a => ({ 
             user_id: a.user_id, 
             account_id: a.alpaca_account_id,
-            type: a.account_type 
+            type: a.account_type,
+            status: a.account_status
           })))
         }
         
