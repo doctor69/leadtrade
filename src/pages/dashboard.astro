@@ -23,32 +23,48 @@ const pageKeywords = "trading dashboard, portfolio management, stock positions, 
     keywords={pageKeywords}
     type="website"
     url="/dashboard"
-
 >
     <AppShell client:only="react">
         <ProtectedRoute client:load>
-        <div class="space-y-6">
-            <div class="flex items-center justify-between">
-                <h1 class="text-3xl font-bold">LEADTRADE Dashboard</h1>
+        <div class="content-spacing">
+            {/* Page Header with better spacing */}
+            <div class="flex items-center justify-between pb-2 border-b">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Dashboard</h1>
+                    <p class="text-muted-foreground mt-1">Monitor your portfolio and trading activity</p>
+                </div>
             </div>
             
-            {/* Portfolio Summary Cards */}
-            <PortfolioSummary client:load />
+            {/* Portfolio Summary Cards with elevation */}
+            <div class="pt-2">
+                <PortfolioSummary client:load />
+            </div>
             
-            {/* Main Asset Grid */}
-            <AssetGrid client:load />
+            {/* Main Content Grid with proper spacing */}
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left Column - 2/3 width */}
+                <div class="lg:col-span-2 space-y-6">
+                    {/* Main Asset Grid */}
+                    <AssetGrid client:load />
+                    
+                    {/* Options Positions */}
+                    <OptionsPositions client:load />
+                    
+                    {/* Corporate Action Impacts */}
+                    <CorporateActionImpacts client:load />
+                </div>
+                
+                {/* Right Column - 1/3 width */}
+                <div class="space-y-6">
+                    {/* Transfer History Section */}
+                    <PortfolioTransferHistory client:load />
+                </div>
+            </div>
             
-            {/* Options Positions (only shown if user has options) */}
-            <OptionsPositions client:load />
-            
-            {/* Corporate Action Impacts (only shown if relevant) */}
-            <CorporateActionImpacts client:load />
-            
-            {/* Transfer History Section */}
-            <PortfolioTransferHistory client:load />
-            
-            {/* Trading Dashboard with all trading features */}
-            <TradingDashboard client:load />
+            {/* Trading Dashboard - Full Width */}
+            <div class="pt-4">
+                <TradingDashboard client:load />
+            </div>
         </div>
         </ProtectedRoute>
     </AppShell>
