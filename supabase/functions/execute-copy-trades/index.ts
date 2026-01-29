@@ -118,21 +118,42 @@ serve(async (req) => {
           return createErrorResponse({ code: 'DB_ERROR', message: 'Failed to fetch Alpaca accounts' }, 500)
         }
         
-        // Map profiles and accounts to subscriptions
-        const subscriptionsWithProfiles = subscriptions.map(sub => {
-          const profile = profilesResult.data?.find(p => p.id === sub.follower_id)
-          const alpacaAccount = alpacaAccountsResult.data?.find(a => a.user_id === sub.follower_id)
-          
-          return {
-            ...sub,
-            follower: {
-              id: sub.follower_id,
-              username: profile?.username || 'Unknown',
-              alpaca_account_id: alpacaAccount?.alpaca_account_id,
-              account_type: alpacaAccount?.account_type as 'paper' | 'live' | undefined
+        // Map profiles and accounts to subscriptions, and filter out followers without Alpaca accounts
+        const subscriptionsWithProfiles = subscriptions
+          .map(sub => {
+            const profile = profilesResult.data?.find(p => p.id === sub.follower_id)
+            const alpacaAccount = alpacaAccountsResult.data?.find(a => a.user_id === sub.follower_id)
+            
+            return {
+              ...sub,
+              follower: {
+                id: sub.follower_id,
+                username: profile?.username || 'Unknown',
+                alpaca_account_id: alpacaAccount?.alpaca_account_id,
+                account_type: alpacaAccount?.account_type as 'paper' | 'live' | undefined
+              }
             }
-          }
-        })
+          })
+          .filter(sub => {
+            // Only include followers who have an active Alpaca account
+            if (!sub.follower.alpaca_account_id) {
+              console.log(`Skipping follower ${sub.follower_id} (${sub.follower.username}): No Alpaca account`)
+              return false
+            }
+            return true
+          })
+        
+        if (subscriptionsWithProfiles.length === 0) {
+          console.log('No followers with Alpaca accounts found')
+          return createSuccessResponse({ 
+            message: 'No followers with Alpaca accounts to copy trade', 
+            copiedTrades: 0,
+            totalFollowers: subscriptions.length,
+            followersWithAccounts: 0
+          })
+        }
+        
+        console.log(`Processing ${subscriptionsWithProfiles.length} followers with Alpaca accounts (out of ${subscriptions.length} total followers)`)
         
         // Get the current market price for accurate quantity calculation
         let estimatedPrice = orderData.limit_price || 1
@@ -179,17 +200,8 @@ serve(async (req) => {
             
             console.log(`Processing follower ${followerId} with ${followerAllocationPercentage}% allocation`)
             
-            if (!subscription.follower?.alpaca_account_id) {
-              console.error(`No Alpaca account for follower ${followerId}`)
-              copyResults.push({
-                followerId,
-                success: false,
-                error: 'No Alpaca account found'
-              })
-              continue
-            }
-            
-            const followerAccountId = subscription.follower.alpaca_account_id
+            // At this point, we know the follower has an Alpaca account (filtered earlier)
+            const followerAccountId = subscription.follower.alpaca_account_id!
             const followerTradingMode = (subscription.follower.account_type || 'paper') as 'paper' | 'live'
             console.log(`Follower ${followerId} account details:`, {
               accountId: followerAccountId,
