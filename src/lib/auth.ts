@@ -263,6 +263,28 @@ export async function handleAuthStateChange(): Promise<void> {
         localStorage.setItem('sb-token-expires-at', session.expires_at?.toString() || '');
         localStorage.setItem('sb-token-refreshed-at', Date.now().toString());
       }
+      
+      // Sync Alpaca account status on login
+      try {
+        const response = await fetch(`${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/sync-alpaca-accounts`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ userId: session.user.id })
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          console.log('Alpaca account sync completed:', result);
+        } else {
+          console.warn('Failed to sync Alpaca accounts:', await response.text());
+        }
+      } catch (error) {
+        console.error('Error syncing Alpaca accounts:', error);
+        // Don't block login if sync fails
+      }
     } else if (event === 'SIGNED_OUT') {
       // Clear all tokens and session data
       clearAuthData();
