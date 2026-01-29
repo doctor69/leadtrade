@@ -156,7 +156,6 @@ export function DataTable<TData, TValue>({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
-                    className={isMobile ? 'hover:bg-muted/50' : ''}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className={isMobile ? 'px-2 py-3' : ''}>
