@@ -2,213 +2,292 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 84.2% 60.2%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 84.2% 60.2%;
-    --radius: 0.5rem;
-    --chart-1: 0 84.2% 60.2%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    /* Professional Fintech Color Palette - Light Mode */
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
     
-    /* Theme customization variables */
-    --primary-light: 0 84.2% 70.2%;
-    --primary-dark: 0 84.2% 50.2%;
-    --primary-hover: 0 84.2% 55.2%;
-    --primary-active: 0 84.2% 50.2%;
+    /* Cards with subtle elevation */
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    
+    /* Popovers */
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    
+    /* Primary - Professional Blue for Finance */
+    --primary: 221 83% 53%;
+    --primary-foreground: 210 40% 98%;
+    
+    /* Secondary - Subtle Gray */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    
+    /* Muted - For less important content */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    
+    /* Accent - For highlights */
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    
+    /* Destructive - For sell/negative */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    
+    /* Success - For buy/positive */
+    --success: 142 76% 36%;
+    --success-foreground: 210 40% 98%;
+    
+    /* Warning */
+    --warning: 38 92% 50%;
+    --warning-foreground: 222 47% 11%;
+    
+    /* Borders */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
+    
+    /* Radius */
+    --radius: 0.5rem;
+    
+    /* Charts - Professional palette */
+    --chart-1: 221 83% 53%;
+    --chart-2: 142 76% 36%;
+    --chart-3: 0 84% 60%;
+    --chart-4: 38 92% 50%;
+    --chart-5: 280 65% 60%;
+    
+    /* Shadows for depth */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   }
 
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 84.2% 60.2%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 84.2% 60.2%;
-    --chart-1: 0 84.2% 60.2%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    /* Professional Fintech Color Palette - Dark Mode */
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
     
-    /* Theme customization variables */
-    --primary-light: 0 84.2% 70.2%;
-    --primary-dark: 0 84.2% 50.2%;
-    --primary-hover: 0 84.2% 65.2%;
-    --primary-active: 0 84.2% 70.2%;
+    /* Cards with elevation */
+    --card: 222 47% 15%;
+    --card-foreground: 210 40% 98%;
+    
+    /* Popovers */
+    --popover: 222 47% 15%;
+    --popover-foreground: 210 40% 98%;
+    
+    /* Primary - Brighter blue for dark mode */
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 11%;
+    
+    /* Secondary */
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    
+    /* Muted */
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    
+    /* Accent */
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+    
+    /* Destructive */
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    
+    /* Success */
+    --success: 142 70% 45%;
+    --success-foreground: 222 47% 11%;
+    
+    /* Warning */
+    --warning: 38 92% 50%;
+    --warning-foreground: 222 47% 11%;
+    
+    /* Borders */
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 217 91% 60%;
+    
+    /* Charts - Adjusted for dark mode */
+    --chart-1: 217 91% 60%;
+    --chart-2: 142 70% 45%;
+    --chart-3: 0 84% 60%;
+    --chart-4: 38 92% 50%;
+    --chart-5: 280 65% 60%;
+    
+    /* Shadows for dark mode */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.4);
   }
 }
 
 @layer base {
   * {
-    border-color: hsl(var(--border));
+    @apply border-border;
   }
 
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Consistent spacing system */
+  .container {
+    @apply mx-auto px-4 sm:px-6 lg:px-8;
   }
 }
 
-/* Dark mode implementation */
+/* Professional card styling */
+@layer components {
+  .card-elevated {
+    @apply bg-card text-card-foreground rounded-lg border shadow-md;
+  }
+  
+  .card-flat {
+    @apply bg-card text-card-foreground rounded-lg border;
+  }
+  
+  /* Financial data display */
+  .stat-card {
+    @apply card-elevated p-6 space-y-2;
+  }
+  
+  .stat-label {
+    @apply text-sm font-medium text-muted-foreground;
+  }
+  
+  .stat-value {
+    @apply text-2xl font-bold;
+  }
+  
+  /* Trading specific */
+  .price-positive {
+    @apply text-success;
+  }
+  
+  .price-negative {
+    @apply text-destructive;
+  }
+  
+  .price-neutral {
+    @apply text-muted-foreground;
+  }
+}
+
+/* Enhanced button states */
+@layer utilities {
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 active:bg-secondary/70;
+  }
+  
+  .btn-destructive {
+    @apply bg-destructive text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/80;
+  }
+  
+  .btn-success {
+    @apply bg-success text-success-foreground hover:bg-success/90 active:bg-success/80;
+  }
+  
+  /* Spacing utilities */
+  .section-spacing {
+    @apply py-12 md:py-16 lg:py-20;
+  }
+  
+  .content-spacing {
+    @apply space-y-6 md:space-y-8;
+  }
+  
+  /* Professional shadows */
+  .shadow-card {
+    box-shadow: var(--shadow-md);
+  }
+  
+  .shadow-card-hover {
+    box-shadow: var(--shadow-lg);
+  }
+  
+  /* Focus states */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background;
+  }
+}
+
+/* Dark mode */
 .dark {
   color-scheme: dark;
 }
 
-/* Button states */
+/* Smooth transitions */
+* {
+  @apply transition-colors duration-200;
+}
+
+/* Button disabled state */
 button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  @apply opacity-50 cursor-not-allowed;
 }
 
-/* Enhanced button hover and active states */
-.hover\:bg-primary\/90:hover {
-  background-color: hsl(var(--primary) / 0.9);
-}
-
-.active\:bg-primary\/80:active {
-  background-color: hsl(var(--primary) / 0.8);
-}
-
-.hover\:bg-destructive\/90:hover {
-  background-color: hsl(var(--destructive) / 0.9);
-}
-
-.active\:bg-destructive\/80:active {
-  background-color: hsl(var(--destructive) / 0.8);
-}
-
-/* Market data colors using theme variables */
+/* Market data colors */
 .text-positive {
-  color: hsl(142 76% 36%); /* Green for positive values */
+  color: hsl(var(--success));
 }
 
 .text-negative {
-  color: hsl(var(--destructive)); /* Use destructive color for negative values */
+  color: hsl(var(--destructive));
 }
 
-.dark .text-positive {
-  color: hsl(142 70% 45%); /* Lighter green for dark mode */
+.bg-positive {
+  background-color: hsl(var(--success) / 0.1);
 }
 
-/* Ensure proper z-index for dropdowns and modals */
+.bg-negative {
+  background-color: hsl(var(--destructive) / 0.1);
+}
+
+/* Z-index management */
 .z-dropdown {
   z-index: 9999;
 }
 
-/* Fix any potential backdrop issues */
 [data-radix-popper-content-wrapper] {
   z-index: 9999 !important;
 }
 
-/* Update focus ring to use primary color */
-:focus-visible {
-  outline-color: hsl(var(--primary)) !important;
-}
-
-/* Update border colors to use primary color */
-.border {
-  border-color: hsl(var(--primary) / 0.2);
-}
-
-/* Additional semantic colors */
-.text-neutral {
-  color: hsl(var(--muted-foreground));
-}
-
-/* Mobile-specific utilities */
+/* Mobile optimizations */
 @layer utilities {
-  /* Touch-friendly interactions */
   .touch-manipulation {
     touch-action: manipulation;
   }
   
-  /* Minimum touch target sizes */
   .min-touch-target {
     min-height: 44px;
     min-width: 44px;
   }
   
-  /* Mobile-first responsive breakpoints */
-  .xs\:hidden {
-    @media (max-width: 475px) {
-      display: none;
-    }
-  }
-  
-  .xs\:inline {
-    @media (max-width: 475px) {
-      display: inline;
-    }
-  }
-  
-  .xs\:block {
-    @media (max-width: 475px) {
-      display: block;
-    }
-  }
-  
-  /* Prevent text selection on touch interfaces */
-  .select-none-touch {
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
-  }
-  
-  /* Smooth scrolling for mobile */
   .scroll-smooth-mobile {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
   }
   
-  /* Active states for mobile */
-  .active\:scale-95:active {
-    transform: scale(0.95);
-  }
-  
-  .active\:bg-accent\/80:active {
-    background-color: hsl(var(--accent) / 0.8);
-  }
-  
-  .active\:bg-muted\/70:active {
-    background-color: hsl(var(--muted) / 0.7);
+  .select-none-touch {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
   }
 }
 
-/* Mobile-specific animations */
-@keyframes slide-in-from-top-2 {
+/* Animations */
+@keyframes slide-in {
   from {
     transform: translateY(-8px);
     opacity: 0;
@@ -219,14 +298,50 @@ button:disabled {
   }
 }
 
-.animate-in {
-  animation-fill-mode: both;
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-.slide-in-from-top-2 {
-  animation: slide-in-from-top-2 0.2s ease-out;
+.animate-slide-in {
+  animation: slide-in 0.2s ease-out;
 }
 
-.duration-200 {
-  animation-duration: 200ms;
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+/* Professional typography */
+h1, h2, h3, h4, h5, h6 {
+  @apply font-semibold tracking-tight;
+}
+
+h1 {
+  @apply text-4xl md:text-5xl lg:text-6xl;
+}
+
+h2 {
+  @apply text-3xl md:text-4xl lg:text-5xl;
+}
+
+h3 {
+  @apply text-2xl md:text-3xl;
+}
+
+h4 {
+  @apply text-xl md:text-2xl;
+}
+
+/* Professional spacing between sections */
+section {
+  @apply section-spacing;
+}
+
+/* Better form inputs */
+input, textarea, select {
+  @apply focus-ring;
 }
