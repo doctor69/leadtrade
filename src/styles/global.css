@@ -56,13 +56,6 @@
     --chart-3: 0 84% 60%;
     --chart-4: 38 92% 50%;
     --chart-5: 280 65% 60%;
-    
-    /* Shadows for depth */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   }
 
   .dark {
@@ -117,114 +110,20 @@
     --chart-3: 0 84% 60%;
     --chart-4: 38 92% 50%;
     --chart-5: 280 65% 60%;
-    
-    /* Shadows for dark mode */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.4);
   }
-}
-
-@layer base {
+  
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
 
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    /* Subtle background for depth */
     background-color: hsl(210 20% 96%);
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
   
   .dark body {
     background-color: hsl(222 47% 9%);
-  }
-  
-  /* Consistent spacing system */
-  .container {
-    @apply mx-auto px-4 sm:px-6 lg:px-8;
-  }
-}
-
-/* Professional card styling */
-@layer components {
-  .card-elevated {
-    @apply bg-card text-card-foreground rounded-lg border shadow-md;
-  }
-  
-  .card-flat {
-    @apply bg-card text-card-foreground rounded-lg border;
-  }
-  
-  /* Financial data display */
-  .stat-card {
-    @apply card-elevated p-6 space-y-2;
-  }
-  
-  .stat-label {
-    @apply text-sm font-medium text-muted-foreground;
-  }
-  
-  .stat-value {
-    @apply text-2xl font-bold;
-  }
-  
-  /* Trading specific */
-  .price-positive {
-    @apply text-success;
-  }
-  
-  .price-negative {
-    @apply text-destructive;
-  }
-  
-  .price-neutral {
-    @apply text-muted-foreground;
-  }
-}
-
-/* Enhanced button states */
-@layer utilities {
-  .btn-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80;
-  }
-  
-  .btn-secondary {
-    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 active:bg-secondary/70;
-  }
-  
-  .btn-destructive {
-    @apply bg-destructive text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/80;
-  }
-  
-  .btn-success {
-    @apply bg-success text-success-foreground hover:bg-success/90 active:bg-success/80;
-  }
-  
-  /* Spacing utilities */
-  .section-spacing {
-    @apply py-12 md:py-16 lg:py-20;
-  }
-  
-  .content-spacing {
-    @apply space-y-6 md:space-y-8;
-  }
-  
-  /* Professional shadows */
-  .shadow-card {
-    box-shadow: var(--shadow-md);
-  }
-  
-  .shadow-card-hover {
-    box-shadow: var(--shadow-lg);
-  }
-  
-  /* Focus states */
-  .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background;
   }
 }
 
@@ -235,12 +134,13 @@
 
 /* Smooth transitions */
 * {
-  @apply transition-colors duration-200;
+  transition: colors 200ms;
 }
 
 /* Button disabled state */
 button:disabled {
-  @apply opacity-50 cursor-not-allowed;
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Market data colors */
@@ -269,27 +169,109 @@ button:disabled {
   z-index: 9999 !important;
 }
 
+/* Professional table styling */
+table {
+  width: 100%;
+}
+
+tbody tr {
+  transition: background-color 150ms;
+}
+
+tbody tr:hover {
+  background-color: hsl(var(--primary) / 0.05);
+}
+
+.dark tbody tr:hover {
+  background-color: hsl(var(--primary) / 0.1);
+}
+
+th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+td {
+  font-size: 0.875rem;
+}
+
+/* Professional typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+h1 {
+  font-size: 2.25rem;
+}
+
+h2 {
+  font-size: 1.875rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+}
+
+h4 {
+  font-size: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  h1 {
+    font-size: 3rem;
+  }
+  
+  h2 {
+    font-size: 2.25rem;
+  }
+  
+  h3 {
+    font-size: 1.875rem;
+  }
+  
+  h4 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  h1 {
+    font-size: 3.75rem;
+  }
+  
+  h2 {
+    font-size: 3rem;
+  }
+}
+
+/* Better form inputs */
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--ring)), 0 0 0 4px hsl(var(--background));
+}
+
 /* Mobile optimizations */
-@layer utilities {
-  .touch-manipulation {
-    touch-action: manipulation;
-  }
-  
-  .min-touch-target {
-    min-height: 44px;
-    min-width: 44px;
-  }
-  
-  .scroll-smooth-mobile {
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-  }
-  
-  .select-none-touch {
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
-  }
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+.min-touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.scroll-smooth-mobile {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+.select-none-touch {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 /* Animations */
@@ -319,60 +301,4 @@ button:disabled {
 
 .animate-fade-in {
   animation: fade-in 0.2s ease-out;
-}
-
-/* Professional typography */
-h1, h2, h3, h4, h5, h6 {
-  @apply font-semibold tracking-tight;
-}
-
-h1 {
-  @apply text-4xl md:text-5xl lg:text-6xl;
-}
-
-h2 {
-  @apply text-3xl md:text-4xl lg:text-5xl;
-}
-
-h3 {
-  @apply text-2xl md:text-3xl;
-}
-
-h4 {
-  @apply text-xl md:text-2xl;
-}
-
-/* Professional spacing between sections */
-section {
-  @apply section-spacing;
-}
-
-/* Better form inputs */
-input, textarea, select {
-  @apply focus-ring;
-}
-
-/* Professional table styling */
-table {
-  @apply w-full;
-}
-
-tbody tr {
-  @apply transition-colors duration-150;
-}
-
-tbody tr:hover {
-  @apply bg-primary/5;
-}
-
-.dark tbody tr:hover {
-  @apply bg-primary/10;
-}
-
-th {
-  @apply text-left font-semibold text-sm text-muted-foreground;
-}
-
-td {
-  @apply text-sm;
 }
