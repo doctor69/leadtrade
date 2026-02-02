@@ -5,11 +5,11 @@
     /* Professional Fintech Color Palette - Light Mode */
     --background: 210 20% 94%;
     --foreground: 222 47% 11%;
-    
+
     /* Component backgrounds - elevated surfaces */
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
-    
+
     /* Modal/Dialog backgrounds - highest elevation */
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
@@ -62,11 +62,11 @@
     /* Professional Fintech Color Palette - Dark Mode */
     --background: 222 47% 9%;
     --foreground: 210 40% 98%;
-    
+
     /* Component backgrounds - elevated surfaces */
     --card: 222 47% 13%;
     --card-foreground: 210 40% 98%;
-    
+
     /* Modal/Dialog backgrounds - highest elevation */
     --popover: 222 47% 15%;
     --popover-foreground: 210 40% 98%;
@@ -301,4 +301,9 @@ select:focus {
 
 .animate-fade-in {
   animation: fade-in 0.2s ease-out;
+}
+/* Swi
+tch component - green when checked */
+button[role="switch"][data-state="checked"] {
+  background-color: hsl(var(--success)) !important;
 }
