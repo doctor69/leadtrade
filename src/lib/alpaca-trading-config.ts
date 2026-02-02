@@ -62,11 +62,29 @@ export async function getTradingConfiguration(
       }
     }
 
-    const edgeFunctionUrl = `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-trading-config/${accountId}`
+    // Get Supabase session for authentication
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
+    const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      return {
+        success: false,
+        error: 'Authentication required. Please sign in.',
+      };
+    }
+
+    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/alpaca-trading-config/${accountId}`
 
     const response = await fetch(edgeFunctionUrl, {
       method: 'GET',
-      credentials: 'include'
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': supabaseAnonKey,
+      },
     })
 
     const result = await response.json()
@@ -74,12 +92,19 @@ export async function getTradingConfiguration(
     if (!response.ok) {
       return {
         success: false,
-        error: result.error || 'Failed to fetch trading configuration'
+        error: result.error?.message || result.error || 'Failed to fetch trading configuration'
+      }
+    }
+
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error?.message || result.error || 'Failed to fetch trading configuration'
       }
     }
 
     // Validate response
-    const configValidation = TradingConfigurationSchema.safeParse(result)
+    const configValidation = TradingConfigurationSchema.safeParse(result.data)
     if (!configValidation.success) {
       return {
         success: false,
@@ -147,15 +172,31 @@ export async function updateTradingConfiguration(
       }
     }
 
-    const edgeFunctionUrl = `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-trading-config/${accountId}`
+    // Get Supabase session for authentication
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
+    const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      return {
+        success: false,
+        error: 'Authentication required. Please sign in.',
+      };
+    }
+
+    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/alpaca-trading-config/${accountId}`
 
     const response = await fetch(edgeFunctionUrl, {
       method: 'PATCH',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': supabaseAnonKey,
       },
       body: JSON.stringify(config),
-      credentials: 'include'
     })
 
     const result = await response.json()
@@ -163,12 +204,19 @@ export async function updateTradingConfiguration(
     if (!response.ok) {
       return {
         success: false,
-        error: result.error || 'Failed to update trading configuration'
+        error: result.error?.message || result.error || 'Failed to update trading configuration'
+      }
+    }
+
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error?.message || result.error || 'Failed to update trading configuration'
       }
     }
 
     // Validate response
-    const configValidation = TradingConfigurationSchema.safeParse(result)
+    const configValidation = TradingConfigurationSchema.safeParse(result.data)
     if (!configValidation.success) {
       return {
         success: false,
