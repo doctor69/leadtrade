@@ -3,14 +3,14 @@
 @layer base {
   :root {
     /* Professional Fintech Color Palette - Light Mode */
-    --background: 210 20% 98%;
+    --background: 210 20% 94%;
     --foreground: 222 47% 11%;
-
-    /* Cards with subtle elevation */
+    
+    /* Component backgrounds - elevated surfaces */
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
-
-    /* Popovers */
+    
+    /* Modal/Dialog backgrounds - highest elevation */
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
@@ -60,14 +60,14 @@
 
   .dark {
     /* Professional Fintech Color Palette - Dark Mode */
-    --background: 222 47% 11%;
+    --background: 222 47% 9%;
     --foreground: 210 40% 98%;
-
-    /* Cards with elevation */
-    --card: 222 47% 15%;
+    
+    /* Component backgrounds - elevated surfaces */
+    --card: 222 47% 13%;
     --card-foreground: 210 40% 98%;
-
-    /* Popovers */
+    
+    /* Modal/Dialog backgrounds - highest elevation */
     --popover: 222 47% 15%;
     --popover-foreground: 210 40% 98%;
 
