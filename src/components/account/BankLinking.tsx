@@ -129,7 +129,25 @@ export default function BankLinking({ accountId, tradingMode = 'paper' }: BankLi
     const handleAddBank = async () => {
         try {
             setError(null);
-            const result = await createBankRelationship(accountId, bankForm);
+            
+            // Prepare bank data based on bank_code_type
+            // For ABA (US banks), we need: name, bank_code, bank_code_type, account_number
+            // For BIC (International), we may need additional address fields
+            const bankData: any = {
+                name: bankForm.name,
+                bank_code: bankForm.bank_code,
+                bank_code_type: bankForm.bank_code_type,
+                account_number: bankForm.account_number
+            };
+            
+            // Only add optional fields if they have values
+            if (bankForm.country) bankData.country = bankForm.country;
+            if (bankForm.city) bankData.city = bankForm.city;
+            if (bankForm.state) bankData.state_province = bankForm.state;
+            if (bankForm.postal_code) bankData.postal_code = bankForm.postal_code;
+            if (bankForm.street_address) bankData.street_address = bankForm.street_address;
+            
+            const result = await createBankRelationship(accountId, bankData);
 
             if (result.success) {
                 setShowAddBank(false);

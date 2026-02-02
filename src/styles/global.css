@@ -5,51 +5,51 @@
     /* Professional Fintech Color Palette - Light Mode */
     --background: 210 20% 98%;
     --foreground: 222 47% 11%;
-    
+
     /* Cards with subtle elevation */
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
-    
+
     /* Popovers */
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    
+
     /* Primary - Professional Blue for Finance */
     --primary: 221 83% 53%;
     --primary-foreground: 210 40% 98%;
-    
+
     /* Secondary - Subtle Gray */
     --secondary: 210 40% 96%;
     --secondary-foreground: 222 47% 11%;
-    
+
     /* Muted - For less important content */
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
-    
+
     /* Accent - For highlights */
     --accent: 210 40% 96%;
     --accent-foreground: 222 47% 11%;
-    
+
     /* Destructive - For sell/negative */
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    
+
     /* Success - For buy/positive */
     --success: 142 76% 36%;
     --success-foreground: 210 40% 98%;
-    
+
     /* Warning */
     --warning: 38 92% 50%;
     --warning-foreground: 222 47% 11%;
-    
+
     /* Borders */
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 221 83% 53%;
-    
+
     /* Radius */
     --radius: 0.5rem;
-    
+
     /* Charts - Professional palette */
     --chart-1: 221 83% 53%;
     --chart-2: 142 76% 36%;
@@ -62,48 +62,48 @@
     /* Professional Fintech Color Palette - Dark Mode */
     --background: 222 47% 11%;
     --foreground: 210 40% 98%;
-    
+
     /* Cards with elevation */
     --card: 222 47% 15%;
     --card-foreground: 210 40% 98%;
-    
+
     /* Popovers */
     --popover: 222 47% 15%;
     --popover-foreground: 210 40% 98%;
-    
+
     /* Primary - Brighter blue for dark mode */
     --primary: 217 91% 60%;
     --primary-foreground: 222 47% 11%;
-    
+
     /* Secondary */
     --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
-    
+
     /* Muted */
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
-    
+
     /* Accent */
     --accent: 217 33% 17%;
     --accent-foreground: 210 40% 98%;
-    
+
     /* Destructive */
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
-    
+
     /* Success */
     --success: 142 70% 45%;
     --success-foreground: 222 47% 11%;
-    
+
     /* Warning */
     --warning: 38 92% 50%;
     --warning-foreground: 222 47% 11%;
-    
+
     /* Borders */
     --border: 217 33% 17%;
     --input: 217 33% 17%;
     --ring: 217 91% 60%;
-    
+
     /* Charts - Adjusted for dark mode */
     --chart-1: 217 91% 60%;
     --chart-2: 142 70% 45%;
@@ -111,7 +111,7 @@
     --chart-4: 38 92% 50%;
     --chart-5: 280 65% 60%;
   }
-  
+
   * {
     border-color: hsl(var(--border));
   }
@@ -121,7 +121,7 @@
     color: hsl(var(--foreground));
     font-feature-settings: "rlig" 1, "calt" 1;
   }
-  
+
   .dark body {
     background-color: hsl(222 47% 9%);
   }
@@ -130,11 +130,6 @@
 /* Dark mode */
 .dark {
   color-scheme: dark;
-}
-
-/* Smooth transitions */
-* {
-  transition: colors 200ms;
 }
 
 /* Button disabled state */
@@ -198,7 +193,12 @@ td {
 }
 
 /* Professional typography */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: 600;
   letter-spacing: -0.025em;
 }
@@ -223,15 +223,15 @@ h4 {
   h1 {
     font-size: 3rem;
   }
-  
+
   h2 {
     font-size: 2.25rem;
   }
-  
+
   h3 {
     font-size: 1.875rem;
   }
-  
+
   h4 {
     font-size: 1.5rem;
   }
@@ -241,14 +241,16 @@ h4 {
   h1 {
     font-size: 3.75rem;
   }
-  
+
   h2 {
     font-size: 3rem;
   }
 }
 
 /* Better form inputs */
-input:focus, textarea:focus, select:focus {
+input:focus,
+textarea:focus,
+select:focus {
   outline: none;
   box-shadow: 0 0 0 2px hsl(var(--ring)), 0 0 0 4px hsl(var(--background));
 }
@@ -280,6 +282,7 @@ input:focus, textarea:focus, select:focus {
     transform: translateY(-8px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -290,6 +293,7 @@ input:focus, textarea:focus, select:focus {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
