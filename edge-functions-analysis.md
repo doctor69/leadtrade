@@ -39,25 +39,25 @@
 36. ✅ **alpaca-market-quotes** - Used in market-data-fallback
 37. ✅ **alpaca-account-activities** - Used for account activity history (Alpaca requirement)
 38. ✅ **alpaca-corporate-actions** - Used for corporate actions tracking (Alpaca requirement)
+39. ✅ **alpaca-portfolio-history** - Used for portfolio performance tracking (Alpaca requirement)
 
 ## UNUSED Functions (Can Delete)
 1. ❌ **alpaca-trading-config** - API endpoint doesn't exist, removed from UI
 2. ❌ **alpaca-options-orders** - Not used anywhere (regular orders endpoint handles options)
 3. ❌ **alpaca-options-positions** - Not used anywhere (regular positions endpoint handles options)
-4. ❌ **alpaca-portfolio-history** - Not used anywhere
-5. ❌ **alpaca-watchlists** - Not used anywhere
-6. ❌ **auth** - Not used (using Supabase auth directly)
-7. ❌ **cancel-order** - Not used (handled by alpaca-orders)
-8. ❌ **create-alpaca-account** - Not used (handled by streamlined-signup)
-9. ❌ **get-order** - Not used (handled by alpaca-orders)
-10. ❌ **modify-order** - Not used (handled by alpaca-orders)
-11. ❌ **initialize-user-funding** - Not used anywhere
-12. ❌ **leadtrade-funding-request** - Empty directory, not implemented
-13. ❌ **market-websocket** - Not used (using different WebSocket implementation)
-14. ❌ **alpaca-security** - Not used (duplicate of alpaca-securities)
-15. ❌ **alpaca-funding-enhanced** - Not used (using alpaca-instant-funding instead)
+4. ❌ **alpaca-watchlists** - Not used anywhere
+5. ❌ **auth** - Not used (using Supabase auth directly)
+6. ❌ **cancel-order** - Not used (handled by alpaca-orders)
+7. ❌ **create-alpaca-account** - Not used (handled by streamlined-signup)
+8. ❌ **get-order** - Not used (handled by alpaca-orders)
+9. ❌ **modify-order** - Not used (handled by alpaca-orders)
+10. ❌ **initialize-user-funding** - Not used anywhere
+11. ❌ **leadtrade-funding-request** - Empty directory, not implemented
+12. ❌ **market-websocket** - Not used (using different WebSocket implementation)
+13. ❌ **alpaca-security** - Not used (duplicate of alpaca-securities)
+14. ❌ **alpaca-funding-enhanced** - Not used (using alpaca-instant-funding instead)
 
 ## Summary
 - **Total Functions**: 52
-- **Used**: 38 (restored alpaca-account-activities and alpaca-corporate-actions)
-- **Unused**: 15
+- **Used**: 39 (restored alpaca-portfolio-history)
+- **Unused**: 14

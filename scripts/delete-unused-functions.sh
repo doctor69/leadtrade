@@ -13,7 +13,6 @@ FUNCTIONS_TO_DELETE=(
     "alpaca-funding-enhanced"
     "alpaca-options-orders"
     "alpaca-options-positions"
-    "alpaca-portfolio-history"
     "alpaca-security"
     "alpaca-trading-config"
     "alpaca-watchlists"
