@@ -563,7 +563,7 @@ export class AlpacaClient {
 
   /**
    * Get account portfolio history
-   * GET /v1/accounts/{account_id}/portfolio/history
+   * GET /v1/trading/accounts/{account_id}/account/portfolio/history
    */
   async getPortfolioHistory(
     accountId: string,
@@ -574,7 +574,7 @@ export class AlpacaClient {
       extended_hours?: boolean
     }
   ): Promise<AlpacaResponse<any>> {
-    return this.brokerRequest(`/v1/accounts/${accountId}/portfolio/history`, { params })
+    return this.brokerRequest(`/v1/trading/accounts/${accountId}/account/portfolio/history`, { params })
   }
 
   /**
