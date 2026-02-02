@@ -3,7 +3,6 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import UserSettings from '../ui/UserSettings';
-import TradingConfigPanel from './TradingConfigPanel';
 import PDTStatusPanel from './PDTStatusPanel';
 import KYCStatus from './KYCStatus';
 import { apiService } from '../../lib/apiService';
@@ -128,11 +127,6 @@ export default function SettingsPageContent() {
               <div id="pdt-status">
                 <PDTStatusPanel accountId={accountId} />
               </div>
-              
-              {/* Trading Configuration - Temporarily disabled */}
-              {/* <div id="trading-config">
-                <TradingConfigPanel accountId={accountId} />
-              </div> */}
             </>
           ) : null}
           
