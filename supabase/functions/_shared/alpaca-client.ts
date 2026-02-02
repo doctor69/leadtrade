@@ -727,21 +727,21 @@ export class AlpacaClient {
 
   /**
    * Get account configuration
-   * GET /v1/accounts/{account_id}/account_configurations
+   * GET /v1/accounts/{account_id}/account/configurations
    */
   async getAccountConfiguration(accountId: string): Promise<AlpacaResponse<TradingConfiguration>> {
-    return this.brokerRequest<TradingConfiguration>(`/v1/accounts/${accountId}/account_configurations`)
+    return this.brokerRequest<TradingConfiguration>(`/v1/accounts/${accountId}/account/configurations`)
   }
 
   /**
    * Update account configuration
-   * PATCH /v1/accounts/{account_id}/account_configurations
+   * PATCH /v1/accounts/{account_id}/account/configurations
    */
   async updateAccountConfiguration(
     accountId: string,
     config: Partial<TradingConfiguration>
   ): Promise<AlpacaResponse<TradingConfiguration>> {
-    return this.brokerRequest<TradingConfiguration>(`/v1/accounts/${accountId}/account_configurations`, {
+    return this.brokerRequest<TradingConfiguration>(`/v1/accounts/${accountId}/account/configurations`, {
       method: 'PATCH',
       body: config
     })
