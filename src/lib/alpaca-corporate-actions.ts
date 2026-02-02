@@ -6,8 +6,6 @@
  * Requirements: 8.1, 8.2, 8.3, 8.4
  */
 
-import { getAlpacaConfig } from './trading-config';
-
 export interface CorporateAction {
   id: string;
   corporate_action_id: string;
@@ -46,12 +44,14 @@ export async function listCorporateActions(
   tradingMode: 'paper' | 'live' = 'paper'
 ): Promise<{ success: boolean; data?: CorporateAction[]; error?: string }> {
   try {
-    const config = getAlpacaConfig(tradingMode);
-    
-    const headers = {
-      'APCA-API-KEY-ID': config.brokerApiKey,
-      'APCA-API-SECRET-KEY': config.brokerApiSecret,
-    };
+    // Get Supabase auth token
+    const accessToken = localStorage.getItem('sb-access-token');
+    if (!accessToken) {
+      return {
+        success: false,
+        error: 'Not authenticated',
+      };
+    }
 
     // Build query string
     const queryParams = new URLSearchParams();
@@ -62,13 +62,17 @@ export async function listCorporateActions(
         }
       });
     }
+    queryParams.append('trading_mode', tradingMode);
 
     const queryString = queryParams.toString();
-    const url = `${config.brokerBaseUrl}/v1/corporate_actions/announcements${queryString ? `?${queryString}` : ''}`;
+    const url = `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-corporate-actions/announcements${queryString ? `?${queryString}` : ''}`;
 
     const response = await fetch(url, {
       method: 'GET',
-      headers,
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
     });
 
     if (!response.ok) {
@@ -112,18 +116,23 @@ export async function getCorporateAction(
   tradingMode: 'paper' | 'live' = 'paper'
 ): Promise<{ success: boolean; data?: CorporateAction; error?: string }> {
   try {
-    const config = getAlpacaConfig(tradingMode);
-    
-    const headers = {
-      'APCA-API-KEY-ID': config.brokerApiKey,
-      'APCA-API-SECRET-KEY': config.brokerApiSecret,
-    };
+    // Get Supabase auth token
+    const accessToken = localStorage.getItem('sb-access-token');
+    if (!accessToken) {
+      return {
+        success: false,
+        error: 'Not authenticated',
+      };
+    }
 
-    const url = `${config.brokerBaseUrl}/v1/corporate_actions/announcements/${announcementId}`;
+    const url = `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-corporate-actions/announcements/${announcementId}?trading_mode=${tradingMode}`;
 
     const response = await fetch(url, {
       method: 'GET',
-      headers,
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
     });
 
     if (!response.ok) {
