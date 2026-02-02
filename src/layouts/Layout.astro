@@ -311,7 +311,10 @@ const {
 				let appliedTheme = 'light';
 				try {
 					appliedTheme = loadThemeWithFallback();
+					console.log('[Theme Init] Loaded theme:', appliedTheme);
 					const success = applyTheme(appliedTheme);
+					console.log('[Theme Init] Applied theme successfully:', success);
+					console.log('[Theme Init] Document classes:', document.documentElement.className);
 					
 					if (!success) {
 						console.warn('Theme application failed, using emergency fallback');
