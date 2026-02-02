@@ -41,18 +41,26 @@ serve(async (req: Request) => {
         const url = new URL(req.url)
         const pathParts = url.pathname.split('/').filter(Boolean)
         
+        console.log('Full URL:', req.url)
+        console.log('Pathname:', url.pathname)
+        console.log('Path parts:', pathParts)
+        
         // Create Alpaca client with auth context
         const alpacaClient = new AlpacaClient(authContext)
         
         // Extract account ID from path
         // Path format: /alpaca-trading-config/{account_id}
+        // After filtering empty strings, pathParts should be: ['alpaca-trading-config', '{account_id}']
         const accountId = pathParts.length > 1 ? pathParts[1] : null
+        
+        console.log('Extracted account ID:', accountId)
         
         if (!accountId) {
           return createErrorResponse(
             {
               code: 'MISSING_ACCOUNT_ID',
-              message: 'Account ID is required in the path'
+              message: 'Account ID is required in the path',
+              details: { pathname: url.pathname, pathParts }
             },
             400
           )
