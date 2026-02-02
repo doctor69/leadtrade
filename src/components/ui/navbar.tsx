@@ -18,8 +18,7 @@ export default function NavigationBar() {
         { name: 'Dashboard', href: '/dashboard' },
         { name: 'Trade', href: '/trade' },
         { name: 'Funding', href: '/funding' },
-        { name: 'Leaderboard', href: '/leaderboard' },
-        { name: 'Settings', href: '/settings' }
+        { name: 'Leaderboard', href: '/leaderboard' }
     ];
 
     // Initialize and check login status on mount

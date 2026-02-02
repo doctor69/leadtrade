@@ -3,7 +3,6 @@ import Layout from "@/layouts/Layout.astro"
 import AppShell from "@/components/AppShell"
 import TradingDashboard from "@/components/trading/TradingDashboard"
 import ProtectedRoute from "@/components/ProtectedRoute"
-import AssetGrid from "@/components/dashboard/AssetGrid"
 import OptionsPositions from "@/components/dashboard/OptionsPositions"
 import CorporateActionImpacts from "@/components/dashboard/CorporateActionImpacts"
 
@@ -35,9 +34,6 @@ const pageKeywords = "trading dashboard, portfolio management, stock positions, 
             
             {/* Main Content - Full Width Layout */}
             <div class="space-y-6">
-                {/* Main Asset Grid */}
-                <AssetGrid client:load />
-                
                 {/* Options Positions */}
                 <OptionsPositions client:load />
                 

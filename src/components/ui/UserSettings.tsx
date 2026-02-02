@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
 import { Switch } from './switch';
 import { Button } from './button';
-import { AlertCircle, User, Shield, Palette, TrendingUp, RefreshCw } from 'lucide-react';
+import { AlertCircle, User, Shield, TrendingUp, RefreshCw } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { ThemeCustomizer } from './ThemeCustomizer';
 import { apiService } from '@/lib/apiService';
 
 interface UserProfile {
@@ -186,22 +185,6 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
             <label className="text-sm font-medium text-muted-foreground">Full Name</label>
             <div className="text-sm font-medium">{profile?.full_name || 'Not set'}</div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Theme Customization */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Palette className="h-5 w-5" />
-            Theme & Appearance
-          </CardTitle>
-          <CardDescription>
-            Customize the look and feel of your trading interface
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ThemeCustomizer />
         </CardContent>
       </Card>
 
