@@ -117,13 +117,9 @@
   }
 
   body {
-    background-color: hsl(210 20% 96%);
+    background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-feature-settings: "rlig" 1, "calt" 1;
-  }
-
-  .dark body {
-    background-color: hsl(222 47% 9%);
   }
 }
 
