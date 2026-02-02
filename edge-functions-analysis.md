@@ -37,27 +37,27 @@
 34. ✅ **alpaca-funding-wallets** - Used in multi-currency wallet features
 35. ✅ **alpaca-events** - Used in event streaming
 36. ✅ **alpaca-market-quotes** - Used in market-data-fallback
+37. ✅ **alpaca-account-activities** - Used for account activity history (Alpaca requirement)
+38. ✅ **alpaca-corporate-actions** - Used for corporate actions tracking (Alpaca requirement)
 
 ## UNUSED Functions (Can Delete)
 1. ❌ **alpaca-trading-config** - API endpoint doesn't exist, removed from UI
-2. ❌ **alpaca-account-activities** - Not used anywhere
-3. ❌ **alpaca-corporate-actions** - Not used anywhere
-4. ❌ **alpaca-options-orders** - Not used anywhere (regular orders endpoint handles options)
-5. ❌ **alpaca-options-positions** - Not used anywhere (regular positions endpoint handles options)
-6. ❌ **alpaca-portfolio-history** - Not used anywhere
-7. ❌ **alpaca-watchlists** - Not used anywhere
-8. ❌ **auth** - Not used (using Supabase auth directly)
-9. ❌ **cancel-order** - Not used (handled by alpaca-orders)
-10. ❌ **create-alpaca-account** - Not used (handled by streamlined-signup)
-11. ❌ **get-order** - Not used (handled by alpaca-orders)
-12. ❌ **modify-order** - Not used (handled by alpaca-orders)
-13. ❌ **initialize-user-funding** - Not used anywhere
-14. ❌ **leadtrade-funding-request** - Empty directory, not implemented
-15. ❌ **market-websocket** - Not used (using different WebSocket implementation)
-16. ❌ **alpaca-security** - Not used (duplicate of alpaca-securities)
-17. ❌ **alpaca-funding-enhanced** - Not used (using alpaca-instant-funding instead)
+2. ❌ **alpaca-options-orders** - Not used anywhere (regular orders endpoint handles options)
+3. ❌ **alpaca-options-positions** - Not used anywhere (regular positions endpoint handles options)
+4. ❌ **alpaca-portfolio-history** - Not used anywhere
+5. ❌ **alpaca-watchlists** - Not used anywhere
+6. ❌ **auth** - Not used (using Supabase auth directly)
+7. ❌ **cancel-order** - Not used (handled by alpaca-orders)
+8. ❌ **create-alpaca-account** - Not used (handled by streamlined-signup)
+9. ❌ **get-order** - Not used (handled by alpaca-orders)
+10. ❌ **modify-order** - Not used (handled by alpaca-orders)
+11. ❌ **initialize-user-funding** - Not used anywhere
+12. ❌ **leadtrade-funding-request** - Empty directory, not implemented
+13. ❌ **market-websocket** - Not used (using different WebSocket implementation)
+14. ❌ **alpaca-security** - Not used (duplicate of alpaca-securities)
+15. ❌ **alpaca-funding-enhanced** - Not used (using alpaca-instant-funding instead)
 
 ## Summary
 - **Total Functions**: 52
-- **Used**: 36
-- **Unused**: 17
+- **Used**: 38 (restored alpaca-account-activities and alpaca-corporate-actions)
+- **Unused**: 15

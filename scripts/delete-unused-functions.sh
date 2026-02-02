@@ -10,8 +10,6 @@ echo ""
 
 # List of functions to delete
 FUNCTIONS_TO_DELETE=(
-    "alpaca-account-activities"
-    "alpaca-corporate-actions"
     "alpaca-funding-enhanced"
     "alpaca-options-orders"
     "alpaca-options-positions"
