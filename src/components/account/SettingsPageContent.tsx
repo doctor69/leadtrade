@@ -124,15 +124,15 @@ export default function SettingsPageContent() {
                 <KYCStatus accountId={accountId} />
               </div>
               
-              {/* Trading Configuration */}
-              <div id="trading-config">
-                <TradingConfigPanel accountId={accountId} />
-              </div>
-              
               {/* PDT Status */}
               <div id="pdt-status">
                 <PDTStatusPanel accountId={accountId} />
               </div>
+              
+              {/* Trading Configuration - Temporarily disabled */}
+              {/* <div id="trading-config">
+                <TradingConfigPanel accountId={accountId} />
+              </div> */}
             </>
           ) : null}
           
