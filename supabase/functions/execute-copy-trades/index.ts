@@ -402,6 +402,131 @@ serve(async (req) => {
         const successfulCopies = copyResults.filter(r => r.success).length
         console.log(`Copy trading completed: ${successfulCopies}/${copyResults.length} successful`)
         
+        // Send email notifications
+        try {
+          const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
+          const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+          
+          // Get leader profile for email
+          const { data: leaderProfile } = await supabase
+            .from('profiles')
+            .select('email, full_name')
+            .eq('id', leaderId)
+            .single()
+          
+          // Send email to leader about their trade
+          if (leaderProfile?.email) {
+            const leaderEmailHtml = `
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                  <h1 style="color: white; margin: 0;">Trade Executed</h1>
+                </div>
+                <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">
+                  <p style="font-size: 16px;">Hi ${leaderProfile.full_name || 'Trader'},</p>
+                  <p style="font-size: 16px;">Your trade has been executed and copied to ${successfulCopies} follower${successfulCopies !== 1 ? 's' : ''}:</p>
+                  <div style="background: white; border: 2px solid ${orderData.side === 'buy' ? '#10b981' : '#ef4444'}; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                      <span style="font-weight: 600; color: #666;">Action:</span>
+                      <span style="font-weight: 700; color: ${orderData.side === 'buy' ? '#10b981' : '#ef4444'}; font-size: 18px;">${orderData.side.toUpperCase()}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                      <span style="color: #666;">Symbol:</span>
+                      <span style="font-weight: 600;">${orderData.symbol}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                      <span style="color: #666;">Quantity:</span>
+                      <span style="font-weight: 600;">${orderData.qty}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                      <span style="color: #666;">Followers Copied:</span>
+                      <span style="font-weight: 600;">${successfulCopies} of ${copyResults.length}</span>
+                    </div>
+                  </div>
+                  <p style="font-size: 14px; color: #666;">Your followers are automatically copying your trades based on their allocation settings.</p>
+                </div>
+              </div>
+            `
+            
+            await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+              },
+              body: JSON.stringify({
+                category: 'trading',
+                to: leaderProfile.email,
+                subject: `Trade Executed - ${orderData.side.toUpperCase()} ${orderData.symbol}`,
+                html: leaderEmailHtml,
+                text: `Your trade has been executed: ${orderData.side.toUpperCase()} ${orderData.qty} ${orderData.symbol}. Copied to ${successfulCopies} of ${copyResults.length} followers.`
+              })
+            })
+          }
+          
+          // Send emails to successful followers
+          for (const result of copyResults.filter(r => r.success)) {
+            const { data: followerProfile } = await supabase
+              .from('profiles')
+              .select('email, full_name')
+              .eq('id', result.followerId)
+              .single()
+            
+            if (followerProfile?.email) {
+              const followerEmailHtml = `
+                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                    <h1 style="color: white; margin: 0;">Copy Trade Executed</h1>
+                  </div>
+                  <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">
+                    <p style="font-size: 16px;">Hi ${followerProfile.full_name || 'Trader'},</p>
+                    <p style="font-size: 16px;">A trade from <strong>${leaderProfile?.full_name || 'your leader'}</strong> has been copied to your account:</p>
+                    <div style="background: white; border: 2px solid ${orderData.side === 'buy' ? '#10b981' : '#ef4444'}; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                      <div style="background: #f3f4f6; padding: 10px; border-radius: 6px; margin-bottom: 15px; text-align: center;">
+                        <span style="font-size: 14px; color: #666;">Following: <strong>${leaderProfile?.full_name || 'Leader'}</strong></span>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                        <span style="font-weight: 600; color: #666;">Action:</span>
+                        <span style="font-weight: 700; color: ${orderData.side === 'buy' ? '#10b981' : '#ef4444'}; font-size: 18px;">${orderData.side.toUpperCase()}</span>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="color: #666;">Symbol:</span>
+                        <span style="font-weight: 600;">${orderData.symbol}</span>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="color: #666;">Quantity:</span>
+                        <span style="font-weight: 600;">${result.quantity?.toFixed(9) || 'N/A'}</span>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="color: #666;">Portfolio %:</span>
+                        <span style="font-weight: 600;">${result.tradePercentage?.toFixed(4) || 'N/A'}%</span>
+                      </div>
+                    </div>
+                    <p style="font-size: 14px; color: #666;">You can manage your copy trading settings and view all trades in your dashboard.</p>
+                  </div>
+                </div>
+              `
+              
+              await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                },
+                body: JSON.stringify({
+                  category: 'trading',
+                  to: followerProfile.email,
+                  subject: `Copy Trade Executed - ${orderData.symbol}`,
+                  html: followerEmailHtml,
+                  text: `A trade from ${leaderProfile?.full_name || 'your leader'} has been copied: ${orderData.side.toUpperCase()} ${result.quantity?.toFixed(9)} ${orderData.symbol}`
+                })
+              })
+            }
+          }
+        } catch (emailError) {
+          console.error('Error sending email notifications:', emailError)
+          // Don't fail the whole operation if emails fail
+        }
+        
         return createSuccessResponse({
           message: `Copy trading completed`,
           copiedTrades: successfulCopies,
