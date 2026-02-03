@@ -1,7 +1,7 @@
 # LEADTRADE - Social Trading Platform
 
-**Version**: v1.7.110.22  
-**Last Updated**: January 29, 2026  
+**Version**: v1.8.0  
+**Last Updated**: February 3, 2026  
 **Status**: ✅ Production Ready
 
 ## Product Overview
@@ -22,6 +22,8 @@ LeadTrade is a comprehensive paper/live trading platform with advanced copy trad
 - Integrated KYC for Alpaca brokerage accounts
 - Fractional shares support for precise allocations
 - Mobile-responsive PWA with offline capabilities
+- **Production-ready email system** with Brevo & Resend integration
+- Automated trade notifications and support inquiries
 
 **Business Logic**: 
 - Users allocate up to 100% portfolio across multiple leaders
@@ -36,6 +38,7 @@ LeadTrade is a comprehensive paper/live trading platform with advanced copy trad
 **Core**: Astro 5.2+ with React 19, TypeScript (strict mode), Vite, SSG output  
 **Frontend**: Tailwind CSS v4, Radix UI components, Lucide icons, Recharts, TanStack Table  
 **Backend**: Supabase (PostgreSQL + Auth + Edge Functions), Alpaca Markets Broker & Data APIs  
+**Email**: Brevo (auth/support/marketing), Resend (trading notifications), Cloudflare Email Routing  
 **Real-time**: WebSocket connections with REST API fallback, Server-Sent Events (SSE)  
 **Validation**: Zod schemas for all API inputs/outputs  
 **Testing**: Vitest with 95%+ coverage on business logic  
@@ -61,7 +64,8 @@ src/
 ├── hooks/                    # Custom React hooks
 │   ├── useAlpacaBroker.ts    # Broker API integration
 │   ├── useMarketDataWithFallback.ts  # WebSocket + REST fallback
-│   └── useTradingMode.ts     # Paper/live mode management
+│   ├── useTradingMode.ts     # Paper/live mode management
+│   └── useTradeNotifications.ts  # Trade notification hooks
 ├── lib/                      # Core business logic & services
 │   ├── __tests__/            # Vitest unit tests (95%+ coverage)
 │   ├── auth.ts               # Authentication & session management
@@ -70,11 +74,29 @@ src/
 │   ├── alpaca-broker-client.ts  # Alpaca Broker API wrapper
 │   ├── copy-trading-service.ts  # Copy trading business logic
 │   ├── market-data-fallback.ts  # WebSocket fallback system
+│   ├── signup-service.ts     # User signup with email integration
+│   ├── email/                # Email delivery system
+│   │   ├── index.ts          # Main exports
+│   │   ├── service.ts        # Email routing logic
+│   │   ├── types.ts          # TypeScript definitions
+│   │   ├── providers/        # Brevo & Resend integrations
+│   │   ├── templates/        # HTML email templates
+│   │   ├── utils.ts          # Retry, batch, validation
+│   │   ├── queue.ts          # Failed email queue
+│   │   └── monitoring.ts     # Analytics & metrics
+│   ├── notifications/        # Notification services
+│   │   └── trade-notifications.ts  # Trade email notifications
 │   └── supabase.ts, encryption.ts
 ├── pages/
 │   ├── api/                  # REST endpoints
 │   │   ├── alpaca/           # Alpaca API proxies
 │   │   ├── auth/             # Authentication endpoints
+│   │   ├── email/            # Email API endpoints
+│   │   │   ├── send.ts       # Generic email send
+│   │   │   ├── test.ts       # Email delivery testing
+│   │   │   └── metrics.ts    # Email analytics
+│   │   ├── support/          # Support system
+│   │   │   └── submit.ts     # Support inquiry handler
 │   │   └── user/             # User management
 │   ├── dashboard.astro       # Portfolio dashboard
 │   ├── trade.astro           # Trading interface
@@ -87,14 +109,22 @@ src/
     └── documents.ts
 
 supabase/
-├── functions/                # Edge Functions (46 total)
+├── functions/                # Edge Functions (47 total)
 │   ├── execute-copy-trades/  # Automated trade replication
 │   ├── alpaca-orders/        # Order management with copy trigger
 │   ├── get-leaderboard/      # Leaderboard data aggregation
 │   ├── update-leaderboard-stats/  # Performance calculations
+│   ├── send-email/           # Email delivery edge function
 │   └── _shared/              # Shared utilities & auth
 └── migrations/               # Database schema migrations
     └── 20260128000000_copy_trading_subscriptions.sql
+
+docs/
+├── EMAIL_SETUP_GUIDE.md      # Complete email setup instructions
+├── EMAIL_SETUP_CHECKLIST.md  # Quick setup checklist
+├── EMAIL_INTEGRATION_EXAMPLES.md  # Integration code examples
+├── EMAIL_ARCHITECTURE_DIAGRAM.md  # System architecture
+└── *.md                      # Other documentation
 ```
 
 ## Conventions
@@ -119,6 +149,7 @@ npm run astro check     # Type checking
 - `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 - `PUBLIC_ALPACA_API_KEY`, `PUBLIC_ALPACA_SECRET_KEY`
 - `PUBLIC_ALPACA_PAPER_API_KEY`, `PUBLIC_ALPACA_PAPER_SECRET_KEY`
+- `BREVO_API_KEY`, `RESEND_API_KEY` (for email delivery)
 
 ## Code Standards
 
@@ -130,6 +161,25 @@ npm run astro check     # Type checking
 - **Documentation**: JSDoc comments for public APIs, inline comments for complex logic
 
 ## Recent Updates
+
+### v1.8.0 - Production Email System (February 3, 2026)
+Comprehensive email delivery infrastructure with dual-provider routing:
+- **Email Providers**: Brevo (auth/support/marketing), Resend (trading notifications)
+- **Automatic Routing**: Category-based routing to appropriate provider
+- **Email Templates**: Professional HTML templates for all email types
+  - Welcome emails with verification links
+  - Trade confirmations with detailed order info
+  - Copy trade notifications
+  - Support inquiry confirmations
+- **Email Categories**: Auth, Trading, Support, Marketing
+- **Monitoring & Analytics**: Real-time metrics, success rates, error tracking
+- **Reliability Features**: Retry logic, email queue, batch sending
+- **API Endpoints**: `/api/email/send`, `/api/email/test`, `/api/email/metrics`
+- **Integration Points**: Signup flow, trade execution, copy trading, support form
+- **Gmail Forwarding**: Cloudflare Email Routing for support@ and hello@
+- **Supabase SMTP**: Custom SMTP configuration for auth emails
+- **Documentation**: Complete setup guides, integration examples, API docs
+- **Files Created**: 26 files (12 TypeScript, 3 API endpoints, 2 edge functions, 9 docs)
 
 ### v1.7.110.22 - Sync Alpaca Accounts Enhancement (January 29, 2026)
 Enhanced account synchronization with dual-mode operation:
@@ -266,6 +316,127 @@ Core copy trading automation:
 - **Multi-Account**: Handles multiple followers with separate Alpaca accounts
 - **Comprehensive Logging**: Detailed execution tracking and reporting
 
+## Email System
+
+### Architecture
+
+The email system uses automatic routing to deliver emails via Brevo and Resend based on category:
+
+| Category | Provider | From Address | Purpose |
+|----------|----------|--------------|---------|
+| **Auth** | Brevo | no-reply@auth.leadtrade.app | Password resets, email verification, account security |
+| **Trading** | Resend | notifications@trade.leadtrade.app | Trade confirmations, copy trade alerts |
+| **Support** | Brevo | support@leadtrade.app | Support inquiries, help requests |
+| **Marketing** | Brevo | hello@marketing.leadtrade.app | Marketing campaigns (future use) |
+
+**Why Two Providers?**
+- **Resend**: No branding on free tier (professional look for customer-facing trading emails)
+- **Brevo**: Multiple domains supported (cost-effective for auth/support/marketing)
+
+### Features
+
+- ✅ Automatic routing based on email category
+- ✅ Professional HTML email templates with plain text fallbacks
+- ✅ Retry logic with exponential backoff
+- ✅ Email queue for failed sends
+- ✅ Batch sending with rate limiting
+- ✅ Real-time monitoring and analytics
+- ✅ Success rate tracking by category and provider
+- ✅ Comprehensive error logging
+- ✅ Zod validation for all inputs
+- ✅ HTML content sanitization
+- ✅ SPF/DKIM/DMARC support
+
+### Email Templates
+
+**Authentication**
+- Welcome email with optional verification link
+- Password reset with secure token
+- Email verification
+
+**Trading**
+- Trade confirmation with order details (symbol, side, quantity, price, total)
+- Copy trade notification showing leader and trade info
+
+**Support**
+- Support inquiry confirmation to user
+- Support team notification (forwarded to Gmail)
+- Support response template
+
+### Usage Example
+
+```typescript
+import { sendTradingEmail, getTradeConfirmationTemplate } from '@/lib/email';
+
+// Send trade confirmation
+const { html, text } = getTradeConfirmationTemplate('John Doe', {
+  symbol: 'AAPL',
+  side: 'buy',
+  quantity: 10,
+  price: 150.25,
+  total: 1502.50,
+  timestamp: new Date().toISOString(),
+  orderId: 'ORDER-123',
+});
+
+await sendTradingEmail({
+  to: 'user@example.com',
+  subject: 'Trade Confirmation - AAPL',
+  html,
+  text,
+});
+```
+
+### Integration Points
+
+1. **User Signup** (`src/lib/signup-service.ts`)
+   - Sends welcome email after successful account creation
+   - Includes email verification link if needed
+
+2. **Trade Execution** (Alpaca webhook handler)
+   - Sends trade confirmation when order is filled
+   - Includes complete trade details
+
+3. **Copy Trading** (`supabase/functions/execute-copy-trades/`)
+   - Notifies follower when trade is copied
+   - Shows leader name and trade details
+
+4. **Support Form** (`src/pages/api/support/submit.ts`)
+   - Sends confirmation to user
+   - Notifies support team (forwarded to Gmail via Cloudflare)
+
+### Monitoring
+
+```bash
+# Check email metrics
+curl http://localhost:4321/api/email/metrics
+
+# Test email delivery
+curl -X POST http://localhost:4321/api/email/test \
+  -H "Content-Type: application/json" \
+  -d '{"category": "all", "to": "your.email@gmail.com"}'
+```
+
+**Metrics Tracked:**
+- Total emails sent/failed
+- Success rate overall and by category
+- Success rate by provider (Brevo/Resend)
+- Recent errors (last 100)
+- Health status
+
+### Rate Limits
+
+**Brevo Free Tier**: 300 emails/day, unlimited contacts, branding in emails  
+**Resend Free Tier**: 100 emails/day, 3,000 emails/month, no branding
+
+### Documentation
+
+- **Setup Guide**: `docs/EMAIL_SETUP_GUIDE.md` - Complete DNS and provider setup
+- **Quick Checklist**: `docs/EMAIL_SETUP_CHECKLIST.md` - 80-minute setup guide
+- **Integration Examples**: `docs/EMAIL_INTEGRATION_EXAMPLES.md` - Real-world code examples
+- **API Documentation**: `src/lib/email/README.md` - Complete API reference
+- **Architecture**: `docs/EMAIL_ARCHITECTURE_DIAGRAM.md` - Visual system overview
+
 ## Copy Trading System
 
 ### Architecture
@@ -315,13 +486,16 @@ followerQty = followerTradeValue / estimatedPrice
 - ✅ Multi-follower support
 - ✅ Allocation limit enforcement (max 100%)
 
-## Edge Functions (46 Total)
+## Edge Functions (47 Total)
 
 ### Copy Trading
 - `execute-copy-trades`: Automated trade replication with proportional allocation
 - `copy-trading-subscriptions`: Follower subscription management
 - `get-leaderboard`: Leaderboard data aggregation with performance metrics
 - `update-leaderboard-stats`: Real-time statistics calculation
+
+### Email & Notifications
+- `send-email`: Email delivery via Brevo and Resend with automatic routing
 
 ### Trading
 - `alpaca-orders`: Order management (GET, POST, DELETE) with copy trade trigger
