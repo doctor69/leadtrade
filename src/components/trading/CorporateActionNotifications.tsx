@@ -30,21 +30,43 @@ export default function CorporateActionNotifications() {
   const [error, setError] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<string>('all');
   const [filterSymbol, setFilterSymbol] = useState<string>('');
+  const [userSymbols, setUserSymbols] = useState<string[]>([]);
 
   useEffect(() => {
-    fetchCorporateActions();
+    fetchUserPositions();
   }, []);
+
+  useEffect(() => {
+    if (userSymbols.length > 0) {
+      fetchCorporateActions();
+    }
+  }, [userSymbols]);
+
+  const fetchUserPositions = async () => {
+    try {
+      const { apiService } = await import('@/lib/apiService');
+      const result = await apiService.getPositions();
+      
+      if (result.success && result.data) {
+        const symbols = result.data.map((position: any) => position.symbol);
+        setUserSymbols(symbols);
+      }
+    } catch (err) {
+      console.error('Failed to fetch positions:', err);
+    }
+  };
 
   const fetchCorporateActions = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const params: GetCorporateActionsParams = {};
-      
-      if (filterType !== 'all') {
-        params.ca_types = filterType;
-      }
+      const params: GetCorporateActionsParams = {
+        ca_types: filterType !== 'all' ? filterType : 'dividend,merger,spinoff,split',
+        // Alpaca requires both since and until, max 90 days apart
+        since: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        until: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      };
       
       if (filterSymbol.trim()) {
         params.symbol = filterSymbol.trim().toUpperCase();
@@ -53,9 +75,31 @@ export default function CorporateActionNotifications() {
       const result = await listCorporateActions(params);
       
       if (result.success && result.data) {
-        setActions(result.data);
+        // Handle nested data structure
+        let dataArray = Array.isArray(result.data) ? result.data : [];
+        if (!Array.isArray(result.data) && (result.data as any).data && Array.isArray((result.data as any).data)) {
+          dataArray = (result.data as any).data;
+        }
+        
+        // Filter out actions with no symbols at all (bad data)
+        const validActions = dataArray.filter(action => 
+          (action.initiating_symbol && action.initiating_symbol.trim()) || 
+          (action.target_symbol && action.target_symbol.trim())
+        );
+        
+        // Filter to only show actions for symbols the user holds
+        const relevantActions = validActions.filter(action => {
+          const symbol = action.initiating_symbol || action.target_symbol;
+          return symbol && userSymbols.includes(symbol);
+        });
+        
+        setActions(relevantActions);
       } else {
-        setError(result.error || 'Failed to fetch corporate actions');
+        // Handle error - ensure it's a string
+        const errorMessage = typeof result.error === 'string' 
+          ? result.error 
+          : (result.error as any)?.message || 'Failed to fetch corporate actions';
+        setError(errorMessage);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error occurred');
@@ -119,7 +163,7 @@ export default function CorporateActionNotifications() {
               Corporate Actions
             </CardTitle>
             <CardDescription>
-              Recent announcements affecting your holdings
+              Corporate actions affecting your portfolio positions
             </CardDescription>
           </div>
           <Button
@@ -179,7 +223,10 @@ export default function CorporateActionNotifications() {
         {/* Corporate Actions List */}
         {!loading && actions.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
-            No corporate actions found
+            {userSymbols.length === 0 
+              ? 'No positions found in your portfolio'
+              : 'No corporate actions found for your holdings'
+            }
           </div>
         )}
 
@@ -200,7 +247,7 @@ export default function CorporateActionNotifications() {
                           {action.ca_type.toUpperCase()}
                         </Badge>
                         <span className="font-semibold text-lg">
-                          {action.initiating_symbol}
+                          {action.initiating_symbol || action.target_symbol || 'N/A'}
                         </span>
                         {action.target_symbol && (
                           <>

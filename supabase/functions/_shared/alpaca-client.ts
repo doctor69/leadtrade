@@ -906,7 +906,7 @@ export class AlpacaClient {
     bankData: {
       name: string
       bank_code: string
-      bank_code_type: 'aba' | 'bic'
+      bank_code_type: 'aba' | 'bic' | 'ABA' | 'BIC'
       account_number: string
       country?: string
       state_province?: string

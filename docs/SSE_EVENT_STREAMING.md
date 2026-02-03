@@ -9,30 +9,14 @@ This document describes the Server-Sent Events (SSE) implementation for real-tim
 ## Architecture
 
 ```
-┌─────────────────┐
-│  React Client   │
-│  (useAlpacaEvents)│
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Astro API      │
-│  /api/alpaca/   │
-│  events/[type]  │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Edge Function  │
-│  alpaca-events  │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Alpaca Broker  │
-│  API (SSE)      │
-└─────────────────┘
+Client (React) 
+  ↓ (fetch with Authorization header)
+Supabase Edge Function (/functions/v1/alpaca-events/{type})
+  ↓ (SSE Stream with Basic Auth)
+Alpaca Broker API (/v1/events/* or /v2beta1/events/*)
 ```
+
+**Note**: Uses fetch API with ReadableStream instead of EventSource to support custom Authorization headers for Supabase authentication.
 
 ## Event Types
 
@@ -417,7 +401,7 @@ npm run test src/lib/__tests__/alpaca-events.test.ts
 
 ## API Endpoints
 
-### Edge Function
+### Edge Function (Direct Connection)
 
 **URL:** `{SUPABASE_URL}/functions/v1/alpaca-events/{event_type}`
 
@@ -428,7 +412,7 @@ npm run test src/lib/__tests__/alpaca-events.test.ts
 - `account_status`
 
 **Query Parameters:**
-- `account_id` - Alpaca account ID
+- `account_id` - Alpaca account ID (optional if in auth context)
 - `since` - ISO 8601 timestamp
 - `until` - ISO 8601 timestamp
 - `since_id` - Event ID
@@ -437,22 +421,10 @@ npm run test src/lib/__tests__/alpaca-events.test.ts
 - `until_ulid` - ULID
 
 **Headers:**
-- `Authorization: Bearer {token}` - Supabase auth token
+- `Authorization: Bearer {token}` - Supabase auth token (required)
+- `Accept: text/event-stream`
 
-### Astro API Route
-
-**URL:** `/api/alpaca/events/{event_type}`
-
-**Event Types:**
-- `trades`
-- `transfers`
-- `journals`
-- `account_status`
-
-**Query Parameters:** Same as edge function
-
-**Headers:**
-- `Authorization: Bearer {token}` - Supabase auth token
+**Implementation Note**: The client uses fetch API with ReadableStream instead of EventSource to support custom Authorization headers.
 
 ## Performance Considerations
 
@@ -496,6 +468,8 @@ npm run test src/lib/__tests__/alpaca-events.test.ts
 
 ## Related Documentation
 
+- [Deployment Guide](./SSE_DEPLOYMENT.md) - How to deploy and configure the edge function
+- [Quick Start Guide](./SSE_QUICK_START.md) - Quick examples and common patterns
 - [Alpaca Broker API - Events](https://alpaca.markets/docs/broker/api-references/events/)
 - [Server-Sent Events Specification](https://html.spec.whatwg.org/multipage/server-sent-events.html)
-- [MDN - EventSource](https://developer.mozilla.org/en-US/docs/Web/API/EventSource)
+- [MDN - Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)

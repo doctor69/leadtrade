@@ -39,7 +39,6 @@ export default function FundingWalletManager({ accountId, tradingMode = 'paper' 
       const result = await listFundingWallets(accountId, undefined, tradingMode);
       setWallets(result);
     } catch (err) {
-      console.error('Error loading funding wallets:', err);
       setError(err instanceof Error ? err.message : 'Failed to load funding wallets');
     } finally {
       setLoading(false);
@@ -54,7 +53,6 @@ export default function FundingWalletManager({ accountId, tradingMode = 'paper' 
       setNewCurrency('USD');
       await loadWallets();
     } catch (err) {
-      console.error('Error creating funding wallet:', err);
       setError(err instanceof Error ? err.message : 'Failed to create funding wallet');
     }
   };
@@ -68,7 +66,6 @@ export default function FundingWalletManager({ accountId, tradingMode = 'paper' 
       const instructions = await getPaymentInstructions(accountId, walletId, tradingMode);
       setPaymentInstructions(instructions);
     } catch (err) {
-      console.error('Error loading payment instructions:', err);
       setError(err instanceof Error ? err.message : 'Failed to load payment instructions');
       setSelectedWallet(null);
     } finally {

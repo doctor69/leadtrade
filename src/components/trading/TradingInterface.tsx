@@ -22,6 +22,8 @@ import AccountPositions from './AccountPositions';
 import OrderHistory from './OrderHistory';
 import PortfolioChart from './PortfolioChart';
 import AssetChart from '@/components/dashboard/AssetChart';
+import AllCorporateActions from './AllCorporateActions';
+import SimpleMarketGrid from './SimpleMarketGrid';
 import { apiService, type AccountData } from '@/lib/apiService';
 
 interface StockData {
@@ -254,7 +256,7 @@ export default function TradingInterface() {
 
       {/* Main Trading Interface */}
       <Tabs defaultValue="trade" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="trade" className="flex items-center gap-2">
             <Search className="h-4 w-4" />
             Trade
@@ -274,6 +276,10 @@ export default function TradingInterface() {
           <TabsTrigger value="chart" className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
             Performance
+          </TabsTrigger>
+          <TabsTrigger value="corporate" className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" />
+            Corp Actions
           </TabsTrigger>
         </TabsList>
 
@@ -331,6 +337,9 @@ export default function TradingInterface() {
               {selectedStock && <TradeForm selectedStock={selectedStock} />}
             </div>
           </div>
+
+          {/* Market Grid in Trade Tab */}
+          <SimpleMarketGrid />
         </TabsContent>
 
         <TabsContent value="portfolio" className="space-y-4">
@@ -384,6 +393,10 @@ export default function TradingInterface() {
 
         <TabsContent value="chart">
           <PortfolioChart />
+        </TabsContent>
+
+        <TabsContent value="corporate">
+          <AllCorporateActions />
         </TabsContent>
       </Tabs>
     </div>

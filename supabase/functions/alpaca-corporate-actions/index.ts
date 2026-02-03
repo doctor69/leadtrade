@@ -40,16 +40,21 @@ serve(async (req: Request) => {
         const alpacaClient = new AlpacaClient(authContext)
         
         console.log(`Processing ${req.method} corporate actions request in ${authContext.tradingMode} mode`)
+        console.log(`URL path: ${url.pathname}`)
+        console.log(`Path parts:`, pathParts)
         
         // Handle GET requests
         if (req.method === 'GET') {
           // Check if requesting specific announcement by ID
           // Path format: /alpaca-corporate-actions/announcements/{id}
-          const isAnnouncementsRoute = pathParts.includes('announcements')
-          const announcementId = isAnnouncementsRoute && pathParts.length > 2 ? pathParts[pathParts.length - 1] : null
+          const announcementIndex = pathParts.indexOf('announcements')
+          const announcementId = announcementIndex >= 0 && pathParts.length > announcementIndex + 1 
+            ? pathParts[announcementIndex + 1] 
+            : null
           
-          if (announcementId && announcementId !== 'announcements') {
+          if (announcementId) {
             // Get specific corporate action announcement
+            console.log(`Fetching specific announcement: ${announcementId}`)
             const response = await alpacaClient.brokerRequest(`/v1/corporate_actions/announcements/${announcementId}`)
             
             if (!response.success) {
@@ -67,6 +72,7 @@ serve(async (req: Request) => {
           }
           
           // List corporate action announcements with filters
+          console.log('Listing corporate action announcements')
           const params: Record<string, string> = {}
           
           // Extract query parameters
@@ -78,13 +84,26 @@ serve(async (req: Request) => {
           const pageToken = url.searchParams.get('page_token')
           const pageSize = url.searchParams.get('page_size')
           
+          // Alpaca requires both since and until
+          if (!since || !until) {
+            return createErrorResponse(
+              {
+                code: 'MISSING_REQUIRED_PARAMS',
+                message: 'Both since and until parameters are required'
+              },
+              400
+            )
+          }
+          
           if (caTypes) params.ca_types = caTypes
-          if (since) params.since = since
-          if (until) params.until = until
+          params.since = since
+          params.until = until
           if (symbol) params.symbol = symbol
           if (cusip) params.cusip = cusip
           if (pageToken) params.page_token = pageToken
           if (pageSize) params.page_size = pageSize
+          
+          console.log('Sending to Alpaca:', params)
           
           const response = await alpacaClient.brokerRequest(
             '/v1/corporate_actions/announcements',
