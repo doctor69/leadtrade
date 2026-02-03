@@ -1,6 +1,6 @@
 /**
  * Shared Email Helper for Supabase Edge Functions
- * Provides a simple interface to send emails via the send-email function
+ * Sends emails directly via Brevo and Resend APIs
  */
 
 interface EmailPayload {
@@ -17,58 +17,163 @@ interface EmailResult {
   error?: string;
 }
 
-/**
- * Send email via Supabase edge function
- */
-export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
-  const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
-  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+interface EmailConfig {
+  provider: 'brevo' | 'resend';
+  fromEmail: string;
+  fromName: string;
+}
 
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    console.error('Missing Supabase configuration');
-    console.error('SUPABASE_URL:', SUPABASE_URL ? 'Set' : 'Not set');
-    console.error('SUPABASE_SERVICE_ROLE_KEY:', SUPABASE_SERVICE_ROLE_KEY ? 'Set' : 'Not set');
-    return {
-      success: false,
-      error: 'Supabase configuration not found',
-    };
+const EMAIL_CONFIGS: Record<string, EmailConfig> = {
+  auth: {
+    provider: 'brevo',
+    fromEmail: 'no-reply@auth.leadtrade.app',
+    fromName: 'LeadTrade Authentication',
+  },
+  trading: {
+    provider: 'resend',
+    fromEmail: 'notifications@trade.leadtrade.app',
+    fromName: 'LeadTrade Trading',
+  },
+  support: {
+    provider: 'brevo',
+    fromEmail: 'support@leadtrade.app',
+    fromName: 'LeadTrade Support',
+  },
+  marketing: {
+    provider: 'brevo',
+    fromEmail: 'hello@marketing.leadtrade.app',
+    fromName: 'LeadTrade',
+  },
+};
+
+/**
+ * Send email via Brevo API
+ */
+async function sendBrevoEmail(
+  payload: EmailPayload,
+  config: EmailConfig
+): Promise<EmailResult> {
+  const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY');
+
+  if (!BREVO_API_KEY) {
+    console.error('Brevo API key not configured');
+    return { success: false, error: 'Brevo API key not configured' };
   }
 
   try {
-    console.log(`Sending email to ${SUPABASE_URL}/functions/v1/send-email`);
-    
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+    const recipients = Array.isArray(payload.to)
+      ? payload.to.map(email => ({ email }))
+      : [{ email: payload.to }];
+
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
+        'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        'api-key': BREVO_API_KEY,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        sender: {
+          email: config.fromEmail,
+          name: config.fromName,
+        },
+        to: recipients,
+        subject: payload.subject,
+        htmlContent: payload.html,
+        textContent: payload.text,
+      }),
     });
 
-    console.log(`Email API response status: ${response.status}`);
-    
-    const result = await response.json();
-    console.log('Email API response:', result);
-
-    if (response.ok && result.success) {
-      return {
-        success: true,
-        messageId: result.messageId,
-      };
-    } else {
-      return {
-        success: false,
-        error: result.error || `HTTP ${response.status}`,
-      };
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `Brevo API error: ${response.status}`);
     }
+
+    const data = await response.json();
+    return { success: true, messageId: data.messageId };
   } catch (error) {
-    console.error('Email send error:', error);
+    console.error('Brevo email error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
+}
+
+/**
+ * Send email via Resend API
+ */
+async function sendResendEmail(
+  payload: EmailPayload,
+  config: EmailConfig
+): Promise<EmailResult> {
+  const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+
+  if (!RESEND_API_KEY) {
+    console.error('Resend API key not configured');
+    return { success: false, error: 'Resend API key not configured' };
+  }
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: `${config.fromName} <${config.fromEmail}>`,
+        to: Array.isArray(payload.to) ? payload.to : [payload.to],
+        subject: payload.subject,
+        html: payload.html,
+        ...(payload.text && { text: payload.text }),
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `Resend API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return { success: true, messageId: data.id };
+  } catch (error) {
+    console.error('Resend email error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Send email directly via Brevo or Resend API
+ */
+export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
+  const config = EMAIL_CONFIGS[payload.category];
+
+  if (!config) {
+    console.error('Invalid email category:', payload.category);
+    return {
+      success: false,
+      error: `Invalid email category: ${payload.category}`,
+    };
+  }
+
+  console.log(`Sending ${payload.category} email via ${config.provider} to ${payload.to}`);
+
+  // Call provider API directly
+  const result = config.provider === 'resend'
+    ? await sendResendEmail(payload, config)
+    : await sendBrevoEmail(payload, config);
+
+  if (result.success) {
+    console.log(`✅ Email sent successfully via ${config.provider} (ID: ${result.messageId})`);
+  } else {
+    console.error(`❌ Email failed via ${config.provider}:`, result.error);
+  }
+
+  return result;
 }
 
 /**
