@@ -1,14 +1,23 @@
 /**
  * Email Service
- * Routes emails to appropriate providers based on category
+ * Routes emails to Supabase edge function for delivery
  */
 
 import type { EmailCategory, EmailPayload, EmailResult } from './types';
 import { EMAIL_CONFIGS } from './types';
-import { sendBrevoEmail } from './providers/brevo';
-import { sendResendEmail } from './providers/resend';
 import { emailMonitor } from './monitoring';
 import { logEmailResult } from './utils';
+import { createClient } from '@supabase/supabase-js';
+
+// Get Supabase client
+const supabaseUrl = typeof process !== 'undefined' 
+  ? process.env.PUBLIC_SUPABASE_URL 
+  : import.meta.env.PUBLIC_SUPABASE_URL;
+const supabaseKey = typeof process !== 'undefined'
+  ? (process.env.PUBLIC_SUPABASE_SERVICE_ROLE_KEY || process.env.PUBLIC_SUPABASE_ANON_KEY)
+  : (import.meta.env.PUBLIC_SUPABASE_SERVICE_ROLE_KEY || import.meta.env.PUBLIC_SUPABASE_ANON_KEY);
+
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 export async function sendEmail(
   category: EmailCategory,
@@ -26,19 +35,64 @@ export async function sendEmail(
     return result;
   }
 
-  // Route to appropriate provider
-  let result: EmailResult;
-  if (config.provider === 'resend') {
-    result = await sendResendEmail(payload, config.fromEmail, config.fromName);
-  } else {
-    result = await sendBrevoEmail(payload, config.fromEmail, config.fromName);
+  if (!supabase) {
+    const result: EmailResult = {
+      success: false,
+      error: 'Supabase client not configured',
+      provider: config.provider,
+    };
+    emailMonitor.record(category, result);
+    return result;
   }
 
-  // Track metrics and log
-  emailMonitor.record(category, result);
-  logEmailResult(category, payload.to, result);
+  try {
+    // Call Supabase edge function
+    const { data, error } = await supabase.functions.invoke('send-email', {
+      body: {
+        category,
+        ...payload,
+      },
+    });
 
-  return result;
+    let result: EmailResult;
+    
+    if (error) {
+      result = {
+        success: false,
+        error: error.message || 'Failed to send email',
+        provider: config.provider,
+      };
+    } else if (data && data.success) {
+      result = {
+        success: true,
+        messageId: data.messageId,
+        provider: data.provider || config.provider,
+      };
+    } else {
+      result = {
+        success: false,
+        error: data?.error || 'Unknown error',
+        provider: config.provider,
+      };
+    }
+
+    // Track metrics and log
+    emailMonitor.record(category, result);
+    logEmailResult(category, payload.to, result);
+
+    return result;
+  } catch (error) {
+    const result: EmailResult = {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      provider: config.provider,
+    };
+    
+    emailMonitor.record(category, result);
+    logEmailResult(category, payload.to, result);
+    
+    return result;
+  }
 }
 
 // Convenience functions for each category
