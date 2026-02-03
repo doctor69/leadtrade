@@ -7,8 +7,8 @@ import { sendTradingEmail, getTradeConfirmationTemplate, getCopyTradeNotificatio
 import { createClient } from '@supabase/supabase-js';
 
 // Access environment variables correctly
-const SUPABASE_URL = typeof process !== 'undefined' 
-  ? process.env.PUBLIC_SUPABASE_URL 
+const SUPABASE_URL = typeof process !== 'undefined'
+  ? process.env.PUBLIC_SUPABASE_URL
   : import.meta.env.PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = typeof process !== 'undefined'
   ? (process.env.PUBLIC_SUPABASE_SERVICE_ROLE_KEY || process.env.PUBLIC_SUPABASE_ANON_KEY)
@@ -160,7 +160,7 @@ export async function batchNotifyTrades(
 
   for (const notification of notifications) {
     const result = await notifyTradeExecution(notification.userId, notification.trade);
-    
+
     if (result.success) {
       successful++;
     } else {
