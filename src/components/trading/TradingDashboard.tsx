@@ -176,7 +176,10 @@ export default function TradingDashboard() {
                 </TabsContent>
 
                 <TabsContent value="events" className="space-y-4 sm:space-y-6">
-                    <EventStreamFeed />
+                    <EventStreamFeed 
+                        accountId={accountData?.id}
+                        enabled={true}
+                    />
                 </TabsContent>
 
                 <TabsContent value="corporate" className="space-y-4 sm:space-y-6">

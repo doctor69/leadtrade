@@ -129,19 +129,6 @@ export default function SettingsPageContent() {
               </div>
             </>
           ) : null}
-          
-          {/* Link to Funding Page */}
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 rounded-lg p-6 border border-border">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Account Funding</h3>
-                <p className="text-muted-foreground">Manage deposits, withdrawals, and multi-currency wallets</p>
-              </div>
-              <a href="/funding" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 transition-all duration-200">
-                Go to Funding
-              </a>
-            </div>
-          </div>
         </div>
       </div>
     </div>

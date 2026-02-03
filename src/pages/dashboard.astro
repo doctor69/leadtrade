@@ -4,7 +4,6 @@ import AppShell from "@/components/AppShell"
 import TradingDashboard from "@/components/trading/TradingDashboard"
 import ProtectedRoute from "@/components/ProtectedRoute"
 import OptionsPositions from "@/components/dashboard/OptionsPositions"
-import CorporateActionImpacts from "@/components/dashboard/CorporateActionImpacts"
 
 // Social media metadata for dashboard page
 const pageTitle = "Trading Dashboard - LEADTRADE";
@@ -36,9 +35,6 @@ const pageKeywords = "trading dashboard, portfolio management, stock positions, 
             <div class="space-y-6">
                 {/* Options Positions */}
                 <OptionsPositions client:load />
-                
-                {/* Corporate Action Impacts */}
-                <CorporateActionImpacts client:load />
             </div>
             
             {/* Trading Dashboard - Full Width */}

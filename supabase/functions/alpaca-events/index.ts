@@ -1,12 +1,13 @@
 // Add Deno types reference
 /// <reference lib="deno.ns" />
 
-import { createAuthContext } from '../_shared/auth.ts'
-import { AlpacaClient } from '../_shared/alpaca-client.ts'
+import { validateAuth, type AuthContext } from '../_shared/auth.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, accept',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Max-Age': '86400',
 }
 
 /**
@@ -23,19 +24,34 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    console.log('Handling OPTIONS request for:', req.url)
+    return new Response(null, { 
+      status: 200,
+      headers: corsHeaders 
+    })
   }
+
+  console.log('Handling request:', {
+    method: req.method,
+    url: req.url,
+    headers: Object.fromEntries(req.headers.entries())
+  })
 
   try {
     // Parse URL to get event type and query parameters
     const url = new URL(req.url)
     const pathParts = url.pathname.split('/').filter(Boolean)
     
+    console.log('Path parts:', pathParts)
+    
     // Expected path: /alpaca-events/{event_type}
     // event_type can be: trades, transfers, journals, account_status
     const eventType = pathParts[pathParts.length - 1]
     
+    console.log('Event type:', eventType)
+    
     if (!eventType || !['trades', 'transfers', 'journals', 'account_status'].includes(eventType)) {
+      console.error('Invalid event type:', eventType)
       return new Response(
         JSON.stringify({
           error: 'Invalid event type. Must be one of: trades, transfers, journals, account_status'
@@ -48,16 +64,23 @@ Deno.serve(async (req) => {
     }
 
     // Authenticate user
-    const authContext = await createAuthContext(req)
-    if (!authContext) {
+    console.log('Creating auth context...')
+    const authResult = await validateAuth(req)
+    console.log('Auth result:', authResult)
+    
+    // Check if auth failed
+    if ('status' in authResult) {
+      console.error('Auth failed:', authResult.message)
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: authResult.message }),
         {
-          status: 401,
+          status: authResult.status,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       )
     }
+    
+    const authContext = authResult as AuthContext
 
     // Get Alpaca account ID from query params or use from auth context
     const accountId = url.searchParams.get('account_id') || authContext.alpacaAccountId
@@ -88,23 +111,23 @@ Deno.serve(async (req) => {
     if (since_ulid) params.since_ulid = since_ulid
     if (until_ulid) params.until_ulid = until_ulid
 
-    // Create Alpaca client
-    const alpacaClient = new AlpacaClient(authContext, console.log)
-
     // Determine the Alpaca API endpoint based on event type
+    // Based on Broker API Postman Collection v2
     let endpoint: string
     switch (eventType) {
       case 'trades':
-        endpoint = `/v1/events/trades`
+        // Use v2beta1 for faster event delivery (recommended by Alpaca)
+        // Legacy v1 endpoint also available: /v1/events/trades
+        endpoint = `/v2beta1/events/trades`
         break
       case 'transfers':
-        endpoint = `/v1/events/transfers`
+        endpoint = `/v1/events/transfers/status`
         break
       case 'journals':
-        endpoint = `/v1/events/journals`
+        endpoint = `/v1/events/journals/status`
         break
       case 'account_status':
-        endpoint = `/v1/events/account_status`
+        endpoint = `/v1/events/accounts/status`
         break
       default:
         return new Response(

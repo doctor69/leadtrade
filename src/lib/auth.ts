@@ -264,24 +264,34 @@ export async function handleAuthStateChange(): Promise<void> {
         localStorage.setItem('sb-token-refreshed-at', Date.now().toString());
       }
       
-      // Sync Alpaca account status on login
-      try {
-        const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-        
-        if (!supabaseUrl) {
-          return;
+      // Sync Alpaca account status on login (only once per session)
+      const syncKey = `alpaca-sync-${session.user.id}`;
+      const lastSync = sessionStorage.getItem(syncKey);
+      const now = Date.now();
+      
+      // Only sync if not synced in the last hour
+      if (!lastSync || (now - parseInt(lastSync)) > 3600000) {
+        try {
+          const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+          
+          if (!supabaseUrl) {
+            return;
+          }
+          
+          await fetch(`${supabaseUrl}/functions/v1/sync-alpaca-accounts`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ userId: session.user.id })
+          });
+          
+          // Mark as synced
+          sessionStorage.setItem(syncKey, now.toString());
+        } catch (error) {
+          // Don't block login if sync fails
         }
-        
-        await fetch(`${supabaseUrl}/functions/v1/sync-alpaca-accounts`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ userId: session.user.id })
-        });
-      } catch (error) {
-        // Don't block login if sync fails
       }
     } else if (event === 'SIGNED_OUT') {
       // Clear all tokens and session data

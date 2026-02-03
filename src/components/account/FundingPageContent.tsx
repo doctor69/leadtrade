@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, Plus } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
-import ACHTransferForm from './ACHTransferForm';
+import BankTransferModal from './BankTransferModal';
 import TransferHistory from './TransferHistory';
 import BankLinking from './BankLinking';
 import { apiService } from '../../lib/apiService';
@@ -11,6 +11,7 @@ export default function FundingPageContent() {
   const [accountId, setAccountId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showTransferModal, setShowTransferModal] = useState(false);
 
   useEffect(() => {
     loadAccountId();
@@ -158,9 +159,15 @@ export default function FundingPageContent() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Account Funding</h1>
-          <p className="text-muted-foreground">Manage your trading account funds</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Account Funding</h1>
+            <p className="text-muted-foreground">Manage your trading account funds</p>
+          </div>
+          <Button onClick={() => setShowTransferModal(true)} size="lg">
+            <Plus className="h-4 w-4 mr-2" />
+            New Transfer
+          </Button>
         </div>
         
         <div className="space-y-8">
@@ -169,16 +176,22 @@ export default function FundingPageContent() {
             <BankLinking accountId={accountId} />
           </div>
           
-          {/* ACH Transfer - Deposit/Withdraw funds */}
-          <div id="ach-transfer">
-            <ACHTransferForm accountId={accountId} />
-          </div>
-          
           {/* Transfer History */}
           <div id="transfer-history">
             <TransferHistory accountId={accountId} />
           </div>
         </div>
+
+        {/* Transfer Modal */}
+        <BankTransferModal
+          accountId={accountId}
+          open={showTransferModal}
+          onOpenChange={setShowTransferModal}
+          onTransferComplete={() => {
+            // Refresh transfer history
+            window.location.reload();
+          }}
+        />
       </div>
     </div>
   );

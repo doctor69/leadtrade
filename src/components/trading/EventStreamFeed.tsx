@@ -7,13 +7,11 @@
  * Requirements: 21.2
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Activity, 
   AlertCircle, 
@@ -36,20 +34,26 @@ import type { TradeEvent, TransferEvent } from '@/lib/alpaca-events';
 
 type EventFeedType = 'trades' | 'transfers' | 'all';
 
-export default function EventStreamFeed() {
-  const [activeTab, setActiveTab] = useState<EventFeedType>('all');
-  const [maxEvents, setMaxEvents] = useState(50);
+interface EventStreamFeedProps {
+  accountId?: string;
+  enabled?: boolean;
+}
 
-  // Subscribe to trade events
+export default function EventStreamFeed({ accountId, enabled = false }: EventStreamFeedProps) {
+  const [activeTab, setActiveTab] = useState<EventFeedType>('all');
+
+  // Subscribe to trade events - disabled by default until user enables
   const tradeStream = useTradeEvents({
-    enabled: activeTab === 'trades' || activeTab === 'all',
+    accountId,
+    enabled: enabled && (activeTab === 'all' || activeTab === 'trades'),
     autoReconnect: true,
     maxReconnectAttempts: 10,
   });
 
-  // Subscribe to transfer events
+  // Subscribe to transfer events - disabled by default until user enables
   const transferStream = useTransferEvents({
-    enabled: activeTab === 'transfers' || activeTab === 'all',
+    accountId,
+    enabled: enabled && (activeTab === 'all' || activeTab === 'transfers'),
     autoReconnect: true,
     maxReconnectAttempts: 10,
   });
@@ -62,11 +66,21 @@ export default function EventStreamFeed() {
     });
   };
 
-  const formatDate = (timestamp: string) => {
-    return new Date(timestamp).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
+  const getCombinedEvents = () => {
+    const combined: Array<{ type: 'trade' | 'transfer'; event: TradeEvent | TransferEvent; timestamp: string }> = [];
+
+    tradeStream.events.forEach((event) => {
+      combined.push({ type: 'trade', event: event as TradeEvent, timestamp: event.timestamp });
     });
+
+    transferStream.events.forEach((event) => {
+      combined.push({ type: 'transfer', event: event as TransferEvent, timestamp: event.timestamp });
+    });
+
+    // Sort by timestamp descending (newest first)
+    combined.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    return combined.slice(0, 50);
   };
 
   const getTradeEventIcon = (event: string) => {
@@ -224,23 +238,6 @@ export default function EventStreamFeed() {
     );
   };
 
-  const getCombinedEvents = () => {
-    const combined: Array<{ type: 'trade' | 'transfer'; event: TradeEvent | TransferEvent; timestamp: string }> = [];
-
-    tradeStream.events.forEach((event) => {
-      combined.push({ type: 'trade', event: event as TradeEvent, timestamp: event.timestamp });
-    });
-
-    transferStream.events.forEach((event) => {
-      combined.push({ type: 'transfer', event: event as TransferEvent, timestamp: event.timestamp });
-    });
-
-    // Sort by timestamp descending (newest first)
-    combined.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-
-    return combined.slice(0, maxEvents);
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -275,118 +272,163 @@ export default function EventStreamFeed() {
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">
+            {!enabled && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Real-time event streaming is available but disabled by default. 
+                  The Supabase edge function must be deployed first. 
+                  Run: <code className="text-xs bg-muted px-1 py-0.5 rounded">supabase functions deploy alpaca-events</code>
+                </AlertDescription>
+              </Alert>
+            )}
+
             {(tradeStream.error || transferStream.error) && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   {tradeStream.error || transferStream.error}
+                  {' - '}Make sure the edge function is deployed.
                 </AlertDescription>
               </Alert>
             )}
 
-            <ScrollArea className="h-[500px] pr-4">
-              <div className="space-y-2">
-                {getCombinedEvents().length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No events yet. Events will appear here in real-time.
-                  </div>
-                ) : (
-                  getCombinedEvents().map((item, index) => 
-                    item.type === 'trade' 
-                      ? renderTradeEvent(item.event as TradeEvent, index)
-                      : renderTransferEvent(item.event as TransferEvent, index)
-                  )
-                )}
-              </div>
-            </ScrollArea>
+            {!accountId && enabled && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Please provide an account ID to view events.
+                </AlertDescription>
+              </Alert>
+            )}
 
-            <div className="flex items-center justify-between pt-2 border-t">
-              <span className="text-sm text-muted-foreground">
-                Showing {getCombinedEvents().length} of {tradeStream.events.length + transferStream.events.length} events
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  tradeStream.clearEvents();
-                  transferStream.clearEvents();
-                }}
-              >
-                Clear All
-              </Button>
-            </div>
+            {accountId && enabled && getCombinedEvents().length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                {tradeStream.isConnecting || transferStream.isConnecting
+                  ? 'Connecting to event stream...'
+                  : 'No events yet. Events will appear here in real-time.'}
+              </div>
+            )}
+
+            {accountId && enabled && getCombinedEvents().length > 0 && (
+              <div className="space-y-2">
+                {getCombinedEvents().map((item, index) => (
+                  item.type === 'trade'
+                    ? renderTradeEvent(item.event as TradeEvent, index)
+                    : renderTransferEvent(item.event as TransferEvent, index)
+                ))}
+              </div>
+            )}
+
+            {!enabled && (
+              <div className="text-center py-8 text-muted-foreground">
+                Event streaming is disabled. Enable it via component props after deploying the edge function.
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="trades" className="space-y-4">
-            {tradeStream.error && (
-              <Alert variant="destructive">
+            {!enabled && (
+              <Alert>
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{tradeStream.error}</AlertDescription>
+                <AlertDescription>
+                  Trade event streaming is disabled. Deploy the edge function first.
+                </AlertDescription>
               </Alert>
             )}
 
-            <ScrollArea className="h-[500px] pr-4">
+            {tradeStream.error && enabled && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {tradeStream.error}
+                  {' - '}Make sure the edge function is deployed.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {!accountId && enabled && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Please provide an account ID to view trade events.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {accountId && enabled && tradeStream.events.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                {tradeStream.isConnecting
+                  ? 'Connecting to trade events...'
+                  : 'No trade events yet. Events will appear here in real-time.'}
+              </div>
+            )}
+
+            {accountId && enabled && tradeStream.events.length > 0 && (
               <div className="space-y-2">
-                {tradeStream.events.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No trade events yet. Trade events will appear here in real-time.
-                  </div>
-                ) : (
-                  tradeStream.events.slice(0, maxEvents).map((event, index) => 
-                    renderTradeEvent(event as TradeEvent, index)
-                  )
+                {tradeStream.events.slice(0, 50).map((event, index) => 
+                  renderTradeEvent(event as TradeEvent, index)
                 )}
               </div>
-            </ScrollArea>
+            )}
 
-            <div className="flex items-center justify-between pt-2 border-t">
-              <span className="text-sm text-muted-foreground">
-                {tradeStream.events.length} trade events
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={tradeStream.clearEvents}
-              >
-                Clear
-              </Button>
-            </div>
+            {!enabled && (
+              <div className="text-center py-8 text-muted-foreground">
+                Trade event streaming is disabled.
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="transfers" className="space-y-4">
-            {transferStream.error && (
-              <Alert variant="destructive">
+            {!enabled && (
+              <Alert>
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{transferStream.error}</AlertDescription>
+                <AlertDescription>
+                  Transfer event streaming is disabled. Deploy the edge function first.
+                </AlertDescription>
               </Alert>
             )}
 
-            <ScrollArea className="h-[500px] pr-4">
+            {transferStream.error && enabled && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {transferStream.error}
+                  {' - '}Make sure the edge function is deployed.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {!accountId && enabled && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Please provide an account ID to view transfer events.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {accountId && enabled && transferStream.events.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                {transferStream.isConnecting
+                  ? 'Connecting to transfer events...'
+                  : 'No transfer events yet. Events will appear here in real-time.'}
+              </div>
+            )}
+
+            {accountId && enabled && transferStream.events.length > 0 && (
               <div className="space-y-2">
-                {transferStream.events.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No transfer events yet. Transfer events will appear here in real-time.
-                  </div>
-                ) : (
-                  transferStream.events.slice(0, maxEvents).map((event, index) => 
-                    renderTransferEvent(event as TransferEvent, index)
-                  )
+                {transferStream.events.slice(0, 50).map((event, index) => 
+                  renderTransferEvent(event as TransferEvent, index)
                 )}
               </div>
-            </ScrollArea>
+            )}
 
-            <div className="flex items-center justify-between pt-2 border-t">
-              <span className="text-sm text-muted-foreground">
-                {transferStream.events.length} transfer events
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={transferStream.clearEvents}
-              >
-                Clear
-              </Button>
-            </div>
+            {!enabled && (
+              <div className="text-center py-8 text-muted-foreground">
+                Transfer event streaming is disabled.
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </CardContent>

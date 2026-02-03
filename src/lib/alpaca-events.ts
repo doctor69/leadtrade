@@ -4,8 +4,12 @@
  * Provides real-time event streaming for trades, transfers, journals, and account status
  * with automatic reconnection and exponential backoff.
  * 
+ * Uses fetch API with ReadableStream instead of EventSource to support custom headers.
+ * 
  * Requirements: 10.1, 10.2, 10.3, 10.4, 10.5
  */
+
+import { supabase } from './supabase'
 
 export type EventType = 'trades' | 'transfers' | 'journals' | 'account_status'
 
@@ -90,14 +94,16 @@ export interface AccountStatusEvent {
 
 /**
  * SSE Event Stream Client with automatic reconnection
+ * Uses fetch API with ReadableStream to support custom headers (for auth)
  */
 export class AlpacaEventStream {
-  private eventSource: EventSource | null = null
+  private abortController: AbortController | null = null
   private options: Required<SSEConnectionOptions>
   private reconnectAttempts = 0
   private reconnectTimer: number | null = null
   private isManualClose = false
   private currentReconnectDelay: number
+  private isConnected = false
 
   constructor(options: SSEConnectionOptions) {
     this.options = {
@@ -123,15 +129,16 @@ export class AlpacaEventStream {
   }
 
   /**
-   * Connect to the SSE event stream
+   * Connect to the SSE event stream using fetch API
    */
-  connect(): void {
-    if (this.eventSource) {
-      console.warn('EventSource already connected')
+  async connect(): Promise<void> {
+    if (this.abortController) {
+      console.warn('Already connected to event stream')
       return
     }
 
     this.isManualClose = false
+    this.abortController = new AbortController()
 
     // Build URL with query parameters
     const params = new URLSearchParams()
@@ -145,77 +152,112 @@ export class AlpacaEventStream {
     if (this.options.until_ulid) params.append('until_ulid', this.options.until_ulid)
 
     const queryString = params.toString()
-    const url = `/api/alpaca/events/${this.options.eventType}${queryString ? '?' + queryString : ''}`
+    
+    // Get Supabase URL from environment
+    const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL
+    if (!supabaseUrl) {
+      console.error('SUPABASE_URL not configured')
+      this.options.onError(new Event('error'))
+      return
+    }
+
+    // Get auth token
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) {
+      console.error('No auth session')
+      this.options.onError(new Event('error'))
+      return
+    }
+
+    // Connect directly to Supabase edge function
+    const url = `${supabaseUrl}/functions/v1/alpaca-events/${this.options.eventType}${queryString ? '?' + queryString : ''}`
 
     console.log('Connecting to SSE:', url)
 
     try {
-      this.eventSource = new EventSource(url)
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Accept': 'text/event-stream',
+        },
+        signal: this.abortController.signal,
+      })
 
-      // Handle connection open
-      this.eventSource.onopen = () => {
-        console.log('SSE connection opened')
-        this.reconnectAttempts = 0
-        this.currentReconnectDelay = this.options.initialReconnectDelay
-        this.options.onOpen()
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
 
-      // Handle messages
-      this.eventSource.onmessage = (event: MessageEvent) => {
-        try {
-          this.options.onMessage(event)
-        } catch (error) {
-          console.error('Error handling SSE message:', error)
+      if (!response.body) {
+        throw new Error('No response body')
+      }
+
+      // Connection successful
+      this.isConnected = true
+      this.reconnectAttempts = 0
+      this.currentReconnectDelay = this.options.initialReconnectDelay
+      this.options.onOpen()
+
+      // Read the stream
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        
+        if (done) {
+          console.log('SSE stream ended')
+          this.isConnected = false
+          break
+        }
+
+        // Decode chunk and add to buffer
+        buffer += decoder.decode(value, { stream: true })
+
+        // Process complete lines
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || '' // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6) // Remove 'data: ' prefix
+            
+            // Create a MessageEvent-like object
+            const event = new MessageEvent('message', {
+              data: data,
+            })
+            
+            this.options.onMessage(event)
+          }
         }
       }
 
-      // Handle errors
-      this.eventSource.onerror = (error: Event) => {
-        console.error('SSE error:', error)
-        this.options.onError(error)
-
-        // Attempt reconnection if enabled and not manually closed
-        if (this.options.autoReconnect && !this.isManualClose) {
-          this.handleReconnect()
-        }
+      // Stream ended normally
+      if (!this.isManualClose && this.options.autoReconnect) {
+        this.handleReconnect()
+      } else {
+        this.options.onClose()
       }
-
-      // Add custom event listeners for specific event types
-      this.addCustomEventListeners()
 
     } catch (error) {
-      console.error('Error creating EventSource:', error)
+      console.error('SSE connection error:', error)
+      this.isConnected = false
+      
+      if (error instanceof Error && error.name === 'AbortError') {
+        // Manual close
+        this.options.onClose()
+        return
+      }
+
+      this.options.onError(new Event('error'))
+
+      // Attempt reconnection if enabled and not manually closed
       if (this.options.autoReconnect && !this.isManualClose) {
         this.handleReconnect()
+      } else {
+        this.options.onClose()
       }
-    }
-  }
-
-  /**
-   * Add custom event listeners for specific event types
-   */
-  private addCustomEventListeners(): void {
-    if (!this.eventSource) return
-
-    // Listen for heartbeat events to keep connection alive
-    this.eventSource.addEventListener('heartbeat', (event: MessageEvent) => {
-      console.log('Received heartbeat:', event.data)
-    })
-
-    // Listen for specific event types based on stream type
-    switch (this.options.eventType) {
-      case 'trades':
-        this.eventSource.addEventListener('fill', this.options.onMessage)
-        this.eventSource.addEventListener('partial_fill', this.options.onMessage)
-        this.eventSource.addEventListener('canceled', this.options.onMessage)
-        this.eventSource.addEventListener('rejected', this.options.onMessage)
-        break
-      
-      case 'transfers':
-      case 'journals':
-      case 'account_status':
-        this.eventSource.addEventListener('status_update', this.options.onMessage)
-        break
     }
   }
 
@@ -230,9 +272,9 @@ export class AlpacaEventStream {
     }
 
     // Close existing connection
-    if (this.eventSource) {
-      this.eventSource.close()
-      this.eventSource = null
+    if (this.abortController) {
+      this.abortController.abort()
+      this.abortController = null
     }
 
     // Clear any existing reconnect timer
@@ -254,7 +296,7 @@ export class AlpacaEventStream {
         this.currentReconnectDelay * 2 + Math.random() * 1000,
         this.options.maxReconnectDelay
       )
-    }, this.currentReconnectDelay)
+    }, this.currentReconnectDelay) as unknown as number
   }
 
   /**
@@ -268,27 +310,28 @@ export class AlpacaEventStream {
       this.reconnectTimer = null
     }
 
-    if (this.eventSource) {
-      this.eventSource.close()
-      this.eventSource = null
+    if (this.abortController) {
+      this.abortController.abort()
+      this.abortController = null
       console.log('SSE connection closed')
     }
 
+    this.isConnected = false
     this.options.onClose()
   }
 
   /**
    * Check if the connection is open
    */
-  isConnected(): boolean {
-    return this.eventSource !== null && this.eventSource.readyState === EventSource.OPEN
+  getIsConnected(): boolean {
+    return this.isConnected
   }
 
   /**
    * Get the current connection state
    */
   getReadyState(): number {
-    return this.eventSource?.readyState ?? EventSource.CLOSED
+    return this.isConnected ? 1 : 3 // OPEN : CLOSED
   }
 }
 
