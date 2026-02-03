@@ -22,10 +22,12 @@ interface EmailResult {
  */
 export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
-  const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     console.error('Missing Supabase configuration');
+    console.error('SUPABASE_URL:', SUPABASE_URL ? 'Set' : 'Not set');
+    console.error('SUPABASE_SERVICE_ROLE_KEY:', SUPABASE_SERVICE_ROLE_KEY ? 'Set' : 'Not set');
     return {
       success: false,
       error: 'Supabase configuration not found',
@@ -33,16 +35,21 @@ export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
   }
 
   try {
+    console.log(`Sending email to ${SUPABASE_URL}/functions/v1/send-email`);
+    
     const response = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
       },
       body: JSON.stringify(payload),
     });
 
+    console.log(`Email API response status: ${response.status}`);
+    
     const result = await response.json();
+    console.log('Email API response:', result);
 
     if (response.ok && result.success) {
       return {

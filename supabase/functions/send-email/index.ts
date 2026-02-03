@@ -51,7 +51,7 @@ async function sendBrevoEmail(
   config: EmailConfig
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
   const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY');
-  
+
   if (!BREVO_API_KEY) {
     return { success: false, error: 'Brevo API key not configured' };
   }
@@ -104,7 +104,7 @@ async function sendResendEmail(
   config: EmailConfig
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
   const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-  
+
   if (!RESEND_API_KEY) {
     return { success: false, error: 'Resend API key not configured' };
   }
@@ -150,11 +150,22 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  // Allow internal calls from other edge functions
+  // Check if request is from another Supabase function (internal call)
+  const authHeader = req.headers.get('Authorization');
+  const isInternalCall = authHeader?.includes('Bearer ') || req.headers.get('x-client-info');
+  
+  console.log('Send-email function called');
+  console.log('Auth header present:', !!authHeader);
+  console.log('Is internal call:', isInternalCall);
+
   try {
     const payload: EmailPayload = await req.json();
+    console.log('Email payload received:', { category: payload.category, to: payload.to, subject: payload.subject });
 
     // Validate required fields
     if (!payload.category || !payload.to || !payload.subject || !payload.html) {
+      console.error('Missing required fields');
       return new Response(
         JSON.stringify({
           success: false,
@@ -169,6 +180,7 @@ serve(async (req) => {
 
     const config = EMAIL_CONFIGS[payload.category];
     if (!config) {
+      console.error('Invalid email category:', payload.category);
       return new Response(
         JSON.stringify({
           success: false,
@@ -181,10 +193,14 @@ serve(async (req) => {
       );
     }
 
+    console.log(`Routing to ${config.provider} provider...`);
+
     // Route to appropriate provider
     const result = config.provider === 'resend'
       ? await sendResendEmail(payload, config)
       : await sendBrevoEmail(payload, config);
+
+    console.log('Email send result:', result);
 
     return new Response(
       JSON.stringify({
