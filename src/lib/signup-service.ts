@@ -6,6 +6,7 @@ import { createAlpacaAccount, type AlpacaAccountData } from './alpaca-account';
 import { encryptToken, hashUserData } from './encryption';
 import { executeAccountRollback } from './account-rollback';
 import { preSignupValidation, postSignupValidation } from './signup-validation';
+import { sendAuthEmail, getWelcomeEmailTemplate } from './email';
 import { z } from 'zod';
 
 // Zod schema for comprehensive signup data validation
@@ -372,6 +373,36 @@ export async function createUserAccount(
       }
 
       console.log('✅ Post-signup validation passed');
+
+      // Send welcome email (non-blocking - don't fail signup if email fails)
+      try {
+        const appUrl = (typeof process !== 'undefined' ? process.env.PUBLIC_APP_URL : import.meta.env.PUBLIC_APP_URL) || 'https://leadtrade.app';
+        const userName = `${signupData.given_name} ${signupData.family_name}`;
+        
+        // Only include verification URL if email is not confirmed
+        const verificationUrl = !authData.user.email_confirmed_at && authData.session?.access_token
+          ? `${appUrl}/verify?token=${authData.session.access_token}`
+          : undefined;
+
+        const { html, text } = getWelcomeEmailTemplate(userName, verificationUrl);
+        
+        const emailResult = await sendAuthEmail({
+          to: signupData.email,
+          subject: 'Welcome to LeadTrade',
+          html,
+          text,
+        });
+
+        if (emailResult.success) {
+          console.log('✅ Welcome email sent successfully');
+        } else {
+          console.warn('⚠️ Failed to send welcome email:', emailResult.error);
+          // Don't fail signup if email fails
+        }
+      } catch (emailError) {
+        console.error('❌ Error sending welcome email:', emailError);
+        // Don't fail signup if email fails
+      }
 
       return {
         success: true,
