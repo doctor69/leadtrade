@@ -446,6 +446,9 @@ serve(async (req) => {
             } else {
               console.error(`❌ Leader email failed:`, leaderEmailResult.error)
             }
+            
+            // Add delay before sending follower emails to respect Resend rate limit
+            await new Promise(resolve => setTimeout(resolve, 600))
           } else {
             console.log('⚠️ No leader email address found, skipping leader notification')
           }
@@ -502,6 +505,10 @@ serve(async (req) => {
             } else {
               console.error(`❌ Follower ${result.followerId} email failed:`, followerEmailResult.error)
             }
+            
+            // Add delay to respect Resend rate limit (2 requests per second)
+            // Wait 600ms between emails to be safe (allows ~1.6 emails/sec)
+            await new Promise(resolve => setTimeout(resolve, 600))
           }
           
           console.log('📧 Email notification process completed')
