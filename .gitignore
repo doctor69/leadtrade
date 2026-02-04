@@ -22,3 +22,10 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Sensitive documentation (keep only README.md)
+*.md
+!README.md
+
+# SQL migrations (manage via Supabase dashboard)
+supabase/migrations/*.sql
