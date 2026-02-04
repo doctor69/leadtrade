@@ -55,20 +55,41 @@ export default function CorporateActionImpacts() {
 
       // Fetch corporate actions for held symbols
       const actionsResult = await listCorporateActions({
-        // Get recent actions (last 30 days forward)
+        ca_types: 'dividend,merger,spinoff,split', // All types
+        // Get actions from last 30 days to next 60 days (90 day max range)
         since: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        until: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       });
 
       if (!actionsResult.success || !actionsResult.data) {
-        setError('Failed to fetch corporate actions');
+        const errorMessage = typeof actionsResult.error === 'string'
+          ? actionsResult.error
+          : actionsResult.error?.message || 'Failed to fetch corporate actions';
+        setError(errorMessage);
         return;
       }
 
+      // Handle nested data structure
+      let dataArray = Array.isArray(actionsResult.data) ? actionsResult.data : [];
+      if (!Array.isArray(actionsResult.data) && (actionsResult.data as any).data && Array.isArray((actionsResult.data as any).data)) {
+        dataArray = (actionsResult.data as any).data;
+      }
+
       // Match actions with positions
-      const relevantImpacts: CorporateActionImpact[] = actionsResult.data
-        .filter(action => symbols.includes(action.initiating_symbol))
+      // Filter to show actions that have valid symbols
+      const validActions = dataArray.filter(action => 
+        (action.initiating_symbol && action.initiating_symbol.trim()) || 
+        (action.target_symbol && action.target_symbol.trim())
+      );
+
+      const relevantImpacts: CorporateActionImpact[] = validActions
+        .filter(action => {
+          const symbol = action.initiating_symbol || action.target_symbol;
+          return symbol && symbols.includes(symbol);
+        })
         .map(action => {
-          const position = positions.find((p: Position) => p.symbol === action.initiating_symbol);
+          const symbol = action.initiating_symbol || action.target_symbol;
+          const position = positions.find((p: Position) => p.symbol === symbol);
           let estimatedImpact = 0;
 
           // Calculate estimated impact based on action type

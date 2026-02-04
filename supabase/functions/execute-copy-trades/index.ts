@@ -1,14 +1,16 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
-import { 
-  withAuth, 
-  processRequest, 
-  createSuccessResponse, 
+import {
+  withAuth,
+  processRequest,
+  createSuccessResponse,
   createErrorResponse,
   AlpacaClient,
   corsHeaders
 } from '../_shared/index.ts'
 import type { AuthContext } from '../_shared/auth.ts'
+import { RESEND_TEMPLATES } from '../_shared/email-helper.ts'
+import { queueEmail } from '../_shared/email-queue-helper.ts'
 
 interface CopyTradeRequest {
   leaderId: string
@@ -42,10 +44,8 @@ serve(async (req) => {
     return withAuth(req, async (authContext: AuthContext) => {
       try {
         const requestBody = await req.json()
-        console.log('Request body:', JSON.stringify(requestBody))
-        
         const { leaderId, orderData, leaderPortfolioValue } = requestBody as CopyTradeRequest
-        
+
         if (!leaderId || !orderData || !leaderPortfolioValue) {
           console.error('Missing required fields:', { leaderId, orderData: !!orderData, leaderPortfolioValue })
           return createErrorResponse({
@@ -53,39 +53,32 @@ serve(async (req) => {
             message: 'Missing required fields: leaderId, orderData, or leaderPortfolioValue'
           }, 400)
         }
-        
-        console.log(`Executing copy trades for leader ${leaderId}`)
-        
+
         // Get Supabase client
         const supabase = createClient(
           Deno.env.get('SUPABASE_URL') ?? '',
           Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         )
-        
+
         // Get all active followers for this leader
         const { data: subscriptions, error: subsError } = await supabase
           .from('copy_trading_subscriptions')
           .select('*')
           .eq('leader_id', leaderId)
           .eq('is_active', true)
-        
+
         if (subsError) {
           console.error('Error fetching subscriptions:', subsError)
           return createErrorResponse({ code: 'DB_ERROR', message: 'Failed to fetch subscriptions' }, 500)
         }
-        
+
         if (!subscriptions || subscriptions.length === 0) {
-          console.log('No active followers found')
           return createSuccessResponse({ message: 'No followers to copy trade', copiedTrades: 0 })
         }
-        
-        console.log(`Found ${subscriptions.length} active followers`)
-        
+
         // Get follower profiles and their Alpaca accounts separately
         const followerIds = subscriptions.map(sub => sub.follower_id)
-        
-        console.log(`Fetching data for ${followerIds.length} followers:`, followerIds)
-        
+
         const [profilesResult, alpacaAccountsResult] = await Promise.all([
           supabase
             .from('profiles')
@@ -95,48 +88,63 @@ serve(async (req) => {
             .from('alpaca_accounts')
             .select('user_id, alpaca_account_id, account_type, account_status')
             .in('user_id', followerIds)
-            .eq('account_status', 'ACTIVE')
         ])
-        
-        console.log(`Profiles found: ${profilesResult.data?.length || 0}`)
-        console.log(`Alpaca accounts found: ${alpacaAccountsResult.data?.length || 0}`)
-        if (alpacaAccountsResult.data) {
-          console.log('Alpaca accounts:', alpacaAccountsResult.data.map(a => ({ 
-            user_id: a.user_id, 
-            account_id: a.alpaca_account_id,
-            type: a.account_type 
-          })))
-        }
-        
+
+        // Filter for ACTIVE accounts only
+        const activeAccounts = alpacaAccountsResult.data?.filter(a =>
+          a.account_status === 'ACTIVE'
+        ) || []
+
         if (profilesResult.error) {
           console.error('Error fetching follower profiles:', profilesResult.error)
           return createErrorResponse({ code: 'DB_ERROR', message: 'Failed to fetch follower profiles' }, 500)
         }
-        
+
         if (alpacaAccountsResult.error) {
           console.error('Error fetching Alpaca accounts:', alpacaAccountsResult.error)
           return createErrorResponse({ code: 'DB_ERROR', message: 'Failed to fetch Alpaca accounts' }, 500)
         }
-        
-        // Map profiles and accounts to subscriptions
-        const subscriptionsWithProfiles = subscriptions.map(sub => {
-          const profile = profilesResult.data?.find(p => p.id === sub.follower_id)
-          const alpacaAccount = alpacaAccountsResult.data?.find(a => a.user_id === sub.follower_id)
-          
-          return {
-            ...sub,
-            follower: {
-              id: sub.follower_id,
-              username: profile?.username || 'Unknown',
-              alpaca_account_id: alpacaAccount?.alpaca_account_id,
-              account_type: alpacaAccount?.account_type as 'paper' | 'live' | undefined
+
+        // Map profiles and accounts to subscriptions, and filter out followers without Alpaca accounts
+        const subscriptionsWithProfiles = subscriptions
+          .map(sub => {
+            const profile = profilesResult.data?.find(p => p.id === sub.follower_id)
+            const alpacaAccount = activeAccounts.find(a => a.user_id === sub.follower_id)
+
+            return {
+              ...sub,
+              follower: {
+                id: sub.follower_id,
+                username: profile?.username || 'Unknown',
+                alpaca_account_id: alpacaAccount?.alpaca_account_id,
+                account_type: alpacaAccount?.account_type as 'paper' | 'live' | undefined
+              }
             }
-          }
-        })
-        
+          })
+          .filter(sub => {
+            // Only include followers who have an active Alpaca account
+            if (!sub.follower.alpaca_account_id) {
+              console.log(`Skipping follower ${sub.follower_id} (${sub.follower.username}): No Alpaca account`)
+              return false
+            }
+            return true
+          })
+
+        if (subscriptionsWithProfiles.length === 0) {
+          console.log('No followers with Alpaca accounts found')
+          return createSuccessResponse({
+            message: 'No followers with Alpaca accounts to copy trade',
+            copiedTrades: 0,
+            totalFollowers: subscriptions.length,
+            followersWithAccounts: 0
+          })
+        }
+
+        console.log(`Processing ${subscriptionsWithProfiles.length} followers with Alpaca accounts (out of ${subscriptions.length} total followers)`)
+
         // Get the current market price for accurate quantity calculation
         let estimatedPrice = orderData.limit_price || 1
-        
+
         // For market orders, fetch the latest price from Alpaca
         if (!orderData.limit_price && orderData.type === 'market') {
           try {
@@ -145,7 +153,7 @@ serve(async (req) => {
             const latestQuote = await leaderAlpacaClient.dataRequest(
               `/v2/stocks/${orderData.symbol}/quotes/latest`
             )
-            
+
             if (latestQuote.success && latestQuote.data?.quote) {
               // Use the mid-point between bid and ask for better accuracy
               const bid = parseFloat(latestQuote.data.quote.bp || latestQuote.data.quote.bid_price || '0')
@@ -162,34 +170,25 @@ serve(async (req) => {
             console.warn(`Failed to fetch market price for ${orderData.symbol}, using fallback:`, error)
           }
         }
-        
+
         // Calculate the trade size as percentage of leader's portfolio
         const tradeValue = parseFloat(orderData.qty.toString()) * estimatedPrice
         const leaderTradePercentage = (tradeValue / leaderPortfolioValue) * 100
-        
+
         console.log(`Leader trade: ${orderData.qty} shares @ ~$${estimatedPrice.toFixed(2)}, ~$${tradeValue.toFixed(2)}, ${leaderTradePercentage.toFixed(4)}% of portfolio`)
-        
+
         const copyResults = []
-        
+
         // Execute copy trades for each follower
         for (const subscription of subscriptionsWithProfiles) {
           try {
             const followerId = subscription.follower_id
             const followerAllocationPercentage = parseFloat(subscription.allocation_percentage.toString())
-            
+
             console.log(`Processing follower ${followerId} with ${followerAllocationPercentage}% allocation`)
-            
-            if (!subscription.follower?.alpaca_account_id) {
-              console.error(`No Alpaca account for follower ${followerId}`)
-              copyResults.push({
-                followerId,
-                success: false,
-                error: 'No Alpaca account found'
-              })
-              continue
-            }
-            
-            const followerAccountId = subscription.follower.alpaca_account_id
+
+            // At this point, we know the follower has an Alpaca account (filtered earlier)
+            const followerAccountId = subscription.follower.alpaca_account_id!
             const followerTradingMode = (subscription.follower.account_type || 'paper') as 'paper' | 'live'
             console.log(`Follower ${followerId} account details:`, {
               accountId: followerAccountId,
@@ -197,7 +196,7 @@ serve(async (req) => {
               tradingMode: followerTradingMode,
               fullFollowerObject: subscription.follower
             })
-            
+
             // Create Alpaca client for follower with proper AuthContext
             const followerAlpacaClient = new AlpacaClient({
               userId: followerId,
@@ -207,19 +206,19 @@ serve(async (req) => {
               isAuthenticated: true,
               alpacaAccessToken: '' // Not needed for broker API calls
             })
-            
+
             // Get follower's account info
             console.log(`Fetching account info for follower ${followerId} from /v1/trading/accounts/${followerAccountId}/account`)
             const accountResponse = await followerAlpacaClient.brokerRequest(
               `/v1/trading/accounts/${followerAccountId}/account`
             )
-            
-            console.log(`Account response for follower ${followerId}:`, { 
-              success: accountResponse.success, 
+
+            console.log(`Account response for follower ${followerId}:`, {
+              success: accountResponse.success,
               hasData: !!accountResponse.data,
-              error: accountResponse.error 
+              error: accountResponse.error
             })
-            
+
             if (!accountResponse.success || !accountResponse.data) {
               console.error(`Failed to get account info for follower ${followerId}:`, accountResponse.error)
               copyResults.push({
@@ -229,33 +228,33 @@ serve(async (req) => {
               })
               continue
             }
-            
+
             const followerPortfolioValue = parseFloat(accountResponse.data.equity || accountResponse.data.portfolio_value || '0')
-            
+
             if (followerPortfolioValue <= 0) {
               console.error(`Invalid portfolio value for follower ${followerId}: ${followerPortfolioValue}`)
               continue
             }
-            
+
             // CORRECT FORMULA: Apply leader's trade percentage to follower's allocated percentage
             // Example: Leader trades 5% of portfolio, follower allocated 20%
             // Follower trades: 5% of 20% = 1% of total portfolio
             const followerTradePercentage = (leaderTradePercentage * followerAllocationPercentage) / 100
             const followerTradeValue = (followerPortfolioValue * followerTradePercentage) / 100
-            
+
             // Calculate quantity with fractional shares support
             // Alpaca supports up to 9 decimal places for fractional shares
             let followerQty = followerTradeValue / estimatedPrice
-            
+
             // Round to 9 decimal places (Alpaca's precision)
             followerQty = Math.round(followerQty * 1000000000) / 1000000000
-            
+
             console.log(`Follower ${followerId}: Portfolio $${followerPortfolioValue.toFixed(2)}, ` +
               `Allocation ${followerAllocationPercentage}%, ` +
               `Trade ${followerTradePercentage.toFixed(4)}% = $${followerTradeValue.toFixed(2)}, ` +
               `Price: $${estimatedPrice.toFixed(2)}, ` +
               `Qty: ${followerQty}`)
-            
+
             // For SELL orders, check if follower has enough shares
             if (orderData.side === 'sell') {
               try {
@@ -263,11 +262,11 @@ serve(async (req) => {
                 const positionsResponse = await followerAlpacaClient.brokerRequest(
                   `/v1/trading/accounts/${followerAccountId}/positions`
                 )
-                
+
                 if (positionsResponse.success && positionsResponse.data) {
                   const positions = Array.isArray(positionsResponse.data) ? positionsResponse.data : []
                   const position = positions.find((p: any) => p.symbol === orderData.symbol)
-                  
+
                   if (!position) {
                     console.log(`Skipping follower ${followerId}: no position in ${orderData.symbol} to sell`)
                     copyResults.push({
@@ -277,9 +276,9 @@ serve(async (req) => {
                     })
                     continue
                   }
-                  
+
                   const availableQty = parseFloat(position.qty || position.available_qty || '0')
-                  
+
                   if (availableQty <= 0) {
                     console.log(`Skipping follower ${followerId}: no available shares of ${orderData.symbol} to sell`)
                     copyResults.push({
@@ -289,7 +288,7 @@ serve(async (req) => {
                     })
                     continue
                   }
-                  
+
                   // Limit sell quantity to available shares
                   if (followerQty > availableQty) {
                     console.log(`Follower ${followerId}: reducing sell qty from ${followerQty} to ${availableQty} (available shares)`)
@@ -314,13 +313,13 @@ serve(async (req) => {
                 continue
               }
             }
-            
+
             // Skip if quantity is too small (less than $0.01 worth)
             if (followerQty <= 0 || followerQty * estimatedPrice < 0.01) {
               console.log(`Skipping follower ${followerId}: calculated quantity ${followerQty} is too small (value: $${(followerQty * estimatedPrice).toFixed(4)})`)
               continue
             }
-            
+
             // Create the copy trade order
             const copyOrderData: any = {
               symbol: orderData.symbol,
@@ -330,13 +329,13 @@ serve(async (req) => {
               time_in_force: orderData.time_in_force,
               client_order_id: `copy_${leaderId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
             }
-            
+
             // Copy optional fields
             if (orderData.limit_price) copyOrderData.limit_price = orderData.limit_price
             if (orderData.stop_price) copyOrderData.stop_price = orderData.stop_price
             if (orderData.trail_price) copyOrderData.trail_price = orderData.trail_price
             if (orderData.trail_percent) copyOrderData.trail_percent = orderData.trail_percent
-            
+
             // Execute the copy trade
             const copyOrderResponse = await followerAlpacaClient.brokerRequest(
               `/v1/trading/accounts/${followerAccountId}/orders`,
@@ -345,7 +344,7 @@ serve(async (req) => {
                 body: copyOrderData
               }
             )
-            
+
             if (copyOrderResponse.success) {
               console.log(`✓ Copy trade successful for follower ${followerId}: ${followerQty} shares`)
               copyResults.push({
@@ -372,10 +371,117 @@ serve(async (req) => {
             })
           }
         }
-        
+
         const successfulCopies = copyResults.filter(r => r.success).length
         console.log(`Copy trading completed: ${successfulCopies}/${copyResults.length} successful`)
-        
+
+        // Send email notifications
+        console.log('📧 Starting email notification process...')
+        try {
+          // Get leader profile for email
+          console.log(`Fetching leader profile for ${leaderId}...`)
+          const { data: leaderProfile, error: leaderError } = await supabase
+            .from('profiles')
+            .select('email, full_name')
+            .eq('id', leaderId)
+            .single()
+          
+          if (leaderError) {
+            console.error('Error fetching leader profile:', leaderError)
+          } else {
+            console.log(`Leader profile: ${leaderProfile?.email || 'No email'}, ${leaderProfile?.full_name || 'No name'}`)
+          }
+
+          // Send email to leader about their trade
+          if (leaderProfile?.email) {
+            console.log(`📧 Queueing email to leader: ${leaderProfile.email}`)
+            
+            const sideColor = orderData.side === 'buy' ? '#10b981' : '#ef4444'
+            
+            const leaderEmailResult = await queueEmail({
+              category: 'trading',
+              to: leaderProfile.email,
+              templateId: RESEND_TEMPLATES.LEADER_TRADE,
+              templateData: {
+                userName: leaderProfile.full_name || 'Trader',
+                symbol: orderData.symbol,
+                side: orderData.side.toUpperCase(),
+                quantity: orderData.qty,
+                followerCount: successfulCopies,
+                sideColor: sideColor,
+              }
+            })
+            
+            if (leaderEmailResult.success) {
+              console.log(`✅ Leader email queued successfully (Queue ID: ${leaderEmailResult.queueId})`)
+            } else {
+              console.error(`❌ Leader email queue failed:`, leaderEmailResult.error)
+            }
+          } else {
+            console.log('⚠️ No leader email address found, skipping leader notification')
+          }
+
+          // Send emails to successful followers
+          console.log(`📧 Queueing emails for ${copyResults.filter(r => r.success).length} successful followers...`)
+          console.log('Copy results:', JSON.stringify(copyResults, null, 2))
+          
+          for (const result of copyResults.filter(r => r.success)) {
+            console.log(`Processing follower ${result.followerId}...`)
+            
+            const { data: followerProfile, error: followerProfileError } = await supabase
+              .from('profiles')
+              .select('email, full_name')
+              .eq('id', result.followerId)
+              .single()
+
+            if (followerProfileError) {
+              console.error(`❌ Error fetching follower ${result.followerId} profile:`, followerProfileError)
+              continue
+            }
+
+            if (!followerProfile) {
+              console.error(`❌ No profile found for follower ${result.followerId}`)
+              continue
+            }
+
+            if (!followerProfile.email) {
+              console.warn(`⚠️ Follower ${result.followerId} has no email address, skipping`)
+              continue
+            }
+
+            console.log(`📧 Queueing email to follower: ${followerProfile.email}`)
+            
+            const sideColor = orderData.side === 'buy' ? '#10b981' : '#ef4444'
+            
+            const followerEmailResult = await queueEmail({
+              category: 'trading',
+              to: followerProfile.email,
+              templateId: RESEND_TEMPLATES.FOLLOWER_COPY_TRADE,
+              templateData: {
+                followerName: followerProfile.full_name || 'Trader',
+                leaderName: leaderProfile?.full_name || 'Leader',
+                symbol: orderData.symbol,
+                side: orderData.side.toUpperCase(),
+                quantity: (result.quantity || 0).toFixed(9),
+                portfolioPercentage: (result.tradePercentage || 0).toFixed(4),
+                sideColor: sideColor,
+              }
+            })
+            
+            if (followerEmailResult.success) {
+              console.log(`✅ Follower ${result.followerId} email queued successfully (Queue ID: ${followerEmailResult.queueId})`)
+            } else {
+              console.error(`❌ Follower ${result.followerId} email queue failed:`, followerEmailResult.error)
+            }
+          }
+          
+          console.log('📧 Email queueing process completed')
+        } catch (emailError) {
+          console.error('❌ Error queueing email notifications:', emailError)
+          console.error('Email error stack:', emailError instanceof Error ? emailError.stack : 'No stack')
+          // Don't fail the whole operation if email queueing fails
+        }
+
         return createSuccessResponse({
           message: `Copy trading completed`,
           copiedTrades: successfulCopies,

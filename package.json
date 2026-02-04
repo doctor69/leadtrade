@@ -28,6 +28,7 @@
     "verify:schema": "node scripts/verify-database-schema.js",
     "deploy:database": "node scripts/deploy-database.js",
     "migrate:apply": "node scripts/apply-migrations-manual.js",
+    "generate:og-image": "node scripts/generate-og-image.js",
     "migrate:check": "node scripts/check-migrations-simple.cjs",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",

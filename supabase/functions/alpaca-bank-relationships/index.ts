@@ -76,7 +76,13 @@ serve(async (req: Request) => {
             )
           }
           
-          const response = await alpacaClient.createBankRelationship(accountId, body)
+          // Transform bank_code_type to uppercase for Alpaca API
+          const bankData = {
+            ...body,
+            bank_code_type: body.bank_code_type.toUpperCase()
+          }
+          
+          const response = await alpacaClient.createBankRelationship(accountId, bankData)
           
           if (!response.success) {
             return createErrorResponse(

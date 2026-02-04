@@ -20,7 +20,7 @@ export const BankRelationshipSchema = z.object({
   id: z.string(),
   name: z.string(),
   bank_code: z.string(),
-  bank_code_type: BankCodeTypeSchema,
+  bank_code_type: z.string().transform(val => val.toLowerCase() as 'aba' | 'bic'), // Accept uppercase from Alpaca
   account_number: z.string(),
   country: z.string().optional(),
   state_province: z.string().optional(),

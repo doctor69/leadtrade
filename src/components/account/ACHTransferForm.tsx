@@ -37,14 +37,9 @@ export default function ACHTransferForm({ accountId, tradingMode = 'paper', onTr
       setLoading(true);
       setError(null);
 
-      console.log('Loading ACH relationships for account:', accountId);
       const result = await listACHRelationships(accountId, undefined, tradingMode);
-      console.log('ACH relationships result:', result);
 
       if (result.success && result.relationships) {
-        // Log all relationships with their statuses
-        console.log('All relationships:', result.relationships.map(r => ({ id: r.id, status: r.status, name: r.account_owner_name })));
-        
         // Filter for approved relationships (case-insensitive)
         const approvedRelationships = result.relationships.filter(r => 
           r.status.toLowerCase() === 'approved'
@@ -58,11 +53,9 @@ export default function ACHTransferForm({ accountId, tradingMode = 'paper', onTr
           setFormData(prev => ({ ...prev, relationship_id: approvedRelationships[0].id }));
         }
       } else {
-        console.error('Failed to load ACH relationships:', result.error);
         setError(result.error || 'Failed to load ACH relationships');
       }
     } catch (err) {
-      console.error('Error loading ACH relationships:', err);
       setError(err instanceof Error ? err.message : 'Failed to load ACH relationships');
     } finally {
       setLoading(false);

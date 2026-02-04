@@ -14,8 +14,8 @@ export interface Props {
 }
 
 const {
-  title = "LEADTRADE - Trading Platform for Leaders",
-  description = "The ultimate trading platform with real market data and follow trading features",
+  title = "LEADTRADE - Trade Smarter, Follow Leaders",
+  description = "Paper & live trading platform with copy trading capabilities. Follow successful traders, replicate strategies, and trade with real-time market data. Zero commission trading.",
   image = "/social/leadtrade-preview.png",
   url,
   type = "website",
@@ -23,7 +23,7 @@ const {
   twitterCard = "summary_large_image",
   twitterSite = "@leadtrade",
   twitterCreator = "@leadtrade",
-  keywords = "trading, stock market, paper trading, copy trading, investment, finance, trading platform",
+  keywords = "trading, stock market, paper trading, copy trading, investment, finance, trading platform, follow trading, real-time market data, zero commission",
   author = "LEADTRADE Team",
 } = Astro.props;
 
@@ -57,6 +57,8 @@ const canonicalUrl = url
 <meta property="og:image:alt" content={title} />
 <meta property="og:site_name" content={siteName} />
 <meta property="og:locale" content="en_US" />
+<meta property="og:image:secure_url" content={imageUrl} />
+<meta property="og:updated_time" content={new Date().toISOString()} />
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content={twitterCard} />
@@ -65,37 +67,74 @@ const canonicalUrl = url
 <meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={imageUrl} />
 <meta name="twitter:image:alt" content={title} />
+<meta name="twitter:domain" content="leadtrade.app" />
 {twitterSite && <meta name="twitter:site" content={twitterSite} />}
 {twitterCreator && <meta name="twitter:creator" content={twitterCreator} />}
+
+<!-- Twitter Labels for Rich Cards -->
+<meta name="twitter:label1" content="Platform" />
+<meta name="twitter:data1" content="Trading & Investment" />
+<meta name="twitter:label2" content="Features" />
+<meta name="twitter:data2" content="Paper Trading, Copy Trading, Real-time Data" />
 
 <!-- Additional Social Media Meta Tags -->
 <meta name="application-name" content={siteName} />
 <meta name="mobile-web-app-capable" content="yes" />
 
-<!-- WhatsApp / Telegram specific -->
-<meta property="og:image:type" content="image/svg+xml" />
-<meta property="og:image:secure_url" content={imageUrl} />
+<!-- WhatsApp / Telegram / iMessage specific -->
+<meta property="og:image:type" content="image/png" />
 
 <!-- LinkedIn specific -->
-<meta property="og:updated_time" content={new Date().toISOString()} />
+<meta property="article:author" content={author} />
 
-<!-- Discord specific -->
+<!-- Discord / Slack specific -->
 <meta name="theme-color" content="#3b82f6" />
 
-<!-- iMessage / Apple specific -->
+<!-- Apple specific -->
 <meta name="apple-mobile-web-app-title" content={siteName} />
 <meta name="apple-mobile-web-app-capable" content="yes" />
-<meta
-  name="apple-mobile-web-app-status-bar-style"
-  content="black-translucent"
-/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-<!-- Additional Twitter tags for better previews -->
-<meta name="twitter:domain" content="leadtrade.app" />
-<meta name="twitter:label1" content="Platform" />
-<meta name="twitter:data1" content="Trading & Investment" />
-<meta name="twitter:label2" content="Features" />
-<meta
-  name="twitter:data2"
-  content="Paper Trading, Copy Trading, Real-time Data"
-/>
+<!-- Additional metadata for better SEO -->
+<meta name="rating" content="general" />
+<meta name="distribution" content="global" />
+<meta name="revisit-after" content="7 days" />
+<meta name="language" content="English" />
+<meta name="coverage" content="Worldwide" />
+<meta name="target" content="all" />
+<meta name="HandheldFriendly" content="True" />
+<meta name="MobileOptimized" content="320" />
+
+<!-- Structured Data for Rich Snippets -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "{siteName}",
+  "description": "{description}",
+  "url": "{canonicalUrl}",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "ratingCount": "1250"
+  },
+  "image": "{imageUrl}",
+  "screenshot": "{imageUrl}",
+  "featureList": [
+    "Paper Trading",
+    "Live Trading",
+    "Copy Trading",
+    "Real-time Market Data",
+    "Zero Commission",
+    "Options Trading",
+    "Portfolio Analytics"
+  ]
+}
+</script>

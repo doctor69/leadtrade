@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSE Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .status.connecting { background: #fef3c7; color: #92400e; }
+        .status.connected { background: #d1fae5; color: #065f46; }
+        .status.error { background: #fee2e2; color: #991b1b; }
+        .event {
+            background: #f9fafb;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 3px solid #3b82f6;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover { background: #2563eb; }
+        button:disabled { background: #9ca3af; cursor: not-allowed; }
+        input {
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            width: 100%;
+            margin: 10px 0;
+        }
+        label {
+            display: block;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SSE Event Stream Test</h1>
+        
+        <div>
+            <label>Supabase URL:</label>
+            <input type="text" id="supabaseUrl" placeholder="https://your-project.supabase.co">
+            
+            <label>Auth Token:</label>
+            <input type="password" id="authToken" placeholder="Your Supabase access token">
+            
+            <label>Account ID (optional):</label>
+            <input type="text" id="accountId" placeholder="Alpaca account ID">
+            
+            <label>Event Type:</label>
+            <select id="eventType" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; width: 100%; margin: 10px 0;">
+                <option value="trades">Trades</option>
+                <option value="transfers">Transfers</option>
+                <option value="journals">Journals</option>
+                <option value="account_status">Account Status</option>
+            </select>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <button id="connectBtn" onclick="connect()">Connect</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+            <button onclick="clearEvents()">Clear Events</button>
+        </div>
+        
+        <div id="status" class="status connecting">Not connected</div>
+        
+        <h3>Events (<span id="eventCount">0</span>):</h3>
+        <div id="events"></div>
+    </div>
+
+    <script>
+        let abortController = null;
+        let eventCount = 0;
+
+        async function connect() {
+            const supabaseUrl = document.getElementById('supabaseUrl').value;
+            const authToken = document.getElementById('authToken').value;
+            const accountId = document.getElementById('accountId').value;
+            const eventType = document.getElementById('eventType').value;
+
+            if (!supabaseUrl || !authToken) {
+                alert('Please enter Supabase URL and Auth Token');
+                return;
+            }
+
+            // Build URL
+            const params = new URLSearchParams();
+            if (accountId) params.append('account_id', accountId);
+            
+            const url = `${supabaseUrl}/functions/v1/alpaca-events/${eventType}${params.toString() ? '?' + params.toString() : ''}`;
+            
+            console.log('Connecting to:', url);
+            
+            updateStatus('Connecting...', 'connecting');
+            document.getElementById('connectBtn').disabled = true;
+            document.getElementById('disconnectBtn').disabled = false;
+
+            abortController = new AbortController();
+
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Accept': 'text/event-stream',
+                    },
+                    signal: abortController.signal,
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                updateStatus('Connected', 'connected');
+
+                // Read the stream
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    
+                    if (done) {
+                        console.log('Stream ended');
+                        updateStatus('Stream ended', 'connecting');
+                        break;
+                    }
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = line.slice(6);
+                            addEvent(data);
+                        }
+                    }
+                }
+
+            } catch (error) {
+                console.error('Connection error:', error);
+                if (error.name !== 'AbortError') {
+                    updateStatus(`Error: ${error.message}`, 'error');
+                }
+            } finally {
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('disconnectBtn').disabled = true;
+            }
+        }
+
+        function disconnect() {
+            if (abortController) {
+                abortController.abort();
+                abortController = null;
+                updateStatus('Disconnected', 'connecting');
+            }
+        }
+
+        function updateStatus(message, className) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${className}`;
+        }
+
+        function addEvent(data) {
+            eventCount++;
+            document.getElementById('eventCount').textContent = eventCount;
+            
+            const eventsEl = document.getElementById('events');
+            const eventEl = document.createElement('div');
+            eventEl.className = 'event';
+            
+            try {
+                const parsed = JSON.parse(data);
+                eventEl.textContent = JSON.stringify(parsed, null, 2);
+            } catch {
+                eventEl.textContent = data;
+            }
+            
+            eventsEl.insertBefore(eventEl, eventsEl.firstChild);
+            
+            // Keep only last 20 events
+            while (eventsEl.children.length > 20) {
+                eventsEl.removeChild(eventsEl.lastChild);
+            }
+        }
+
+        function clearEvents() {
+            document.getElementById('events').innerHTML = '';
+            eventCount = 0;
+            document.getElementById('eventCount').textContent = '0';
+        }
+
+        // Load saved values
+        window.addEventListener('load', () => {
+            const saved = localStorage.getItem('sseTestConfig');
+            if (saved) {
+                const config = JSON.parse(saved);
+                document.getElementById('supabaseUrl').value = config.supabaseUrl || '';
+                document.getElementById('accountId').value = config.accountId || '';
+            }
+        });
+
+        // Save values on change
+        document.getElementById('supabaseUrl').addEventListener('change', saveConfig);
+        document.getElementById('accountId').addEventListener('change', saveConfig);
+
+        function saveConfig() {
+            const config = {
+                supabaseUrl: document.getElementById('supabaseUrl').value,
+                accountId: document.getElementById('accountId').value,
+            };
+            localStorage.setItem('sseTestConfig', JSON.stringify(config));
+        }
+    </script>
+</body>
+</html>

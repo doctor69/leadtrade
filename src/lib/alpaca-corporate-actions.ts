@@ -6,7 +6,7 @@
  * Requirements: 8.1, 8.2, 8.3, 8.4
  */
 
-import { getAlpacaConfig } from './trading-config';
+import { createClient } from '@supabase/supabase-js';
 
 export interface CorporateAction {
   id: string;
@@ -46,12 +46,26 @@ export async function listCorporateActions(
   tradingMode: 'paper' | 'live' = 'paper'
 ): Promise<{ success: boolean; data?: CorporateAction[]; error?: string }> {
   try {
-    const config = getAlpacaConfig(tradingMode);
+    const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return {
+        success: false,
+        error: 'Supabase configuration missing',
+      };
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
-    const headers = {
-      'APCA-API-KEY-ID': config.brokerApiKey,
-      'APCA-API-SECRET-KEY': config.brokerApiSecret,
-    };
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      return {
+        success: false,
+        error: 'Not authenticated',
+      };
+    }
 
     // Build query string
     const queryParams = new URLSearchParams();
@@ -62,13 +76,17 @@ export async function listCorporateActions(
         }
       });
     }
+    queryParams.append('trading_mode', tradingMode);
 
     const queryString = queryParams.toString();
-    const url = `${config.brokerBaseUrl}/v1/corporate_actions/announcements${queryString ? `?${queryString}` : ''}`;
+    const url = `${supabaseUrl}/functions/v1/alpaca-corporate-actions/announcements${queryString ? `?${queryString}` : ''}`;
 
     const response = await fetch(url, {
       method: 'GET',
-      headers,
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
     });
 
     if (!response.ok) {
@@ -89,9 +107,18 @@ export async function listCorporateActions(
 
     const data: CorporateAction[] = await response.json();
     
+    // Handle nested response structure from Edge Function
+    // Edge Function wraps response in { success: true, data: [...], timestamp: ... }
+    let actions: CorporateAction[] = [];
+    if (Array.isArray(data)) {
+      actions = data;
+    } else if ((data as any).data && Array.isArray((data as any).data)) {
+      actions = (data as any).data;
+    }
+    
     return {
       success: true,
-      data,
+      data: actions,
     };
 
   } catch (error) {
@@ -112,18 +139,35 @@ export async function getCorporateAction(
   tradingMode: 'paper' | 'live' = 'paper'
 ): Promise<{ success: boolean; data?: CorporateAction; error?: string }> {
   try {
-    const config = getAlpacaConfig(tradingMode);
-    
-    const headers = {
-      'APCA-API-KEY-ID': config.brokerApiKey,
-      'APCA-API-SECRET-KEY': config.brokerApiSecret,
-    };
+    const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
-    const url = `${config.brokerBaseUrl}/v1/corporate_actions/announcements/${announcementId}`;
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return {
+        success: false,
+        error: 'Supabase configuration missing',
+      };
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      return {
+        success: false,
+        error: 'Not authenticated',
+      };
+    }
+
+    const url = `${supabaseUrl}/functions/v1/alpaca-corporate-actions/announcements/${announcementId}?trading_mode=${tradingMode}`;
 
     const response = await fetch(url, {
       method: 'GET',
-      headers,
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
     });
 
     if (!response.ok) {

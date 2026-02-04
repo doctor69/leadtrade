@@ -16,13 +16,14 @@ interface WireTransferFormProps {
 
 export default function WireTransferForm({ accountId, onTransferComplete }: WireTransferFormProps) {
   const [bankRelationships, setBankRelationships] = useState<BankRelationship[]>([]);
+  const [accountNumber, setAccountNumber] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
-    direction: 'INCOMING' as 'INCOMING' | 'OUTGOING',
+    direction: 'OUTGOING' as 'OUTGOING', // Wire transfers via API only support outgoing
     amount: '',
     bank_id: '',
     additional_information: '',
@@ -30,29 +31,38 @@ export default function WireTransferForm({ accountId, onTransferComplete }: Wire
   });
 
   useEffect(() => {
-    loadBankRelationships();
+    loadData();
   }, [accountId]);
 
-  const loadBankRelationships = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const result = await listBankRelationships(accountId);
+      // Load account details and bank relationships in parallel
+      const [accountResult, bankResult] = await Promise.all([
+        import('../../lib/apiService').then(({ apiService }) => apiService.getAccount()),
+        listBankRelationships(accountId)
+      ]);
 
-      if (result.success && result.banks) {
-        setBankRelationships(result.banks);
+      // Set account number
+      if (accountResult.success && accountResult.data?.account_number) {
+        setAccountNumber(accountResult.data.account_number);
+      }
+
+      // Set bank relationships
+      if (bankResult.success && bankResult.banks) {
+        setBankRelationships(bankResult.banks);
         
         // Auto-select first bank if available
-        if (result.banks.length > 0 && !formData.bank_id) {
-          setFormData(prev => ({ ...prev, bank_id: result.banks![0].id }));
+        if (bankResult.banks.length > 0 && !formData.bank_id) {
+          setFormData(prev => ({ ...prev, bank_id: bankResult.banks![0].id }));
         }
       } else {
-        setError(result.error || 'Failed to load bank relationships');
+        setError(bankResult.error || 'Failed to load bank relationships');
       }
     } catch (err) {
-      console.error('Error loading bank relationships:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load bank relationships');
+      setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
       setLoading(false);
     }
@@ -95,7 +105,7 @@ export default function WireTransferForm({ accountId, onTransferComplete }: Wire
       if (result.success) {
         setSuccess(true);
         setFormData({
-          direction: 'INCOMING',
+          direction: 'OUTGOING',
           amount: '',
           bank_id: formData.bank_id,
           additional_information: '',
@@ -151,11 +161,61 @@ export default function WireTransferForm({ accountId, onTransferComplete }: Wire
       <CardHeader>
         <CardTitle>Wire Transfer</CardTitle>
         <CardDescription>
-          Transfer funds via wire transfer (faster but with fees)
+          Withdraw funds via wire transfer (same-day/next-day, fees apply)
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-6">
+          {/* Info about deposits */}
+          <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-3">💡 Need to Deposit Funds?</h3>
+            
+            <div className="mb-4">
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+                <strong>ACH Transfer (Recommended):</strong>
+              </p>
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                Use the ACH Transfer tab to deposit money. Free and takes 1-3 business days.
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+                <strong>Wire Deposit (Same-Day):</strong>
+              </p>
+              <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+                For same-day deposits, initiate a wire from your bank using these details:
+              </p>
+              <div className="bg-white dark:bg-blue-900 rounded p-3 space-y-2 text-sm">
+                <div className="grid grid-cols-[140px_1fr] gap-2">
+                  <span className="font-medium text-blue-900 dark:text-blue-100">Beneficiary:</span>
+                  <span className="text-blue-800 dark:text-blue-200">Alpaca Securities LLC</span>
+                </div>
+                <div className="grid grid-cols-[140px_1fr] gap-2">
+                  <span className="font-medium text-blue-900 dark:text-blue-100">Account Number:</span>
+                  <span className="text-blue-800 dark:text-blue-200 font-mono">
+                    {accountNumber || 'Loading...'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-[140px_1fr] gap-2">
+                  <span className="font-medium text-blue-900 dark:text-blue-100">Bank Details:</span>
+                  <span className="text-blue-800 dark:text-blue-200">Contact Alpaca support for routing number</span>
+                </div>
+                <div className="grid grid-cols-[140px_1fr] gap-2">
+                  <span className="font-medium text-blue-900 dark:text-blue-100">Support:</span>
+                  <span className="text-blue-800 dark:text-blue-200">support@alpaca.markets</span>
+                </div>
+              </div>
+              <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
+                Note: Your bank may charge a wire fee ($15-$50). Funds typically arrive same-day or next business day.
+              </p>
+            </div>
+          </div>
+
+          {/* Wire Withdrawal Form */}
+          <div>
+            <h3 className="font-semibold mb-4">Wire Withdrawal</h3>
+            <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
             <div className="bg-destructive/10 border border-destructive rounded-lg p-4">
               <div className="flex items-center gap-2 text-destructive">
@@ -169,41 +229,13 @@ export default function WireTransferForm({ accountId, onTransferComplete }: Wire
             <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4">
               <div className="flex items-center gap-2 text-green-800 dark:text-green-200">
                 <CheckCircle className="h-4 w-4" />
-                <span className="text-sm">Wire transfer initiated successfully</span>
+                <span className="text-sm">Wire withdrawal initiated successfully</span>
               </div>
             </div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="direction">Transfer Direction</Label>
-            <Select
-              value={formData.direction}
-              onValueChange={(value: 'INCOMING' | 'OUTGOING') => 
-                setFormData({ ...formData, direction: value })
-              }
-            >
-              <SelectTrigger id="direction">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="INCOMING">
-                  <div className="flex items-center gap-2">
-                    <ArrowDownToLine className="h-4 w-4" />
-                    Deposit (Bank → Trading Account)
-                  </div>
-                </SelectItem>
-                <SelectItem value="OUTGOING">
-                  <div className="flex items-center gap-2">
-                    <ArrowUpFromLine className="h-4 w-4" />
-                    Withdraw (Trading Account → Bank)
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="bank_id">Bank</Label>
+            <Label htmlFor="bank_id">Recipient Bank</Label>
             <Select
               value={formData.bank_id}
               onValueChange={(value) => setFormData({ ...formData, bank_id: value })}
@@ -286,16 +318,14 @@ export default function WireTransferForm({ accountId, onTransferComplete }: Wire
               </>
             ) : (
               <>
-                {formData.direction === 'INCOMING' ? (
-                  <ArrowDownToLine className="h-4 w-4 mr-2" />
-                ) : (
-                  <ArrowUpFromLine className="h-4 w-4 mr-2" />
-                )}
-                {formData.direction === 'INCOMING' ? 'Initiate Wire Deposit' : 'Initiate Wire Withdrawal'}
+                <ArrowUpFromLine className="h-4 w-4 mr-2" />
+                Initiate Wire Withdrawal
               </>
             )}
           </Button>
         </form>
+      </div>
+    </div>
       </CardContent>
     </Card>
   );

@@ -129,7 +129,46 @@ export default function BankLinking({ accountId, tradingMode = 'paper' }: BankLi
     const handleAddBank = async () => {
         try {
             setError(null);
-            const result = await createBankRelationship(accountId, bankForm);
+
+            // Validate bank_code format based on type
+            if (bankForm.bank_code_type === 'aba') {
+                // ABA routing numbers must be exactly 9 digits
+                if (!/^\d{9}$/.test(bankForm.bank_code)) {
+                    setError('ABA routing number must be exactly 9 digits');
+                    return;
+                }
+            } else if (bankForm.bank_code_type === 'bic') {
+                // BIC/SWIFT codes must be 8 or 11 characters (letters and numbers)
+                if (!/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/i.test(bankForm.bank_code)) {
+                    setError('BIC/SWIFT code must be 8 or 11 characters (e.g., CHASUS33 or CHASUS33XXX)');
+                    return;
+                }
+
+                // For BIC, additional fields are required
+                if (!bankForm.country || !bankForm.state || !bankForm.postal_code || !bankForm.city || !bankForm.street_address) {
+                    setError('For international banks (BIC), all address fields are required');
+                    return;
+                }
+            }
+
+            // Prepare bank data based on bank_code_type
+            const bankData: any = {
+                name: bankForm.name,
+                bank_code: bankForm.bank_code,
+                bank_code_type: bankForm.bank_code_type,
+                account_number: bankForm.account_number
+            };
+
+            // Add address fields ONLY for BIC (international banks)
+            if (bankForm.bank_code_type === 'bic') {
+                if (bankForm.country) bankData.country = bankForm.country;
+                if (bankForm.city) bankData.city = bankForm.city;
+                if (bankForm.state) bankData.state_province = bankForm.state;
+                if (bankForm.postal_code) bankData.postal_code = bankForm.postal_code;
+                if (bankForm.street_address) bankData.street_address = bankForm.street_address;
+            }
+
+            const result = await createBankRelationship(accountId, bankData);
 
             if (result.success) {
                 setShowAddBank(false);
@@ -377,13 +416,24 @@ export default function BankLinking({ accountId, tradingMode = 'paper' }: BankLi
                                     </Select>
                                 </div>
                                 <div>
-                                    <Label htmlFor="bank_code">Bank Code</Label>
+                                    <Label htmlFor="bank_code">
+                                        Bank Code
+                                        <span className="text-xs text-muted-foreground ml-2">
+                                            {bankForm.bank_code_type === 'aba' ? '(9 digits)' : '(8 or 11 characters)'}
+                                        </span>
+                                    </Label>
                                     <Input
                                         id="bank_code"
                                         value={bankForm.bank_code}
                                         onChange={(e) => setBankForm({ ...bankForm, bank_code: e.target.value })}
                                         placeholder={bankForm.bank_code_type === 'aba' ? '123456789' : 'CHASUS33'}
+                                        maxLength={bankForm.bank_code_type === 'aba' ? 9 : 11}
                                     />
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        {bankForm.bank_code_type === 'aba'
+                                            ? 'Enter the 9-digit ABA routing number'
+                                            : 'Enter the 8 or 11 character BIC/SWIFT code'}
+                                    </p>
                                 </div>
                                 <div>
                                     <Label htmlFor="account_number">Account Number</Label>
@@ -395,6 +445,61 @@ export default function BankLinking({ accountId, tradingMode = 'paper' }: BankLi
                                     />
                                 </div>
                             </div>
+
+                            {/* Address fields - required for BIC, optional for ABA */}
+                            {bankForm.bank_code_type === 'bic' && (
+                                <div className="border-t pt-4 mt-4">
+                                    <p className="text-sm font-medium mb-3">Bank Address (Required for International)</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <Label htmlFor="country">Country</Label>
+                                            <Input
+                                                id="country"
+                                                value={bankForm.country}
+                                                onChange={(e) => setBankForm({ ...bankForm, country: e.target.value })}
+                                                placeholder="USA"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="state">State/Province</Label>
+                                            <Input
+                                                id="state"
+                                                value={bankForm.state}
+                                                onChange={(e) => setBankForm({ ...bankForm, state: e.target.value })}
+                                                placeholder="California"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="city">City</Label>
+                                            <Input
+                                                id="city"
+                                                value={bankForm.city}
+                                                onChange={(e) => setBankForm({ ...bankForm, city: e.target.value })}
+                                                placeholder="San Francisco"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="postal_code">Postal Code</Label>
+                                            <Input
+                                                id="postal_code"
+                                                value={bankForm.postal_code}
+                                                onChange={(e) => setBankForm({ ...bankForm, postal_code: e.target.value })}
+                                                placeholder="94102"
+                                            />
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <Label htmlFor="street_address">Street Address</Label>
+                                            <Input
+                                                id="street_address"
+                                                value={bankForm.street_address}
+                                                onChange={(e) => setBankForm({ ...bankForm, street_address: e.target.value })}
+                                                placeholder="123 Main Street"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="flex gap-2">
                                 <Button onClick={handleAddBank}>Add Bank Relationship</Button>
                                 <Button variant="outline" onClick={() => setShowAddBank(false)}>Cancel</Button>

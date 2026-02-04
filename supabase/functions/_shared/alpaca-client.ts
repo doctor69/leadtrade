@@ -563,7 +563,7 @@ export class AlpacaClient {
 
   /**
    * Get account portfolio history
-   * GET /v1/accounts/{account_id}/portfolio/history
+   * GET /v1/trading/accounts/{account_id}/account/portfolio/history
    */
   async getPortfolioHistory(
     accountId: string,
@@ -574,7 +574,7 @@ export class AlpacaClient {
       extended_hours?: boolean
     }
   ): Promise<AlpacaResponse<any>> {
-    return this.brokerRequest(`/v1/accounts/${accountId}/portfolio/history`, { params })
+    return this.brokerRequest(`/v1/trading/accounts/${accountId}/account/portfolio/history`, { params })
   }
 
   /**
@@ -727,21 +727,21 @@ export class AlpacaClient {
 
   /**
    * Get account configuration
-   * GET /v1/accounts/{account_id}/account_configurations
+   * GET /v1/accounts/{account_id}/account/configurations
    */
   async getAccountConfiguration(accountId: string): Promise<AlpacaResponse<TradingConfiguration>> {
-    return this.brokerRequest<TradingConfiguration>(`/v1/accounts/${accountId}/account_configurations`)
+    return this.brokerRequest<TradingConfiguration>(`/v1/accounts/${accountId}/account/configurations`)
   }
 
   /**
    * Update account configuration
-   * PATCH /v1/accounts/{account_id}/account_configurations
+   * PATCH /v1/accounts/{account_id}/account/configurations
    */
   async updateAccountConfiguration(
     accountId: string,
     config: Partial<TradingConfiguration>
   ): Promise<AlpacaResponse<TradingConfiguration>> {
-    return this.brokerRequest<TradingConfiguration>(`/v1/accounts/${accountId}/account_configurations`, {
+    return this.brokerRequest<TradingConfiguration>(`/v1/accounts/${accountId}/account/configurations`, {
       method: 'PATCH',
       body: config
     })
@@ -906,7 +906,7 @@ export class AlpacaClient {
     bankData: {
       name: string
       bank_code: string
-      bank_code_type: 'aba' | 'bic'
+      bank_code_type: 'aba' | 'bic' | 'ABA' | 'BIC'
       account_number: string
       country?: string
       state_province?: string

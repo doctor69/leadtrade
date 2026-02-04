@@ -149,23 +149,6 @@ export default function TradingDashboard() {
                                     )}
                                 </CardContent>
                             </Card>
-
-                            {/* Quick Actions */}
-                            <Card>
-                                <CardHeader className="pb-3">
-                                    <CardTitle className="text-base sm:text-lg">Quick Actions</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-2 sm:space-y-3">
-                                    <Button className="w-full min-h-[44px] text-sm" onClick={() => window.location.href = '/trade'}>
-                                        <Activity className="h-4 w-4 mr-2" />
-                                        Start Trading
-                                    </Button>
-                                    <Button variant="outline" className="w-full min-h-[44px] text-sm" onClick={() => window.location.href = '/leaderboard'}>
-                                        <TrendingUp className="h-4 w-4 mr-2" />
-                                        View Leaderboard
-                                    </Button>
-                                </CardContent>
-                            </Card>
                         </div>
                     </div>
                 </TabsContent>
@@ -193,7 +176,10 @@ export default function TradingDashboard() {
                 </TabsContent>
 
                 <TabsContent value="events" className="space-y-4 sm:space-y-6">
-                    <EventStreamFeed />
+                    <EventStreamFeed 
+                        accountId={accountData?.id}
+                        enabled={true}
+                    />
                 </TabsContent>
 
                 <TabsContent value="corporate" className="space-y-4 sm:space-y-6">

@@ -216,38 +216,74 @@ export async function createAlpacaAccount(
 }
 
 /**
- * Retrieves Alpaca account information
+ * Retrieves Alpaca account information via Supabase Edge Function
  */
 export async function getAlpacaAccount(
   accountId: string,
   tradingMode: 'paper' | 'live' = 'paper'
 ): Promise<{ success: boolean; account?: AlpacaAccountResponse; error?: string }> {
   try {
-    const config = getAlpacaConfig(tradingMode);
-    
-    const headers = {
-      'APCA-API-KEY-ID': config.brokerApiKey,
-      'APCA-API-SECRET-KEY': config.brokerApiSecret,
-    };
+    if (!accountId) {
+      return {
+        success: false,
+        error: 'Account ID is required'
+      };
+    }
 
-    const response = await fetch(`${config.brokerBaseUrl}/accounts/${accountId}`, {
+    // Get Supabase session for authentication
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || '';
+    const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '';
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      return {
+        success: false,
+        error: 'Authentication required. Please sign in.',
+      };
+    }
+
+    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/alpaca-account/${accountId}`;
+
+    const response = await fetch(edgeFunctionUrl, {
       method: 'GET',
-      headers,
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': supabaseAnonKey,
+      },
     });
 
     if (!response.ok) {
       const errorText = await response.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        return {
+          success: false,
+          error: `Failed to retrieve account: ${response.status} ${response.statusText}`,
+        };
+      }
       return {
         success: false,
-        error: `Failed to retrieve account: ${response.status} ${response.statusText}`,
+        error: errorData.error?.message || errorData.error || 'Failed to retrieve account',
       };
     }
 
-    const account: AlpacaAccountResponse = await response.json();
+    const result = await response.json();
     
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error?.message || result.error || 'Failed to retrieve account',
+      };
+    }
+
     return {
       success: true,
-      account,
+      account: result.data,
     };
 
   } catch (error) {
