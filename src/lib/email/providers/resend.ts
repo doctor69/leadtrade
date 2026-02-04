@@ -6,8 +6,8 @@
 import type { EmailPayload, EmailResult } from '../types';
 
 // Access environment variables - works in both Astro and Node.js contexts
-const RESEND_API_KEY = typeof process !== 'undefined' 
-  ? process.env.RESEND_API_KEY 
+const RESEND_API_KEY = typeof process !== 'undefined'
+  ? process.env.RESEND_API_KEY
   : import.meta.env.RESEND_API_KEY;
 const RESEND_API_URL = 'https://api.resend.com/emails';
 
@@ -53,14 +53,14 @@ export async function sendResendEmail(
     if (!response.ok) {
       const responseText = await response.text();
       console.error('Resend API error response:', responseText);
-      
+
       let errorData;
       try {
         errorData = JSON.parse(responseText);
       } catch {
         errorData = { message: responseText };
       }
-      
+
       throw new Error(errorData.message || `Resend API error: ${response.status}`);
     }
 

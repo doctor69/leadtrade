@@ -1,6 +1,6 @@
 # LeadTrade Technical Architecture
 
-**Version**: 1.8.0  
+**Version**: 1.8.9  
 **Last Updated**: February 3, 2026
 
 ## System Overview
@@ -114,8 +114,9 @@ LeadTrade is a full-stack social trading platform built with modern web technolo
 
 **Email Providers**
 - Brevo API: Multi-domain email delivery
-- Resend API: Branded trading notifications
+- Resend API: Branded trading notifications (rate limited: 2 req/sec)
 - SPF/DKIM/DMARC configured
+- Automatic rate limiting in copy trading notifications
 
 ### Development Tools
 
@@ -197,9 +198,11 @@ LeadTrade is a full-stack social trading platform built with modern web technolo
 7. For each follower:
    - Validate position (for sells)
    - Submit order to Alpaca
-   - Send notification email
+   - Fetch follower profile with error handling
+   - Send notification email (with graceful failure)
+   - Apply 600ms delay between emails (rate limiting)
    ↓
-8. Return execution results
+8. Return execution results with detailed logging
 ```
 
 ### Email Delivery Flow
@@ -223,6 +226,15 @@ LeadTrade is a full-stack social trading platform built with modern web technolo
 7. If failed, add to retry queue
    ↓
 8. Return result to caller
+
+**Error Handling & Rate Limiting (v1.8.7):**
+- Explicit error checking for profile fetch operations
+- Graceful degradation: continues processing if one email fails
+- Missing data validation: checks for profiles and email addresses
+- Detailed logging with follower IDs for debugging
+- Non-blocking: email failures don't affect trade execution
+- Rate limiting: 600ms delay between emails (respects Resend's 2 req/sec limit)
+- Applies to both leader and follower notification emails
 ```
 
 ## Database Schema
@@ -466,6 +478,13 @@ CREATE TABLE leaderboard_stats (
 - Request/response logging
 - Error stack traces
 
+**Production Best Practices**
+- No console.log in production code
+- Structured logging with proper levels
+- Error tracking with context
+- Performance metrics logging
+- Security-sensitive data redaction
+
 **Log Aggregation**
 - Supabase Edge Function logs
 - Cloudflare Pages logs
@@ -545,7 +564,8 @@ CREATE TABLE leaderboard_stats (
 - **Time to Interactive**: < 3.5s
 - **API Response Time**: < 200ms (p95)
 - **WebSocket Latency**: < 100ms
-- **Copy Trade Execution**: < 200ms per follower
+- **Copy Trade Execution**: < 200ms per follower (excluding email delays)
+- **Email Rate Limit**: 600ms delay between notifications (~1.6 emails/sec)
 - **Email Delivery**: < 5s
 
 ## Disaster Recovery
@@ -597,6 +617,6 @@ CREATE TABLE leaderboard_stats (
 
 ---
 
-**Document Version**: 1.8.0  
+**Document Version**: 1.8.9  
 **Last Updated**: February 3, 2026  
 **Maintained By**: LeadTrade Engineering Team

@@ -1,14 +1,18 @@
 /**
  * Shared Email Helper for Supabase Edge Functions
  * Sends emails directly via Brevo and Resend APIs
+ * Supports Resend templates for trading emails
  */
 
 interface EmailPayload {
   category: 'auth' | 'trading' | 'support' | 'marketing';
   to: string | string[];
-  subject: string;
-  html: string;
+  subject?: string; // Optional when using templates
+  html?: string; // Optional when using templates
   text?: string;
+  // Resend template support
+  templateId?: string;
+  templateData?: Record<string, any>;
 }
 
 interface EmailResult {
@@ -22,6 +26,12 @@ interface EmailConfig {
   fromEmail: string;
   fromName: string;
 }
+
+// Resend template IDs (create these in your Resend dashboard)
+export const RESEND_TEMPLATES = {
+  LEADER_TRADE: 'leader-trade-executed', // Template for leader trade notifications
+  FOLLOWER_COPY_TRADE: 'follower-copy-trade', // Template for follower copy trade notifications
+} as const;
 
 const EMAIL_CONFIGS: Record<string, EmailConfig> = {
   auth: {
@@ -102,6 +112,7 @@ async function sendBrevoEmail(
 
 /**
  * Send email via Resend API
+ * Supports both HTML content and templates
  */
 async function sendResendEmail(
   payload: EmailPayload,
@@ -115,19 +126,37 @@ async function sendResendEmail(
   }
 
   try {
+    // Build email body - use template if provided, otherwise use HTML
+    const emailBody: any = {
+      from: `${config.fromName} <${config.fromEmail}>`,
+      to: Array.isArray(payload.to) ? payload.to : [payload.to],
+    };
+
+    if (payload.templateId) {
+      // Use Resend template
+      emailBody.template_id = payload.templateId;
+      if (payload.templateData) {
+        emailBody.template_data = payload.templateData;
+      }
+    } else {
+      // Use HTML content
+      if (!payload.subject || !payload.html) {
+        throw new Error('Subject and HTML are required when not using a template');
+      }
+      emailBody.subject = payload.subject;
+      emailBody.html = payload.html;
+      if (payload.text) {
+        emailBody.text = payload.text;
+      }
+    }
+
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        from: `${config.fromName} <${config.fromEmail}>`,
-        to: Array.isArray(payload.to) ? payload.to : [payload.to],
-        subject: payload.subject,
-        html: payload.html,
-        ...(payload.text && { text: payload.text }),
-      }),
+      body: JSON.stringify(emailBody),
     });
 
     if (!response.ok) {
