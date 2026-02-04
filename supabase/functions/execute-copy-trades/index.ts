@@ -452,38 +452,55 @@ serve(async (req) => {
 
           // Send emails to successful followers
           console.log(`📧 Sending emails to ${copyResults.filter(r => r.success).length} successful followers...`)
+          console.log('Copy results:', JSON.stringify(copyResults, null, 2))
+          
           for (const result of copyResults.filter(r => r.success)) {
-            const { data: followerProfile } = await supabase
+            console.log(`Processing follower ${result.followerId}...`)
+            
+            const { data: followerProfile, error: followerProfileError } = await supabase
               .from('profiles')
               .select('email, full_name')
               .eq('id', result.followerId)
               .single()
 
-            if (followerProfile?.email) {
-              console.log(`📧 Sending email to follower: ${followerProfile.email}`)
-              
-              const followerEmailHtml = generateCopyTradeEmailHtml({
-                followerName: followerProfile.full_name || 'Trader',
-                leaderName: leaderProfile?.full_name || 'Leader',
-                symbol: orderData.symbol,
-                side: orderData.side,
-                quantity: result.quantity || 0,
-                portfolioPercentage: result.tradePercentage
-              })
-              
-              const followerEmailResult = await sendEmail({
-                category: 'trading',
-                to: followerProfile.email,
-                subject: `Copy Trade Executed - ${orderData.symbol}`,
-                html: followerEmailHtml,
-                text: `A trade from ${leaderProfile?.full_name || 'your leader'} has been copied: ${orderData.side.toUpperCase()} ${result.quantity?.toFixed(9)} ${orderData.symbol}`
-              })
-              
-              if (followerEmailResult.success) {
-                console.log(`✅ Follower email sent successfully (ID: ${followerEmailResult.messageId})`)
-              } else {
-                console.error(`❌ Follower email failed:`, followerEmailResult.error)
-              }
+            if (followerProfileError) {
+              console.error(`❌ Error fetching follower ${result.followerId} profile:`, followerProfileError)
+              continue
+            }
+
+            if (!followerProfile) {
+              console.error(`❌ No profile found for follower ${result.followerId}`)
+              continue
+            }
+
+            if (!followerProfile.email) {
+              console.warn(`⚠️ Follower ${result.followerId} has no email address, skipping`)
+              continue
+            }
+
+            console.log(`📧 Sending email to follower: ${followerProfile.email}`)
+            
+            const followerEmailHtml = generateCopyTradeEmailHtml({
+              followerName: followerProfile.full_name || 'Trader',
+              leaderName: leaderProfile?.full_name || 'Leader',
+              symbol: orderData.symbol,
+              side: orderData.side,
+              quantity: result.quantity || 0,
+              portfolioPercentage: result.tradePercentage
+            })
+            
+            const followerEmailResult = await sendEmail({
+              category: 'trading',
+              to: followerProfile.email,
+              subject: `Copy Trade Executed - ${orderData.symbol}`,
+              html: followerEmailHtml,
+              text: `A trade from ${leaderProfile?.full_name || 'your leader'} has been copied: ${orderData.side.toUpperCase()} ${result.quantity?.toFixed(9)} ${orderData.symbol}`
+            })
+            
+            if (followerEmailResult.success) {
+              console.log(`✅ Follower ${result.followerId} email sent successfully (ID: ${followerEmailResult.messageId})`)
+            } else {
+              console.error(`❌ Follower ${result.followerId} email failed:`, followerEmailResult.error)
             }
           }
           
