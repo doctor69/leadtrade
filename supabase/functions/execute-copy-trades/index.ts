@@ -9,7 +9,8 @@ import {
   corsHeaders
 } from '../_shared/index.ts'
 import type { AuthContext } from '../_shared/auth.ts'
-import { sendEmail, generateTradeEmailHtml, generateCopyTradeEmailHtml } from '../_shared/email-helper.ts'
+import { RESEND_TEMPLATES } from '../_shared/email-helper.ts'
+import { queueEmail } from '../_shared/email-queue-helper.ts'
 
 interface CopyTradeRequest {
   leaderId: string
@@ -393,39 +394,35 @@ serve(async (req) => {
 
           // Send email to leader about their trade
           if (leaderProfile?.email) {
-            console.log(`📧 Sending email to leader: ${leaderProfile.email}`)
+            console.log(`📧 Queueing email to leader: ${leaderProfile.email}`)
             
-            const leaderEmailHtml = generateTradeEmailHtml({
-              userName: leaderProfile.full_name || 'Trader',
-              symbol: orderData.symbol,
-              side: orderData.side,
-              quantity: orderData.qty,
-              isLeader: true,
-              followerCount: successfulCopies
-            })
+            const sideColor = orderData.side === 'buy' ? '#10b981' : '#ef4444'
             
-            const leaderEmailResult = await sendEmail({
+            const leaderEmailResult = await queueEmail({
               category: 'trading',
               to: leaderProfile.email,
-              subject: `Trade Executed - ${orderData.side.toUpperCase()} ${orderData.symbol}`,
-              html: leaderEmailHtml,
-              text: `Your trade has been executed: ${orderData.side.toUpperCase()} ${orderData.qty} ${orderData.symbol}. Copied to ${successfulCopies} of ${copyResults.length} followers.`
+              templateId: RESEND_TEMPLATES.LEADER_TRADE,
+              templateData: {
+                userName: leaderProfile.full_name || 'Trader',
+                symbol: orderData.symbol,
+                side: orderData.side.toUpperCase(),
+                quantity: orderData.qty,
+                followerCount: successfulCopies,
+                sideColor: sideColor,
+              }
             })
             
             if (leaderEmailResult.success) {
-              console.log(`✅ Leader email sent successfully (ID: ${leaderEmailResult.messageId})`)
+              console.log(`✅ Leader email queued successfully (Queue ID: ${leaderEmailResult.queueId})`)
             } else {
-              console.error(`❌ Leader email failed:`, leaderEmailResult.error)
+              console.error(`❌ Leader email queue failed:`, leaderEmailResult.error)
             }
-            
-            // Add delay before sending follower emails to respect Resend rate limit
-            await new Promise(resolve => setTimeout(resolve, 600))
           } else {
             console.log('⚠️ No leader email address found, skipping leader notification')
           }
 
           // Send emails to successful followers
-          console.log(`📧 Sending emails to ${copyResults.filter(r => r.success).length} successful followers...`)
+          console.log(`📧 Queueing emails for ${copyResults.filter(r => r.success).length} successful followers...`)
           console.log('Copy results:', JSON.stringify(copyResults, null, 2))
           
           for (const result of copyResults.filter(r => r.success)) {
@@ -452,41 +449,37 @@ serve(async (req) => {
               continue
             }
 
-            console.log(`📧 Sending email to follower: ${followerProfile.email}`)
+            console.log(`📧 Queueing email to follower: ${followerProfile.email}`)
             
-            const followerEmailHtml = generateCopyTradeEmailHtml({
-              followerName: followerProfile.full_name || 'Trader',
-              leaderName: leaderProfile?.full_name || 'Leader',
-              symbol: orderData.symbol,
-              side: orderData.side,
-              quantity: result.quantity || 0,
-              portfolioPercentage: result.tradePercentage
-            })
+            const sideColor = orderData.side === 'buy' ? '#10b981' : '#ef4444'
             
-            const followerEmailResult = await sendEmail({
+            const followerEmailResult = await queueEmail({
               category: 'trading',
               to: followerProfile.email,
-              subject: `Copy Trade Executed - ${orderData.symbol}`,
-              html: followerEmailHtml,
-              text: `A trade from ${leaderProfile?.full_name || 'your leader'} has been copied: ${orderData.side.toUpperCase()} ${result.quantity?.toFixed(9)} ${orderData.symbol}`
+              templateId: RESEND_TEMPLATES.FOLLOWER_COPY_TRADE,
+              templateData: {
+                followerName: followerProfile.full_name || 'Trader',
+                leaderName: leaderProfile?.full_name || 'Leader',
+                symbol: orderData.symbol,
+                side: orderData.side.toUpperCase(),
+                quantity: (result.quantity || 0).toFixed(9),
+                portfolioPercentage: (result.tradePercentage || 0).toFixed(4),
+                sideColor: sideColor,
+              }
             })
             
             if (followerEmailResult.success) {
-              console.log(`✅ Follower ${result.followerId} email sent successfully (ID: ${followerEmailResult.messageId})`)
+              console.log(`✅ Follower ${result.followerId} email queued successfully (Queue ID: ${followerEmailResult.queueId})`)
             } else {
-              console.error(`❌ Follower ${result.followerId} email failed:`, followerEmailResult.error)
+              console.error(`❌ Follower ${result.followerId} email queue failed:`, followerEmailResult.error)
             }
-            
-            // Add delay to respect Resend rate limit (2 requests per second)
-            // Wait 600ms between emails to be safe (allows ~1.6 emails/sec)
-            await new Promise(resolve => setTimeout(resolve, 600))
           }
           
-          console.log('📧 Email notification process completed')
+          console.log('📧 Email queueing process completed')
         } catch (emailError) {
-          console.error('❌ Error sending email notifications:', emailError)
+          console.error('❌ Error queueing email notifications:', emailError)
           console.error('Email error stack:', emailError instanceof Error ? emailError.stack : 'No stack')
-          // Don't fail the whole operation if emails fail
+          // Don't fail the whole operation if email queueing fails
         }
 
         return createSuccessResponse({

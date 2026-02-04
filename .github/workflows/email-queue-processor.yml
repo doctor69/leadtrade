@@ -1,0 +1,28 @@
+name: Email Queue Processor
+
+# Process email queue every 30 seconds to handle rate limiting
+# This ensures trading emails (Resend) respect the 2 req/sec limit
+
+on:
+  schedule:
+    # Run every minute (GitHub Actions minimum interval)
+    # The edge function will process up to 10 emails with 600ms delay between each
+    - cron: '* * * * *'
+  
+  # Allow manual trigger for testing
+  workflow_dispatch:
+
+jobs:
+  process-queue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    
+    steps:
+      - name: Process Email Queue
+        run: |
+          curl -X POST "${{ secrets.SUPABASE_URL }}/functions/v1/email-queue" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            --max-time 60 \
+            --fail-with-body
+        continue-on-error: true
