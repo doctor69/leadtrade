@@ -38,6 +38,13 @@ export default function NavigationBar() {
         // Listen for custom navigation events
         window.addEventListener('astro:page-load', handleLocationChange);
 
+        // Poll for URL changes (fallback for static sites)
+        const pathCheckInterval = setInterval(() => {
+            if (window.location.pathname !== currentPath) {
+                setCurrentPath(window.location.pathname);
+            }
+        }, 100);
+
         // Check if user is logged in via Supabase
         const checkLoginStatus = async () => {
             if (typeof window !== 'undefined') {
@@ -74,8 +81,9 @@ export default function NavigationBar() {
             window.removeEventListener('storage', checkLoginStatus);
             window.removeEventListener('popstate', handleLocationChange);
             window.removeEventListener('astro:page-load', handleLocationChange);
+            clearInterval(pathCheckInterval);
         };
-    }, []);
+    }, [currentPath]);
 
     // Handle swipe gestures for mobile menu
     useEffect(() => {
