@@ -162,8 +162,8 @@ export default function NavigationBar() {
                                 }
                             })
                             .map((item) => {
-                                // Check current path directly from window.location for production
-                                const isActive = mounted && window.location.pathname === item.href;
+                                // Use currentPath state which updates on mount and navigation
+                                const isActive = currentPath === item.href;
                                 return (
                                     <div key={`desktop-${item.name}`} className="relative">
                                         <Button
@@ -290,8 +290,8 @@ export default function NavigationBar() {
                                         }
                                     })
                                     .map((item) => {
-                                        // Check current path directly from window.location for production
-                                        const isActive = mounted && window.location.pathname === item.href;
+                                        // Use currentPath state which updates on mount and navigation
+                                        const isActive = currentPath === item.href;
                                         return (
                                             <div key={`mobile-${item.name}`} className="relative">
                                                 <button
