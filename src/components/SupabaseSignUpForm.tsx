@@ -554,9 +554,9 @@ export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: Supabas
           <div className="space-y-2 text-sm text-muted-foreground">
             <p>✅ Trading account created and verified</p>
             <p>✅ Alpaca brokerage account set up</p>
-            <p>✅ $100,000 paper trading balance</p>
+            <p>✅ $100,000 virtual trading balance</p>
             <p>✅ Access to real-time market data</p>
-            <p>✅ Copy trading features available</p>
+            <p>✅ Mirror trading features available</p>
             <p>✅ Portfolio analytics enabled</p>
           </div>
           <p className="text-sm text-muted-foreground mt-4">
@@ -574,13 +574,13 @@ export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: Supabas
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-              Paper Trading
+              Virtual Trading
             </Badge>
             <Badge variant="outline">Real Market Data</Badge>
           </div>
           <CardTitle className="text-2xl">Create Your Trading Account</CardTitle>
           <CardDescription>
-            Start paper trading with $100,000 virtual funds and real market data
+            Start trading with $100,000 virtual funds and real market data
           </CardDescription>
         </CardHeader>
       </Card>

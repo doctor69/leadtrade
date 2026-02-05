@@ -3,7 +3,7 @@
 // Requirements: 14.1, 14.2, 14.3, 14.4, 14.5
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.52.0'
 import { AlpacaClient } from '../_shared/alpaca-client.ts'
 import { authenticateUser } from '../_shared/auth.ts'
 

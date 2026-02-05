@@ -3,6 +3,24 @@ import { edgeFunctionClient } from './edgeFunctionClient';
 import { marketDataCache, userDataCache, cacheKeys, cacheUtils } from './cache';
 import logger from './logger';
 
+// Types for mirror trading
+export interface MirrorTradingSubscription {
+  id: string;
+  follower_id: string;
+  leader_id: string;
+  allocation_percentage: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MirrorTradingStats {
+  total_followers: number;
+  total_following: number;
+  total_mirrored_trades: number;
+  success_rate: number;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;

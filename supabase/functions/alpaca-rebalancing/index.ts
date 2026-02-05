@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.52.0'
 import { AlpacaClient } from '../_shared/alpaca-client.ts'
 import { authenticateRequest, type AuthContext } from '../_shared/auth.ts'
 import { corsHeaders, handleCors } from '../_shared/cors.ts'

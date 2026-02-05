@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Layout from "../layouts/Layout.astro";
 import { supabase } from "../lib/supabase";
 import AppShell from "@/components/AppShell";
+import HomePageRedirect from "@/components/HomePageRedirect";
 import { TrendingUp, Users, Trophy, BarChart3 } from "lucide-react";
 
 // Enable prerendering for static generation
@@ -20,10 +21,10 @@ const preloadResources = [
 ];
 
 // Social media metadata for homepage
-const pageTitle = "LEADTRADE - Advanced Paper & Live Trading Platform";
-const pageDescription = "The ultimate trading platform with real market data, copy trading, and social leaderboards. Practice trading risk-free with $100K virtual funds or trade with real money.";
+const pageTitle = "LEADTRADE - Professional Trading Platform with Mirror Trading";
+const pageDescription = "Institutional-grade trading platform featuring real-time market data, mirror trading capabilities, and advanced performance analytics. Elevate your investment strategy with precision and confidence.";
 const pageImage = "/social/leadtrade-preview.png";
-const pageKeywords = "paper trading, live trading, copy trading, stock market, investment, finance, trading platform, social trading, leaderboards, real-time data";
+const pageKeywords = "trading platform, mirror trading, stock market, investment, finance, social trading, leaderboards, real-time data, portfolio management, algorithmic trading";
 ---
 
 <Layout 
@@ -40,23 +41,18 @@ const pageKeywords = "paper trading, live trading, copy trading, stock market, i
 			"@context": "https://schema.org",
 			"@type": "WebApplication",
 			"name": "LEADTRADE",
-			"description": "Advanced paper and live trading platform with real market data, copy trading, and social leaderboards",
+			"description": "Institutional-grade trading platform with real-time market data, mirror trading capabilities, and advanced analytics",
 			"url": "https://leadtrade.app",
 			"applicationCategory": "FinanceApplication",
 			"operatingSystem": "Web Browser",
-			"offers": {
-				"@type": "Offer",
-				"price": "0",
-				"priceCurrency": "USD",
-				"description": "Free paper trading with $100,000 virtual funds"
-			},
 			"featureList": [
 				"Real-time market data",
-				"Paper trading with virtual funds",
-				"Copy trading features",
-				"Social leaderboards",
-				"Portfolio analytics",
-				"Risk-free practice trading"
+				"Mirror trading capabilities",
+				"Competitive leaderboards",
+				"Advanced portfolio analytics",
+				"Performance tracking",
+				"Risk management tools",
+				"Algorithmic trading support"
 			],
 			"screenshot": "https://leadtrade.app/social/leadtrade-preview.svg",
 			"author": {
@@ -66,6 +62,7 @@ const pageKeywords = "paper trading, live trading, copy trading, stock market, i
 		}
 	</script>
 <AppShell client:only="react">
+	<HomePageRedirect client:only="react" />
 	<div class="space-y-12">
 		<!-- Hero Section -->
 		<div class="text-center space-y-6">
@@ -73,12 +70,12 @@ const pageKeywords = "paper trading, live trading, copy trading, stock market, i
 				<span class="text-primary">LEAD</span>TRADE
 			</h1>
 			<p class="text-xl text-muted-foreground max-w-2xl mx-auto">
-				The ultimate paper trading platform. Practice trading with real market data, compete with others, and master your skills risk-free.
+				Institutional-grade trading platform with real-time market intelligence. Mirror elite traders, compete on global leaderboards, and execute your investment strategy with precision.
 			</p>
 			<div class="flex flex-col sm:flex-row gap-4 justify-center">
 				<a href="/dashboard">
 					<Button size="lg" className="w-full sm:w-auto">
-						Start Trading
+						Launch Platform
 					</Button>
 				</a>
 				<a href="/leaderboard">
@@ -96,11 +93,11 @@ const pageKeywords = "paper trading, live trading, copy trading, stock market, i
 					<div class="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mb-4">
 						<TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
 					</div>
-					<CardTitle>Real Market Data</CardTitle>
+					<CardTitle>Real-Time Market Data</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<CardDescription>
-						Trade with live market data from Alpaca Markets. Experience real market conditions without the risk.
+						Access institutional-grade market data powered by Alpaca Markets. Execute trades with real-time pricing and market intelligence.
 					</CardDescription>
 				</CardContent>
 			</Card>
@@ -110,11 +107,11 @@ const pageKeywords = "paper trading, live trading, copy trading, stock market, i
 					<div class="mx-auto w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mb-4">
 						<Users className="h-6 w-6 text-green-600 dark:text-green-400" />
 					</div>
-					<CardTitle>Compete & Learn</CardTitle>
+					<CardTitle>Mirror Trading</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<CardDescription>
-						Join a community of traders. Learn from others, share strategies, and improve your trading skills.
+						Replicate the strategies of elite traders automatically. Customize allocation percentages and risk parameters to align with your investment objectives.
 					</CardDescription>
 				</CardContent>
 			</Card>
@@ -124,11 +121,11 @@ const pageKeywords = "paper trading, live trading, copy trading, stock market, i
 					<div class="mx-auto w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mb-4">
 						<Trophy className="h-6 w-6 text-purple-600 dark:text-purple-400" />
 					</div>
-					<CardTitle>Leaderboards</CardTitle>
+					<CardTitle>Global Leaderboards</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<CardDescription>
-						Track your performance and compete for the top spot. See how you rank against other traders.
+						Benchmark your performance against a global community of traders. Track rankings, win rates, and portfolio returns in real-time.
 					</CardDescription>
 				</CardContent>
 			</Card>
@@ -138,11 +135,11 @@ const pageKeywords = "paper trading, live trading, copy trading, stock market, i
 					<div class="mx-auto w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center mb-4">
 						<BarChart3 className="h-6 w-6 text-orange-600 dark:text-orange-400" />
 					</div>
-					<CardTitle>Analytics</CardTitle>
+					<CardTitle>Advanced Analytics</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<CardDescription>
-						Detailed portfolio analytics and performance tracking to help you understand your trading patterns.
+						Comprehensive portfolio analytics with performance attribution, risk metrics, and trade analysis to optimize your strategy.
 					</CardDescription>
 				</CardContent>
 			</Card>
@@ -151,10 +148,9 @@ const pageKeywords = "paper trading, live trading, copy trading, stock market, i
 		<!-- CTA Section -->
 		<Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border-none">
 			<CardContent className="p-8 text-center">
-				<h2 class="text-2xl font-bold mb-4">Ready to Start Trading?</h2>
+				<h2 class="text-2xl font-bold mb-4">Begin Your Trading Journey</h2>
 				<p class="text-muted-foreground mb-6 max-w-2xl mx-auto">
-					Join thousands of traders who are improving their skills with our paper trading platform. 
-					No risk, real learning.
+					Join an elite community of traders utilizing institutional-grade market data, sophisticated analytics, and mirror trading technology to achieve superior investment outcomes.
 				</p>
 				<div class="flex flex-col sm:flex-row gap-4 justify-center">
 					<a href="/signup">

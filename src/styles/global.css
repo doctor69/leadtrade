@@ -59,32 +59,32 @@
   }
 
   .dark {
-    /* Professional Fintech Color Palette - Dark Mode */
-    --background: 222 47% 9%;
+    /* Elite Dark Mode - Dark grey background with pure black components */
+    --background: 0 0% 12%;
     --foreground: 210 40% 98%;
 
-    /* Component backgrounds - elevated surfaces */
-    --card: 222 47% 13%;
+    /* Component backgrounds - pure black for elite look */
+    --card: 0 0% 0%;
     --card-foreground: 210 40% 98%;
 
-    /* Modal/Dialog backgrounds - highest elevation */
-    --popover: 222 47% 15%;
+    /* Modal/Dialog backgrounds - pure black */
+    --popover: 0 0% 0%;
     --popover-foreground: 210 40% 98%;
 
     /* Primary - Brighter blue for dark mode */
     --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
+    --primary-foreground: 0 0% 0%;
 
     /* Secondary */
-    --secondary: 217 33% 17%;
+    --secondary: 0 0% 8%;
     --secondary-foreground: 210 40% 98%;
 
     /* Muted */
-    --muted: 217 33% 17%;
+    --muted: 0 0% 8%;
     --muted-foreground: 215 20% 65%;
 
     /* Accent */
-    --accent: 217 33% 17%;
+    --accent: 0 0% 8%;
     --accent-foreground: 210 40% 98%;
 
     /* Destructive */
@@ -93,15 +93,15 @@
 
     /* Success */
     --success: 142 70% 45%;
-    --success-foreground: 222 47% 11%;
+    --success-foreground: 0 0% 0%;
 
     /* Warning */
     --warning: 38 92% 50%;
-    --warning-foreground: 222 47% 11%;
+    --warning-foreground: 0 0% 0%;
 
-    /* Borders */
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
+    /* Borders - subtle grey on black */
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
     --ring: 217 91% 60%;
 
     /* Charts - Adjusted for dark mode */
@@ -174,7 +174,7 @@ tbody tr:hover {
 }
 
 .dark tbody tr:hover {
-  background-color: hsl(var(--primary) / 0.1);
+  background-color: hsl(var(--primary) / 0.3) !important;
 }
 
 th {
@@ -186,6 +186,29 @@ th {
 
 td {
   font-size: 0.875rem;
+}
+
+/* Dark mode button hover overrides for better visibility */
+.dark button:hover:not([disabled]):not(:active),
+.dark [role="button"]:hover:not([disabled]):not(:active) {
+  background-color: hsl(var(--primary) / 0.5) !important;
+  transition: background-color 150ms;
+}
+
+.dark button:active:not([disabled]),
+.dark [role="button"]:active:not([disabled]) {
+  background-color: hsl(var(--primary) / 0.7) !important;
+  transition: background-color 50ms;
+}
+
+.dark button[data-variant="outline"]:hover:not([disabled]):not(:active),
+.dark button[data-variant="ghost"]:hover:not([disabled]):not(:active) {
+  background-color: hsl(var(--primary) / 0.5) !important;
+}
+
+.dark button[data-variant="outline"]:active:not([disabled]),
+.dark button[data-variant="ghost"]:active:not([disabled]) {
+  background-color: hsl(var(--primary) / 0.7) !important;
 }
 
 /* Professional typography */

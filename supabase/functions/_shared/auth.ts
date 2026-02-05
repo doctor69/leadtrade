@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.52.0'
 import { corsHeaders } from './cors.ts'
 
 export interface AuthContext {

@@ -137,7 +137,7 @@ export default function EventStreamFeed({ accountId, enabled = false }: EventStr
     const isBuy = order.side === 'buy';
 
     return (
-      <div key={`trade-${index}`} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+      <div key={`trade-${index}`} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 dark:hover:bg-primary/25 transition-colors">
         <div className="mt-1">
           {getTradeEventIcon(event.event)}
         </div>
@@ -178,7 +178,7 @@ export default function EventStreamFeed({ accountId, enabled = false }: EventStr
     const isIncoming = transfer.direction === 'INCOMING';
 
     return (
-      <div key={`transfer-${index}`} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+      <div key={`transfer-${index}`} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 dark:hover:bg-primary/25 transition-colors">
         <div className="mt-1">
           {getTransferStatusIcon(transfer.status)}
         </div>
