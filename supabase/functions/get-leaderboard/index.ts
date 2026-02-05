@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.52.0';
 import { corsHeaders } from '../_shared/cors.ts';
 
 interface LeaderboardEntry {

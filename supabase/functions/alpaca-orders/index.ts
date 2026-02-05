@@ -349,7 +349,7 @@ serve(async (req: Request) => {
             // Trigger leaderboard stats update in the background (don't wait for it)
             // Only if user has share_trades enabled
             try {
-              const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.39.3');
+              const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.52.0');
               const supabase = createClient(
                 Deno.env.get('SUPABASE_URL') ?? '',
                 Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -380,7 +380,7 @@ serve(async (req: Request) => {
             
             // Trigger copy trades for followers if this user is a leader
             try {
-              const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.39.3');
+              const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.52.0');
               const supabase = createClient(
                 Deno.env.get('SUPABASE_URL') ?? '',
                 Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
