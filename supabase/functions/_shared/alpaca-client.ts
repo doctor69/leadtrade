@@ -174,7 +174,7 @@ export interface TradingConfiguration {
  */
 export async function getAlpacaCredentials(userId: string, userEmail: string) {
   try {
-    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2')
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.39.3')
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
