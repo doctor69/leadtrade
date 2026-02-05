@@ -179,7 +179,7 @@ export default function OrderHistory() {
                   </TableRow>
                 ) : (
                   orders.map((order) => (
-                    <TableRow key={order.id} className="hover:bg-muted/50">
+                    <TableRow key={order.id} className="hover:bg-muted/50 dark:hover:bg-primary/25">
                       <TableCell className="font-medium">
                         {order.symbol}
                       </TableCell>

@@ -13,6 +13,7 @@ export default function NavigationBar() {
     const [mounted, setMounted] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [currentPath, setCurrentPath] = useState('');
 
     const menu = [
         { name: 'Dashboard', href: '/dashboard' },
@@ -24,6 +25,7 @@ export default function NavigationBar() {
     // Initialize and check login status on mount
     useEffect(() => {
         setMounted(true);
+        setCurrentPath(window.location.pathname);
 
         // Check if user is logged in via Supabase
         const checkLoginStatus = async () => {
@@ -125,7 +127,7 @@ export default function NavigationBar() {
                     <div className="flex items-center space-x-2">
                         <TrendingUp className="h-8 w-8 text-primary" />
                         <button
-                            onClick={() => safeNavigate('/')}
+                            onClick={() => safeNavigate(isLoggedIn ? '/dashboard' : '/')}
                             className="text-2xl font-bold text-foreground hover:opacity-80 transition-opacity"
                         >
                             <span className="text-primary">LEAD</span>TRADE
@@ -143,18 +145,31 @@ export default function NavigationBar() {
                                     return item.name === 'Leaderboard'; // Only show leaderboard for non-logged in users
                                 }
                             })
-                            .map((item) => (
-                                <Button
-                                    key={`desktop-${item.name}`}
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => safeNavigate(item.href)}
-                                    className="cursor-pointer"
-                                >
-                                    {item.name}
-                                </Button>
-                            ))}
-                    </div>
+                            .map((item) => {
+                                const isActive = currentPath === item.href;
+                                return (
+                                    <div key={`desktop-${item.name}`} className="relative">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                safeNavigate(item.href);
+                                                setCurrentPath(item.href);
+                                            }}
+                                            className="cursor-pointer"
+                                        >
+                                            {item.name}
+                                        </Button>
+                                        {isActive ? (
+                                            <div 
+                                                className="absolute -bottom-[0.6rem] left-0 right-0 h-[3px] rounded-full" 
+                                                style={{ backgroundColor: 'hsl(var(--primary))', zIndex: 100 }}
+                                            />
+                                        ) : null}
+                                    </div>
+                                );
+                            })}
+                    </div>                  
 
                     {/* Right side - Auth buttons, Theme Customizer, and Settings */}
                     <div className="flex items-center space-x-2">
@@ -257,18 +272,26 @@ export default function NavigationBar() {
                                             return item.name === 'Leaderboard'; // Only show leaderboard for non-logged in users
                                         }
                                     })
-                                    .map((item) => (
-                                        <button
-                                            key={`mobile-${item.name}`}
-                                            className="flex w-full items-center px-4 py-3 rounded-lg text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground active:bg-accent/80 transition-all duration-200 min-h-[44px]"
-                                            onClick={() => {
-                                                setMobileMenuOpen(false);
-                                                safeNavigate(item.href);
-                                            }}
-                                        >
-                                            {item.name}
-                                        </button>
-                                    ))}
+                                    .map((item) => {
+                                        const isActive = currentPath === item.href;
+                                        return (
+                                            <div key={`mobile-${item.name}`} className="relative">
+                                                <button
+                                                    className="flex w-full items-center px-4 py-3 rounded-lg text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground active:bg-accent/80 transition-all duration-200 min-h-[44px]"
+                                                    onClick={() => {
+                                                        setMobileMenuOpen(false);
+                                                        safeNavigate(item.href);
+                                                        setCurrentPath(item.href);
+                                                    }}
+                                                >
+                                                    {item.name}
+                                                </button>
+                                                {isActive && (
+                                                    <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-primary" />
+                                                )}
+                                            </div>
+                                        );
+                                    })}
 
                                 {/* Mobile Theme Customizer */}
                                 <div className="pt-2 border-t">

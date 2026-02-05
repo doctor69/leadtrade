@@ -479,7 +479,7 @@ export default function Leaderboard() {
                 return (
                 <div 
                   key={trader.id} 
-                  className="flex items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-muted/50 active:bg-muted/70 transition-colors cursor-pointer min-h-[60px]"
+                  className="flex items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-muted/50 dark:hover:bg-primary/25 active:bg-muted/70 dark:active:bg-primary/30 transition-colors cursor-pointer min-h-[60px]"
                   onClick={() => setSelectedTrader(trader)}
                 >
                   <div className="flex items-center space-x-2 sm:space-x-4 flex-1 min-w-0">

@@ -338,7 +338,7 @@ export default function AccountPositions() {
                 </TableHeader>
                 <TableBody>
                   {positions.map((position) => (
-                    <TableRow key={position.symbol} className="hover:bg-muted/50">
+                    <TableRow key={position.symbol} className="hover:bg-muted/50 dark:hover:bg-primary/25">
                       <TableCell className="font-medium">
                         <div className="flex items-center space-x-2">
                           <span>{position.symbol}</span>

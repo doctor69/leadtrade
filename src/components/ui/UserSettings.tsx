@@ -27,6 +27,7 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
   const [error, setError] = useState<string | null>(null);
   const [updatingStats, setUpdatingStats] = useState(false);
   const [statsMessage, setStatsMessage] = useState<string | null>(null);
+  const [settingsChanged, setSettingsChanged] = useState(false);
 
   // Load user profile
   useEffect(() => {
@@ -97,6 +98,7 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
 
   const handlePrivacyToggle = async (field: 'share_trades' | 'show_asset_amounts', value: boolean) => {
     await updateProfile({ [field]: value });
+    setSettingsChanged(true);
   };
 
   const handleUpdateLeaderboardStats = async () => {
@@ -108,6 +110,7 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
       
       if (result.success) {
         setStatsMessage('Leaderboard stats updated successfully!');
+        setSettingsChanged(false); // Reset the changed state
       } else {
         setStatsMessage(result.error || 'Failed to update stats');
       }
@@ -250,14 +253,15 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
                     Leaderboard Stats
                   </div>
                   <div className="text-sm text-muted-foreground mt-1">
-                    Update your performance metrics to appear on the leaderboard
+                    Update your performance metrics to appear on the leaderboard. Stats auto-update when you make trades.
                   </div>
                 </div>
                 <Button
                   onClick={handleUpdateLeaderboardStats}
                   disabled={updatingStats}
                   size="sm"
-                  variant="outline"
+                  variant={settingsChanged ? "default" : "outline"}
+                  className={settingsChanged ? "animate-pulse" : ""}
                 >
                   {updatingStats ? (
                     <>
@@ -267,7 +271,7 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
                   ) : (
                     <>
                       <RefreshCw className="h-4 w-4 mr-2" />
-                      Update Stats
+                      {settingsChanged ? "Update Now" : "Update Stats"}
                     </>
                   )}
                 </Button>

@@ -317,7 +317,7 @@ export default function OptionsSelector({ symbol, onOptionSelect, selectedOption
                     {currentStrikes.calls.map((contract) => (
                       <TableRow 
                         key={`${contract.symbol}-${contract.strike}`}
-                        className="cursor-pointer hover:bg-muted/50"
+                        className="cursor-pointer hover:bg-muted/50 dark:hover:bg-primary/25"
                         onClick={() => handleOptionSelect(contract)}
                       >
                         <TableCell className="font-medium">${contract.strike}</TableCell>
@@ -358,7 +358,7 @@ export default function OptionsSelector({ symbol, onOptionSelect, selectedOption
                     {currentStrikes.puts.map((contract) => (
                       <TableRow 
                         key={`${contract.symbol}-${contract.strike}`}
-                        className="cursor-pointer hover:bg-muted/50"
+                        className="cursor-pointer hover:bg-muted/50 dark:hover:bg-primary/25"
                         onClick={() => handleOptionSelect(contract)}
                       >
                         <TableCell className="font-medium">${contract.strike}</TableCell>

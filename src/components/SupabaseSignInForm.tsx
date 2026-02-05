@@ -116,7 +116,7 @@ export default function SupabaseSignInForm({ returnUrl = '/dashboard' }: Supabas
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Badge variant="default">LEADTRADE</Badge>
-            <Badge variant="outline">Paper Trading Platform</Badge>
+            <Badge variant="outline">Trading Platform</Badge>
           </div>
           <CardTitle className="text-2xl">Welcome Back</CardTitle>
           <CardDescription>
@@ -253,13 +253,13 @@ export default function SupabaseSignInForm({ returnUrl = '/dashboard' }: Supabas
             </div>
             <div className="text-center">
               <div className="text-2xl mb-1">💰</div>
-              <div className="font-medium">Paper Trading</div>
+              <div className="font-medium">Virtual Trading</div>
               <div className="text-muted-foreground text-xs">Risk-free practice</div>
             </div>
             <div className="text-center">
               <div className="text-2xl mb-1">👥</div>
-              <div className="font-medium">Copy Trading</div>
-              <div className="text-muted-foreground text-xs">Follow top traders</div>
+              <div className="font-medium">Mirror Trading</div>
+              <div className="text-muted-foreground text-xs">Follow elite traders</div>
             </div>
             <div className="text-center">
               <div className="text-2xl mb-1">🏆</div>

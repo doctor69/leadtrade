@@ -5,22 +5,24 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 transition-all duration-200 border-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary)/0.5)] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 transition-colors duration-200 border-0 outline-none",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground hover:bg-primary/80 active:bg-primary shadow-sm",
+          "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary)/0.8)] active:bg-[hsl(var(--primary))] shadow-sm",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/80 active:bg-destructive shadow-sm",
+          "bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] hover:bg-[hsl(var(--destructive)/0.8)] active:bg-[hsl(var(--destructive))] shadow-sm",
         outline:
-          "bg-transparent hover:bg-primary/10 active:bg-primary/20 text-foreground border-0",
+          "bg-transparent hover:bg-[hsl(var(--primary)/0.1)] dark:hover:!bg-[hsl(var(--primary)/0.5)] active:bg-[hsl(var(--primary)/0.2)] dark:active:!bg-[hsl(var(--primary)/0.6)] text-[hsl(var(--foreground))]",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 active:bg-secondary shadow-sm",
-        ghost: "bg-transparent hover:bg-primary/10 active:bg-primary/20 text-foreground",
-        link: "text-primary underline-offset-4 hover:underline bg-transparent",
+          "bg-[hsl(var(--secondary))] text-[hsl(var(--secondary-foreground))] hover:bg-[hsl(var(--secondary)/0.8)] active:bg-[hsl(var(--secondary))] shadow-sm",
+        ghost: 
+          "bg-transparent hover:bg-[hsl(var(--primary)/0.1)] dark:hover:!bg-[hsl(var(--primary)/0.5)] active:bg-[hsl(var(--primary)/0.2)] dark:active:!bg-[hsl(var(--primary)/0.6)] text-[hsl(var(--foreground))]",
+        link: 
+          "text-[hsl(var(--primary))] underline-offset-4 hover:underline bg-transparent",
         success:
-          "bg-success text-success-foreground hover:bg-success/80 active:bg-success shadow-sm",
+          "bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))] hover:bg-[hsl(var(--success)/0.8)] active:bg-[hsl(var(--success))] shadow-sm",
       },
       size: {
         default: "h-10 px-4 py-2 min-h-[44px]",
