@@ -27,6 +27,17 @@ export default function NavigationBar() {
         setMounted(true);
         setCurrentPath(window.location.pathname);
 
+        // Update currentPath when URL changes (for client-side navigation)
+        const handleLocationChange = () => {
+            setCurrentPath(window.location.pathname);
+        };
+
+        // Listen for popstate (back/forward buttons)
+        window.addEventListener('popstate', handleLocationChange);
+        
+        // Listen for custom navigation events
+        window.addEventListener('astro:page-load', handleLocationChange);
+
         // Check if user is logged in via Supabase
         const checkLoginStatus = async () => {
             if (typeof window !== 'undefined') {
@@ -58,7 +69,12 @@ export default function NavigationBar() {
 
         // Listen for storage changes to update login status
         window.addEventListener('storage', checkLoginStatus);
-        return () => window.removeEventListener('storage', checkLoginStatus);
+        
+        return () => {
+            window.removeEventListener('storage', checkLoginStatus);
+            window.removeEventListener('popstate', handleLocationChange);
+            window.removeEventListener('astro:page-load', handleLocationChange);
+        };
     }, []);
 
     // Handle swipe gestures for mobile menu
