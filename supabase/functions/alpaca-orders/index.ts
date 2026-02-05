@@ -393,7 +393,9 @@ serve(async (req: Request) => {
                 .eq('leader_id', authContext.userId)
                 .eq('is_active', true);
               
-              if (!followersError && followers && followers.length > 0) {
+              const hasFollowers = !followersError && followers && followers.length > 0;
+              
+              if (hasFollowers) {
                 console.log(`User ${authContext.userId} has ${followers.length} followers, triggering copy trades`);
                 
                 // Get leader's account data to calculate portfolio value
@@ -410,6 +412,7 @@ serve(async (req: Request) => {
                   
                   if (leaderPortfolioValue > 0) {
                     // Trigger copy trades in background (non-blocking)
+                    // This will also send email to the leader
                     fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/execute-copy-trades`, {
                       method: 'POST',
                       headers: {
@@ -430,6 +433,40 @@ serve(async (req: Request) => {
                   }
                 } else {
                   console.error('Failed to get leader account data:', accountResponse.error);
+                }
+              } else {
+                // No followers - send email directly to the trader
+                console.log(`User ${authContext.userId} has no followers, sending trade confirmation email`);
+                
+                // Get user profile for email
+                const { data: userProfile } = await supabase
+                  .from('profiles')
+                  .select('email, full_name')
+                  .eq('id', authContext.userId)
+                  .single();
+                
+                if (userProfile?.email) {
+                  // Queue email notification
+                  const { queueEmail } = await import('../_shared/email-queue-helper.ts');
+                  const { RESEND_TEMPLATES } = await import('../_shared/email-helper.ts');
+                  
+                  const sideColor = validatedOrder.side === 'buy' ? '#10b981' : '#ef4444';
+                  
+                  await queueEmail({
+                    category: 'trading',
+                    to: userProfile.email,
+                    templateId: RESEND_TEMPLATES.LEADER_TRADE,
+                    templateData: {
+                      userName: userProfile.full_name || 'Trader',
+                      symbol: validatedOrder.symbol,
+                      side: validatedOrder.side.toUpperCase(),
+                      quantity: validatedOrder.qty,
+                      followerCount: 0,
+                      sideColor: sideColor,
+                    }
+                  }).catch(error => {
+                    console.error('Failed to queue trade email:', error);
+                  });
                 }
               }
             } catch (error) {
