@@ -46,18 +46,6 @@ serve(async (req) => {
   )
 
   try {
-    // First, let's see what's in the queue
-    const { data: allEmails, error: allError } = await supabase
-      .from('email_queue')
-      .select('id, status, category, scheduled_for, created_at')
-      .order('created_at', { ascending: false })
-      .limit(20)
-
-    console.log('📊 Email queue status (last 20):')
-    if (allEmails) {
-      console.log(JSON.stringify(allEmails, null, 2))
-    }
-
     // Get pending emails from queue (only trading emails need rate limiting)
     const { data: pendingEmails, error: fetchError } = await supabase
       .from('email_queue')
@@ -68,14 +56,6 @@ serve(async (req) => {
       .lt('attempts', 500) // Only process if attempts < max_attempts
       .order('created_at', { ascending: true })
       .limit(10) // Process 10 at a time
-
-    console.log('🔍 Query for pending/failed emails:', {
-      status: ['pending', 'failed'],
-      category: 'trading',
-      scheduled_for_lte: new Date().toISOString(),
-      attempts_lt: 500,
-      found: pendingEmails?.length || 0
-    })
 
     if (fetchError) {
       console.error('Error fetching emails:', fetchError)

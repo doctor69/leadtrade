@@ -121,11 +121,9 @@ async function sendResendEmail(
   const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 
   if (!RESEND_API_KEY) {
-    console.error('❌ Resend API key not configured');
+    console.error('Resend API key not configured');
     return { success: false, error: 'Resend API key not configured' };
   }
-
-  console.log('🔑 Resend API key found:', RESEND_API_KEY.substring(0, 10) + '...');
 
   try {
     // Build email body - use template if provided, otherwise use HTML
@@ -135,23 +133,15 @@ async function sendResendEmail(
     };
 
     if (payload.templateId) {
-      // Use Resend template - send template ID and variables
-      // Template must be created and published in Resend dashboard first
-      // According to Resend docs, variables should be at root level, not nested
-      emailBody.template_id = payload.templateId;
+      // Resend templates require a subject field
+      // The template ID should be used with react property for React Email templates
+      // For now, let's use the template as a react component
+      emailBody.react = payload.templateId;
       
-      // Add template variables at root level
+      // Add template variables as props
       if (payload.templateData) {
-        // Merge template variables directly into emailBody
-        Object.assign(emailBody, payload.templateData);
+        emailBody.props = payload.templateData;
       }
-      
-      console.log('📧 Sending template email:', {
-        template_id: emailBody.template_id,
-        to: emailBody.to,
-        from: emailBody.from,
-        variables: Object.keys(payload.templateData || {})
-      });
     } else {
       // Use HTML content
       if (!payload.subject || !payload.html) {
@@ -162,15 +152,8 @@ async function sendResendEmail(
       if (payload.text) {
         emailBody.text = payload.text;
       }
-      
-      console.log('📧 Sending HTML email:', {
-        subject: emailBody.subject,
-        to: emailBody.to,
-        from: emailBody.from
-      });
     }
 
-    console.log('🌐 Making request to Resend API...');
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -180,11 +163,9 @@ async function sendResendEmail(
       body: JSON.stringify(emailBody),
     });
 
-    console.log('📥 Resend API response status:', response.status);
-
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('❌ Resend API error:', errorData);
+      console.error('Resend API error:', errorData);
       throw new Error(errorData.message || `Resend API error: ${response.status}`);
     }
 
@@ -192,7 +173,7 @@ async function sendResendEmail(
     console.log('✅ Email sent successfully, ID:', data.id);
     return { success: true, messageId: data.id };
   } catch (error) {
-    console.error('❌ Resend email error:', error);
+    console.error('Resend email error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
