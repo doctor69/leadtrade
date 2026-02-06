@@ -133,11 +133,17 @@ async function sendResendEmail(
     };
 
     if (payload.templateId) {
-      // Use Resend template
-      emailBody.template_id = payload.templateId;
+      // Use Resend template - send template ID and variables
+      // Template must be created and published in Resend dashboard first
+      emailBody.template = payload.templateId;
+      
+      // Add template variables if provided
       if (payload.templateData) {
-        emailBody.template_data = payload.templateData;
+        // Resend expects variables as a flat object
+        Object.assign(emailBody, payload.templateData);
       }
+      
+      console.log('Sending with Resend template:', payload.templateId);
     } else {
       // Use HTML content
       if (!payload.subject || !payload.html) {
