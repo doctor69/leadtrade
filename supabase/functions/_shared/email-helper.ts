@@ -133,15 +133,20 @@ async function sendResendEmail(
     };
 
     if (payload.templateId) {
-      // Resend templates require a subject field
-      // The template ID should be used with react property for React Email templates
-      // For now, let's use the template as a react component
-      emailBody.react = payload.templateId;
+      // Resend templates still require subject and at least text or html field
+      // The template is rendered server-side by Resend
+      emailBody.subject = payload.subject || 'Trade Notification';
+      emailBody.text = ' '; // Required field, even if empty
       
-      // Add template variables as props
-      if (payload.templateData) {
-        emailBody.props = payload.templateData;
-      }
+      // Add template reference - Resend uses different approaches
+      // For dashboard templates, we need to send the template content
+      // For now, let's use the template ID in a custom header or generate HTML
+      console.warn('Resend template support: Templates created in dashboard cannot be referenced by ID via API');
+      console.warn('You need to either: 1) Use React Email, or 2) Send the HTML directly');
+      
+      // Fallback: We'll need to generate HTML from template data
+      // For now, throw an error to indicate templates aren't supported this way
+      throw new Error('Resend dashboard templates cannot be sent via API. Please use HTML content or React Email.');
     } else {
       // Use HTML content
       if (!payload.subject || !payload.html) {
