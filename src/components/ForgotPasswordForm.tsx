@@ -19,6 +19,26 @@ export default function ForgotPasswordForm() {
     setSuccess(false);
 
     try {
+      // Check if user exists first to avoid wasting email quota
+      const checkResponse = await fetch(`${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/check-user-exists`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.PUBLIC_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const { exists } = await checkResponse.json();
+
+      if (!exists) {
+        // Show success anyway to prevent account enumeration
+        // but don't actually send the email
+        setSuccess(true);
+        return;
+      }
+
+      // User exists, proceed with password reset
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
