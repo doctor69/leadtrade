@@ -138,12 +138,12 @@ async function sendResendEmail(
       emailBody.template = payload.templateId;
       
       // Add template variables if provided
+      // Resend expects variables in a template_data object
       if (payload.templateData) {
-        // Resend expects variables as a flat object
-        Object.assign(emailBody, payload.templateData);
+        emailBody.template_data = payload.templateData;
       }
       
-      console.log('Sending with Resend template:', payload.templateId);
+      console.log('Sending with Resend template:', payload.templateId, 'with data:', payload.templateData);
     } else {
       // Use HTML content
       if (!payload.subject || !payload.html) {
