@@ -43,7 +43,7 @@ export async function queueEmail(payload: QueueEmailPayload): Promise<{ success:
         scheduled_for: payload.scheduledFor?.toISOString() || new Date().toISOString(),
         status: 'pending',
         attempts: 0,
-        max_attempts: 3,
+        max_attempts: 500, // High limit for testing, reduce after verification
       })
       .select('id')
       .single()

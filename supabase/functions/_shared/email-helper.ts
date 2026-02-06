@@ -133,11 +133,12 @@ async function sendResendEmail(
     };
 
     if (payload.templateId) {
-      // Use Resend template
-      emailBody.template_id = payload.templateId;
-      if (payload.templateData) {
-        emailBody.template_data = payload.templateData;
-      }
+      // Resend templates use a nested object structure
+      emailBody.template = {
+        id: payload.templateId,
+        variables: payload.templateData || {}
+      };
+      console.log('Sending with template:', payload.templateId);
     } else {
       // Use HTML content
       if (!payload.subject || !payload.html) {
@@ -161,10 +162,12 @@ async function sendResendEmail(
 
     if (!response.ok) {
       const errorData = await response.json();
+      console.error('Resend API error:', errorData);
       throw new Error(errorData.message || `Resend API error: ${response.status}`);
     }
 
     const data = await response.json();
+    console.log('✅ Email sent successfully, ID:', data.id);
     return { success: true, messageId: data.id };
   } catch (error) {
     console.error('Resend email error:', error);
