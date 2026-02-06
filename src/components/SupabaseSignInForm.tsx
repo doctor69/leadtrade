@@ -159,10 +159,19 @@ export default function SupabaseSignInForm({ returnUrl = '/dashboard' }: Supabas
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-2">
-                <Lock className="h-4 w-4" />
-                Password
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Lock className="h-4 w-4" />
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => safeNavigate('/forgot-password')}
+                  className="text-xs text-primary hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
               <Input
                 type="password"
                 value={formData.password}
