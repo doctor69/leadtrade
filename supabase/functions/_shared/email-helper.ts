@@ -138,6 +138,7 @@ async function sendResendEmail(
         id: payload.templateId,
         variables: payload.templateData || {}
       };
+      console.log('Sending with template:', payload.templateId);
     } else {
       // Use HTML content
       if (!payload.subject || !payload.html) {

@@ -451,6 +451,7 @@ serve(async (req: Request) => {
                   const { RESEND_TEMPLATES } = await import('../_shared/email-helper.ts');
                   
                   const sideColor = validatedOrder.side === 'buy' ? '#10b981' : '#ef4444';
+                  const followerCount = 0; // Will be updated by copy trade execution
                   
                   await queueEmail({
                     category: 'trading',
@@ -461,7 +462,8 @@ serve(async (req: Request) => {
                       symbol: validatedOrder.symbol,
                       side: validatedOrder.side.toUpperCase(),
                       quantity: validatedOrder.qty,
-                      followerCount: 0,
+                      followerCount: followerCount,
+                      followerText: followerCount === 1 ? 'follower' : 'followers',
                       sideColor: sideColor,
                     }
                   }).catch(error => {
