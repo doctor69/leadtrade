@@ -144,6 +144,7 @@ async function sendResendEmail(
       }
       
       console.log('Sending with Resend template:', payload.templateId, 'with data:', payload.templateData);
+      console.log('Full email body:', JSON.stringify(emailBody, null, 2));
     } else {
       // Use HTML content
       if (!payload.subject || !payload.html) {
@@ -167,6 +168,7 @@ async function sendResendEmail(
 
     if (!response.ok) {
       const errorData = await response.json();
+      console.error('Resend API error:', JSON.stringify(errorData, null, 2));
       throw new Error(errorData.message || `Resend API error: ${response.status}`);
     }
 
