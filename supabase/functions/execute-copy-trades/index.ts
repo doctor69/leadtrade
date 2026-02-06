@@ -396,20 +396,20 @@ serve(async (req) => {
           if (leaderProfile?.email) {
             console.log(`📧 Queueing email to leader: ${leaderProfile.email}`)
             
-            const sideColor = orderData.side === 'buy' ? '#10b981' : '#ef4444'
+            const { generateTradeEmailHtml } = await import('../_shared/email-helper.ts');
             
             const leaderEmailResult = await queueEmail({
               category: 'trading',
               to: leaderProfile.email,
-              templateId: RESEND_TEMPLATES.LEADER_TRADE,
-              templateData: {
+              subject: `Trade Executed: ${orderData.side.toUpperCase()} ${orderData.qty} ${orderData.symbol}`,
+              html: generateTradeEmailHtml({
                 userName: leaderProfile.full_name || 'Trader',
                 symbol: orderData.symbol,
-                side: orderData.side.toUpperCase(),
+                side: orderData.side,
                 quantity: orderData.qty,
+                isLeader: true,
                 followerCount: successfulCopies,
-                sideColor: sideColor,
-              }
+              }),
             })
             
             if (leaderEmailResult.success) {
@@ -451,21 +451,20 @@ serve(async (req) => {
 
             console.log(`📧 Queueing email to follower: ${followerProfile.email}`)
             
-            const sideColor = orderData.side === 'buy' ? '#10b981' : '#ef4444'
+            const { generateCopyTradeEmailHtml } = await import('../_shared/email-helper.ts');
             
             const followerEmailResult = await queueEmail({
               category: 'trading',
               to: followerProfile.email,
-              templateId: RESEND_TEMPLATES.FOLLOWER_COPY_TRADE,
-              templateData: {
+              subject: `Copy Trade Executed: ${orderData.side.toUpperCase()} ${orderData.symbol}`,
+              html: generateCopyTradeEmailHtml({
                 followerName: followerProfile.full_name || 'Trader',
                 leaderName: leaderProfile?.full_name || 'Leader',
                 symbol: orderData.symbol,
-                side: orderData.side.toUpperCase(),
-                quantity: (result.quantity || 0).toFixed(9),
-                portfolioPercentage: (result.tradePercentage || 0).toFixed(4),
-                sideColor: sideColor,
-              }
+                side: orderData.side,
+                quantity: result.quantity || 0,
+                portfolioPercentage: result.tradePercentage,
+              }),
             })
             
             if (followerEmailResult.success) {

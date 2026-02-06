@@ -34,7 +34,7 @@ export default function NavigationBar() {
 
         // Listen for popstate (back/forward buttons)
         window.addEventListener('popstate', handleLocationChange);
-        
+
         // Listen for custom navigation events
         window.addEventListener('astro:page-load', handleLocationChange);
 
@@ -76,7 +76,7 @@ export default function NavigationBar() {
 
         // Listen for storage changes to update login status
         window.addEventListener('storage', checkLoginStatus);
-        
+
         return () => {
             window.removeEventListener('storage', checkLoginStatus);
             window.removeEventListener('popstate', handleLocationChange);
@@ -186,15 +186,15 @@ export default function NavigationBar() {
                                             {item.name}
                                         </Button>
                                         {isActive ? (
-                                            <div 
-                                                className="absolute -bottom-[0.6rem] left-0 right-0 h-[3px] rounded-full" 
+                                            <div
+                                                className="absolute -bottom-[0.6rem] left-0 right-0 h-[3px] rounded-full"
                                                 style={{ backgroundColor: 'hsl(var(--primary))', zIndex: 100 }}
                                             />
                                         ) : null}
                                     </div>
                                 );
                             })}
-                    </div>                  
+                    </div>
 
                     {/* Right side - Auth buttons, Theme Customizer, and Settings */}
                     <div className="flex items-center space-x-2">
@@ -242,7 +242,12 @@ export default function NavigationBar() {
                         {/* Theme Customizer Dropdown - icon only, modal-like dropdown */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="icon" className="hidden md:flex">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="hidden md:flex"
+                                    aria-label="Open theme customizer"
+                                >
                                     <Palette className="h-4 w-4" />
                                 </Button>
                             </DropdownMenuTrigger>
@@ -259,6 +264,7 @@ export default function NavigationBar() {
                             size="icon"
                             className="hidden md:flex"
                             onClick={() => safeNavigate('/settings')}
+                            aria-label="Open settings"
                         >
                             <Settings className="h-4 w-4" />
                         </Button>
