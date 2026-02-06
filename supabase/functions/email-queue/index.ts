@@ -81,15 +81,24 @@ serve(async (req) => {
         .update({ status: 'processing' })
         .eq('id', email.id)
 
+      // Parse JSON fields from database
+      const parsedTo = typeof email.to === 'string' && email.to.startsWith('[') 
+        ? JSON.parse(email.to) 
+        : email.to;
+      
+      const parsedTemplateData = email.template_data && typeof email.template_data === 'string'
+        ? JSON.parse(email.template_data)
+        : email.template_data;
+
       // Send email
       const result = await sendEmail({
         category: email.category,
-        to: email.to,
+        to: parsedTo,
         subject: email.subject,
         html: email.html,
         text: email.text,
         templateId: email.template_id,
-        templateData: email.template_data,
+        templateData: parsedTemplateData,
       })
 
       if (result.success) {
