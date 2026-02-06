@@ -51,7 +51,9 @@ export const isValidRoute = (href: string): boolean => {
     '/leaderboard',
     '/settings',
     '/signin',
-    '/signup'
+    '/signup',
+    '/forgot-password',
+    '/reset-password'
   ];
   
   // Check if the base path (without query parameters) is valid
