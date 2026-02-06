@@ -135,16 +135,14 @@ async function sendResendEmail(
     if (payload.templateId) {
       // Use Resend template - send template ID and variables
       // Template must be created and published in Resend dashboard first
-      emailBody.template = payload.templateId;
+      // According to Resend docs, variables should be at root level, not nested
+      emailBody.template_id = payload.templateId;
       
-      // Add template variables if provided
-      // Resend expects variables in a template_data object
+      // Add template variables at root level
       if (payload.templateData) {
-        emailBody.template_data = payload.templateData;
+        // Merge template variables directly into emailBody
+        Object.assign(emailBody, payload.templateData);
       }
-      
-      console.log('Sending with Resend template:', payload.templateId, 'with data:', payload.templateData);
-      console.log('Full email body:', JSON.stringify(emailBody, null, 2));
     } else {
       // Use HTML content
       if (!payload.subject || !payload.html) {
@@ -168,7 +166,7 @@ async function sendResendEmail(
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Resend API error:', JSON.stringify(errorData, null, 2));
+      console.error('Resend API error:', errorData);
       throw new Error(errorData.message || `Resend API error: ${response.status}`);
     }
 
