@@ -53,7 +53,7 @@ serve(async (req) => {
       .in('status', ['pending', 'failed']) // Process both pending and failed emails
       .eq('category', 'trading') // Only queue trading emails (Resend)
       .lte('scheduled_for', new Date().toISOString())
-      .lt('attempts', 500) // Only process if attempts < max_attempts
+      .filter('attempts', 'lt', 'max_attempts') // Only process if attempts < max_attempts
       .order('created_at', { ascending: true })
       .limit(10) // Process 10 at a time
 
