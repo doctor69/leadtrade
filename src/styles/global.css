@@ -73,7 +73,7 @@
 
     /* Primary - Brighter blue for dark mode */
     --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
 
     /* Secondary */
     --secondary: 0 0% 8%;
@@ -93,11 +93,11 @@
 
     /* Success */
     --success: 142 70% 45%;
-    --success-foreground: 0 0% 0%;
+    --success-foreground: 0 0% 100%;
 
     /* Warning */
     --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 0%;
+    --warning-foreground: 0 0% 100%;
 
     /* Borders - subtle grey on black */
     --border: 0 0% 15%;
