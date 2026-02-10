@@ -14,7 +14,7 @@ export default function Footer() {
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>Powered by</span>
             <a 
-              href="https://kiro.ai" 
+              href="https://kiro.dev" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-primary hover:underline font-medium"
