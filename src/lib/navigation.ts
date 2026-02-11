@@ -17,14 +17,14 @@ export const navigateTo = (href: string, options?: { replace?: boolean }) => {
 
     // Handle relative URLs
     const url = href.startsWith('/') ? href : `/${href}`;
-    
+
     // For Astro static sites, we need to use window.location for navigation
     // but we can try to prevent unnecessary refreshes by checking current location
     if (window.location.pathname === url) {
       console.log('Already on target page:', url);
       return;
     }
-    
+
     // Use replace or assign based on options
     if (options?.replace) {
       window.location.replace(url);
@@ -55,7 +55,7 @@ export const isValidRoute = (href: string): boolean => {
     '/forgot-password',
     '/reset-password'
   ];
-  
+
   // Check if the base path (without query parameters) is valid
   const basePath = href.split('?')[0];
   return validRoutes.includes(basePath);
