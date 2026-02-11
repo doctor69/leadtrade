@@ -163,11 +163,19 @@ Deno.serve(async (req: Request) => {
       logInfo('Document uploaded successfully', { documentId: result.data?.id })
       return createSuccessResponse(result.data, corsHeaders)
 
-    } else if (req.method === 'GET' && pathParts.length > 0) {
-      const lastPart = pathParts[pathParts.length - 1]
-
-      // Check if requesting specific document or list
-      if (lastPart === 'documents' || lastPart === 'alpaca-documents') {
+    } else if (req.method === 'GET') {
+      // Parse the path - handle both direct calls and function URLs
+      // URL will be like /functions/v1/alpaca-documents or /functions/v1/alpaca-documents/{documentId}
+      
+      // Find the index of 'alpaca-documents' in the path
+      const funcIndex = pathParts.findIndex(part => part === 'alpaca-documents')
+      
+      // If there's a part after 'alpaca-documents', it's the document ID
+      const documentId = funcIndex >= 0 && funcIndex < pathParts.length - 1 
+        ? pathParts[funcIndex + 1] 
+        : null
+      
+      if (!documentId) {
         // List all documents
         logInfo('Listing documents', { accountId })
 
@@ -187,7 +195,6 @@ Deno.serve(async (req: Request) => {
 
       } else {
         // Get specific document (download URL)
-        const documentId = lastPart
         logInfo('Getting document download URL', { accountId, documentId })
 
         const result = await alpacaClient.getDocument(accountId, documentId)
