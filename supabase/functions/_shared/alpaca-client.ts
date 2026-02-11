@@ -896,9 +896,81 @@ export class AlpacaClient {
   /**
    * Get document download URL
    * GET /v1/accounts/{account_id}/documents/{document_id}/download
+   * This endpoint returns a 301 redirect with the download URL in the Location header
    */
   async getDocumentDownloadUrl(accountId: string, documentId: string): Promise<AlpacaResponse<{ download_url: string }>> {
-    return this.brokerRequest<{ download_url: string }>(`/v1/accounts/${accountId}/documents/${documentId}/download`)
+    try {
+      const url = `${this.baseUrl}/v1/accounts/${accountId}/documents/${documentId}/download`
+      
+      // Get Alpaca API credentials based on trading mode
+      const apiKey = this.authContext.tradingMode === 'paper'
+        ? Deno.env.get('PUBLIC_ALPACA_BROKER_SANDBOX_API_KEY')
+        : Deno.env.get('PUBLIC_ALPACA_BROKER_LIVE_API_KEY')
+
+      const apiSecret = this.authContext.tradingMode === 'paper'
+        ? Deno.env.get('PUBLIC_ALPACA_BROKER_SANDBOX_API_SECRET')
+        : Deno.env.get('PUBLIC_ALPACA_BROKER_LIVE_API_SECRET')
+
+      if (!apiKey || !apiSecret) {
+        throw new Error(`Missing Alpaca API credentials for ${this.authContext.tradingMode} mode`)
+      }
+
+      const credentials = `${apiKey}:${apiSecret}`
+      const encodedCredentials = btoa(credentials)
+
+      // Make request with redirect: 'manual' to capture the Location header
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${encodedCredentials}`,
+        },
+        redirect: 'manual' // Don't follow redirects automatically
+      })
+
+      this.logger('Document download URL request', {
+        url,
+        status: response.status,
+        hasLocation: response.headers.has('location')
+      })
+
+      // Check for redirect response (301)
+      if (response.status === 301 || response.status === 302) {
+        const downloadUrl = response.headers.get('location')
+        if (downloadUrl) {
+          return {
+            success: true,
+            data: { download_url: downloadUrl }
+          }
+        }
+      }
+
+      // If not a redirect, try to parse as JSON
+      if (response.headers.get('Content-Type')?.includes('application/json')) {
+        const data = await response.json()
+        return {
+          success: true,
+          data
+        }
+      }
+
+      return {
+        success: false,
+        error: {
+          status: response.status,
+          message: 'Failed to get download URL',
+          code: 'ALPACA_API_ERROR'
+        }
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          status: 500,
+          message: error instanceof Error ? error.message : 'Unknown error',
+          code: 'ALPACA_REQUEST_FAILED'
+        }
+      }
+    }
   }
 
   // =============================================================================
