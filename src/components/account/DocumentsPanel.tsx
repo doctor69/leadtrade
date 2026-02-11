@@ -37,10 +37,15 @@ export default function DocumentsPanel({ accountId }: DocumentsPanelProps) {
 
   useEffect(() => {
     // Filter documents when filter changes
+    // Exclude trade_confirmation_json and account_application from display
+    const displayableDocuments = documents.filter(
+      doc => doc.type !== 'trade_confirmation_json' && doc.type !== 'account_application'
+    );
+    
     if (filterType === 'all') {
-      setFilteredDocuments(documents);
+      setFilteredDocuments(displayableDocuments);
     } else {
-      setFilteredDocuments(documents.filter(doc => doc.type === filterType));
+      setFilteredDocuments(displayableDocuments.filter(doc => doc.type === filterType));
     }
   }, [filterType, documents]);
 
@@ -112,8 +117,14 @@ export default function DocumentsPanel({ accountId }: DocumentsPanelProps) {
     return typeMap[type] || type;
   };
 
-  // Get unique document types from the documents
-  const documentTypes = Array.from(new Set(documents.map(doc => doc.type)));
+  // Get unique document types from the documents (excluding unwanted types)
+  const documentTypes = Array.from(
+    new Set(
+      documents
+        .filter(doc => doc.type !== 'trade_confirmation_json' && doc.type !== 'account_application')
+        .map(doc => doc.type)
+    )
+  );
 
   return (
     <Card>
@@ -183,7 +194,7 @@ export default function DocumentsPanel({ accountId }: DocumentsPanelProps) {
                 {filterType === 'all' ? 'No documents available' : 'No documents found for this type'}
               </p>
               <p className="text-xs text-muted-foreground">
-                {filterType === 'all' 
+                {filterType === 'all'
                   ? 'Documents will appear here once they are generated'
                   : 'Try selecting a different document type'}
               </p>
