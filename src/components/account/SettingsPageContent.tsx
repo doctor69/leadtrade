@@ -5,6 +5,7 @@ import { Card, CardContent } from '../ui/card';
 import UserSettings from '../ui/UserSettings';
 import PDTStatusPanel from './PDTStatusPanel';
 import KYCStatus from './KYCStatus';
+import DocumentsPanel from './DocumentsPanel';
 import { apiService } from '../../lib/apiService';
 
 export default function SettingsPageContent() {
@@ -126,6 +127,11 @@ export default function SettingsPageContent() {
               {/* PDT Status */}
               <div id="pdt-status">
                 <PDTStatusPanel accountId={accountId} />
+              </div>
+
+              {/* Documents & Statements */}
+              <div id="documents">
+                <DocumentsPanel accountId={accountId} />
               </div>
             </>
           ) : null}

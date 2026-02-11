@@ -1,10 +1,10 @@
 /// <reference lib="deno.ns" />
 
 import { AlpacaClient } from '../_shared/alpaca-client.ts'
-import { authenticateRequest } from '../_shared/auth.ts'
+import { validateAuth } from '../_shared/auth.ts'
 import { corsHeaders, handleCors } from '../_shared/cors.ts'
 import { createErrorResponse, createSuccessResponse } from '../_shared/response.ts'
-import { logInfo, logError } from '../_shared/logging.ts'
+import { createLogger } from '../_shared/logging.ts'
 
 // Document validation constants
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB in bytes
@@ -61,26 +61,29 @@ Deno.serve(async (req: Request) => {
 
   try {
     // Authenticate request
-    const authResult = await authenticateRequest(req)
-    if (!authResult.success || !authResult.context) {
-      logError('Authentication failed', { error: authResult.error })
-      return createErrorResponse(authResult.error || 'Authentication failed', 401, corsHeaders)
+    const authResult = await validateAuth(req)
+    if ('status' in authResult) {
+      return createErrorResponse(authResult.message, authResult.status)
     }
 
-    const { context } = authResult
+    const context = authResult
     const url = new URL(req.url)
     const pathParts = url.pathname.split('/').filter(Boolean)
 
-    logInfo('Document management request', {
+    // Create logger with context
+    const logger = createLogger('alpaca-documents', context.userId, {
+      tradingMode: context.tradingMode,
+      alpacaAccountId: context.alpacaAccountId
+    })
+
+    logger.info('Document management request', {
       method: req.method,
-      path: url.pathname,
-      userId: context.userId,
-      tradingMode: context.tradingMode
+      path: url.pathname
     })
 
     // Initialize Alpaca client
     const alpacaClient = new AlpacaClient(context, (message, data) => {
-      logInfo(message, data)
+      logger.debug(message, data)
     })
 
     // Get user's Alpaca account ID
@@ -97,8 +100,8 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (accountError || !alpacaAccount?.alpaca_account_id) {
-      logError('Alpaca account not found', { userId: context.userId, error: accountError })
-      return createErrorResponse('Alpaca account not found', 404, corsHeaders)
+      logger.error('Alpaca account not found', accountError, { userId: context.userId })
+      return createErrorResponse('Alpaca account not found', 404)
     }
 
     const accountId = alpacaAccount.alpaca_account_id
@@ -111,10 +114,10 @@ Deno.serve(async (req: Request) => {
       // Validate request
       const validation = validateDocumentUpload(body)
       if (!validation.valid) {
-        return createErrorResponse(validation.error!, 400, corsHeaders)
+        return createErrorResponse(validation.error!, 400)
       }
 
-      logInfo('Uploading document', {
+      logger.info('Uploading document', {
         accountId,
         documentType: body.document_type,
         mimeType: body.mime_type,
@@ -130,11 +133,10 @@ Deno.serve(async (req: Request) => {
       })
 
       if (!result.success) {
-        logError('Document upload failed', { error: result.error })
+        logger.error('Document upload failed', result.error)
         return createErrorResponse(
           result.error?.message || 'Failed to upload document',
-          result.error?.status || 500,
-          corsHeaders
+          result.error?.status || 500
         )
       }
 
@@ -156,69 +158,74 @@ Deno.serve(async (req: Request) => {
         })
 
       if (dbError) {
-        logError('Failed to store document metadata', { error: dbError })
+        logger.error('Failed to store document metadata', dbError)
         // Don't fail the request, document is uploaded to Alpaca
       }
 
-      logInfo('Document uploaded successfully', { documentId: result.data?.id })
-      return createSuccessResponse(result.data, corsHeaders)
+      logger.info('Document uploaded successfully', { documentId: result.data?.id })
+      return createSuccessResponse(result.data)
 
-    } else if (req.method === 'GET' && pathParts.length > 0) {
-      const lastPart = pathParts[pathParts.length - 1]
-
-      // Check if requesting specific document or list
-      if (lastPart === 'documents' || lastPart === 'alpaca-documents') {
+    } else if (req.method === 'GET') {
+      // Parse the path - handle both direct calls and function URLs
+      // URL will be like /functions/v1/alpaca-documents or /functions/v1/alpaca-documents/{documentId}
+      
+      // Find the index of 'alpaca-documents' in the path
+      const funcIndex = pathParts.findIndex(part => part === 'alpaca-documents')
+      
+      // If there's a part after 'alpaca-documents', it's the document ID
+      const documentId = funcIndex >= 0 && funcIndex < pathParts.length - 1 
+        ? pathParts[funcIndex + 1] 
+        : null
+      
+      if (!documentId) {
         // List all documents
-        logInfo('Listing documents', { accountId })
+        logger.info('Listing documents', { accountId })
 
         const result = await alpacaClient.listDocuments(accountId)
 
         if (!result.success) {
-          logError('Failed to list documents', { error: result.error })
+          logger.error('Failed to list documents', result.error)
           return createErrorResponse(
             result.error?.message || 'Failed to list documents',
-            result.error?.status || 500,
-            corsHeaders
+            result.error?.status || 500
           )
         }
 
-        logInfo('Documents listed successfully', { count: result.data?.length || 0 })
-        return createSuccessResponse(result.data, corsHeaders)
+        logger.info('Documents listed successfully', { count: result.data?.length || 0 })
+        return createSuccessResponse(result.data)
 
       } else {
         // Get specific document (download URL)
-        const documentId = lastPart
-        logInfo('Getting document download URL', { accountId, documentId })
+        logger.info('Getting document download URL', { accountId, documentId })
 
-        const result = await alpacaClient.getDocument(accountId, documentId)
+        const result = await alpacaClient.getDocumentDownloadUrl(accountId, documentId)
 
         if (!result.success) {
-          logError('Failed to get document', { error: result.error })
+          logger.error('Failed to get document download URL', result.error)
           return createErrorResponse(
             result.error?.message || 'Failed to get document',
-            result.error?.status || 500,
-            corsHeaders
+            result.error?.status || 500
           )
         }
 
-        logInfo('Document URL retrieved successfully', { documentId })
-        return createSuccessResponse(result.data, corsHeaders)
+        logger.info('Document URL retrieved successfully', { 
+          documentId, 
+          hasDownloadUrl: !!result.data?.download_url,
+          dataKeys: result.data ? Object.keys(result.data) : []
+        })
+        return createSuccessResponse(result.data)
       }
 
     } else {
-      return createErrorResponse('Method not allowed', 405, corsHeaders)
+      return createErrorResponse('Method not allowed', 405)
     }
 
   } catch (error) {
-    logError('Unexpected error in document management', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
-    })
+    console.error('Unexpected error in document management:', error)
 
     return createErrorResponse(
       'Internal server error',
-      500,
-      corsHeaders
+      500
     )
   }
 })
