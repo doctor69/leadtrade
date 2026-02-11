@@ -208,7 +208,11 @@ Deno.serve(async (req: Request) => {
           )
         }
 
-        logger.info('Document URL retrieved successfully', { documentId })
+        logger.info('Document URL retrieved successfully', { 
+          documentId, 
+          hasDownloadUrl: !!result.data?.download_url,
+          dataKeys: result.data ? Object.keys(result.data) : []
+        })
         return createSuccessResponse(result.data)
       }
 
