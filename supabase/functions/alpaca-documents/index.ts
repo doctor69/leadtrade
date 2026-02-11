@@ -63,7 +63,7 @@ Deno.serve(async (req: Request) => {
     // Authenticate request
     const authResult = await validateAuth(req)
     if ('status' in authResult) {
-      return createErrorResponse(authResult.message, authResult.status, corsHeaders)
+      return createErrorResponse(authResult.message, authResult.status)
     }
 
     const context = authResult
@@ -101,7 +101,7 @@ Deno.serve(async (req: Request) => {
 
     if (accountError || !alpacaAccount?.alpaca_account_id) {
       logger.error('Alpaca account not found', accountError, { userId: context.userId })
-      return createErrorResponse('Alpaca account not found', 404, corsHeaders)
+      return createErrorResponse('Alpaca account not found', 404)
     }
 
     const accountId = alpacaAccount.alpaca_account_id
@@ -114,7 +114,7 @@ Deno.serve(async (req: Request) => {
       // Validate request
       const validation = validateDocumentUpload(body)
       if (!validation.valid) {
-        return createErrorResponse(validation.error!, 400, corsHeaders)
+        return createErrorResponse(validation.error!, 400)
       }
 
       logger.info('Uploading document', {
@@ -136,8 +136,7 @@ Deno.serve(async (req: Request) => {
         logger.error('Document upload failed', result.error)
         return createErrorResponse(
           result.error?.message || 'Failed to upload document',
-          result.error?.status || 500,
-          corsHeaders
+          result.error?.status || 500
         )
       }
 
@@ -164,7 +163,7 @@ Deno.serve(async (req: Request) => {
       }
 
       logger.info('Document uploaded successfully', { documentId: result.data?.id })
-      return createSuccessResponse(result.data, corsHeaders)
+      return createSuccessResponse(result.data)
 
     } else if (req.method === 'GET') {
       // Parse the path - handle both direct calls and function URLs
@@ -188,13 +187,12 @@ Deno.serve(async (req: Request) => {
           logger.error('Failed to list documents', result.error)
           return createErrorResponse(
             result.error?.message || 'Failed to list documents',
-            result.error?.status || 500,
-            corsHeaders
+            result.error?.status || 500
           )
         }
 
         logger.info('Documents listed successfully', { count: result.data?.length || 0 })
-        return createSuccessResponse(result.data, corsHeaders)
+        return createSuccessResponse(result.data)
 
       } else {
         // Get specific document (download URL)
@@ -206,17 +204,16 @@ Deno.serve(async (req: Request) => {
           logger.error('Failed to get document', result.error)
           return createErrorResponse(
             result.error?.message || 'Failed to get document',
-            result.error?.status || 500,
-            corsHeaders
+            result.error?.status || 500
           )
         }
 
         logger.info('Document URL retrieved successfully', { documentId })
-        return createSuccessResponse(result.data, corsHeaders)
+        return createSuccessResponse(result.data)
       }
 
     } else {
-      return createErrorResponse('Method not allowed', 405, corsHeaders)
+      return createErrorResponse('Method not allowed', 405)
     }
 
   } catch (error) {
@@ -224,8 +221,7 @@ Deno.serve(async (req: Request) => {
 
     return createErrorResponse(
       'Internal server error',
-      500,
-      corsHeaders
+      500
     )
   }
 })
