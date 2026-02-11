@@ -52,9 +52,19 @@ export default function DocumentsPanel({ accountId }: DocumentsPanelProps) {
 
       const response = await edgeFunctionClient.get(`alpaca-documents/${documentId}`);
 
-      if (response.success && response.data?.download_url) {
-        // Open the download URL in a new tab
-        window.open(response.data.download_url, '_blank');
+      console.log('Download response:', response);
+
+      if (response.success && response.data) {
+        // The response.data should contain the download_url
+        const downloadUrl = response.data.download_url || response.data;
+
+        if (typeof downloadUrl === 'string' && downloadUrl.startsWith('http')) {
+          // Open the download URL in a new tab
+          window.open(downloadUrl, '_blank');
+        } else {
+          console.error('Invalid download URL:', response.data);
+          throw new Error('Invalid download URL received from server');
+        }
       } else {
         throw new Error(response.error?.message || 'Failed to download document');
       }
@@ -189,7 +199,7 @@ export default function DocumentsPanel({ accountId }: DocumentsPanelProps) {
 
         <div className="mt-6 p-4 bg-muted/50 rounded-lg">
           <p className="text-xs text-muted-foreground">
-            <strong>Note:</strong> Under FINRA and SEC rules, Alpaca is required to provide customer statements and trade confirmations. 
+            <strong>Note:</strong> Under FINRA and SEC rules, Alpaca is required to provide customer statements and trade confirmations.
             Monthly statements are typically available within 10 business days after month-end. Trade confirmations are generated for each trade execution.
           </p>
         </div>

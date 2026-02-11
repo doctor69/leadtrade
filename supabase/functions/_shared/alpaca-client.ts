@@ -886,11 +886,19 @@ export class AlpacaClient {
   }
 
   /**
-   * Get a specific document (returns pre-signed URL)
+   * Get a specific document metadata
    * GET /v1/accounts/{account_id}/documents/{document_id}
    */
-  async getDocument(accountId: string, documentId: string): Promise<AlpacaResponse<{ download_url: string }>> {
-    return this.brokerRequest<{ download_url: string }>(`/v1/accounts/${accountId}/documents/${documentId}`)
+  async getDocument(accountId: string, documentId: string): Promise<AlpacaResponse<any>> {
+    return this.brokerRequest<any>(`/v1/accounts/${accountId}/documents/${documentId}`)
+  }
+
+  /**
+   * Get document download URL
+   * GET /v1/accounts/{account_id}/documents/{document_id}/download
+   */
+  async getDocumentDownloadUrl(accountId: string, documentId: string): Promise<AlpacaResponse<{ download_url: string }>> {
+    return this.brokerRequest<{ download_url: string }>(`/v1/accounts/${accountId}/documents/${documentId}/download`)
   }
 
   // =============================================================================

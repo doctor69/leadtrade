@@ -198,10 +198,10 @@ Deno.serve(async (req: Request) => {
         // Get specific document (download URL)
         logger.info('Getting document download URL', { accountId, documentId })
 
-        const result = await alpacaClient.getDocument(accountId, documentId)
+        const result = await alpacaClient.getDocumentDownloadUrl(accountId, documentId)
 
         if (!result.success) {
-          logger.error('Failed to get document', result.error)
+          logger.error('Failed to get document download URL', result.error)
           return createErrorResponse(
             result.error?.message || 'Failed to get document',
             result.error?.status || 500
