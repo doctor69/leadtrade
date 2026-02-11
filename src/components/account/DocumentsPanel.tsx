@@ -13,7 +13,7 @@ interface Document {
 }
 
 interface DocumentsPanelProps {
-  accountId: string;
+  accountId: string; // Still needed for the component key/identification
 }
 
 export default function DocumentsPanel({ accountId }: DocumentsPanelProps) {
@@ -24,17 +24,14 @@ export default function DocumentsPanel({ accountId }: DocumentsPanelProps) {
 
   useEffect(() => {
     loadDocuments();
-  }, [accountId]);
+  }, []); // Remove accountId dependency since function gets it from auth
 
   const loadDocuments = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await edgeFunctionClient.post('alpaca-proxy', {
-        endpoint: `/v1/accounts/${accountId}/documents/`,
-        method: 'GET',
-      });
+      const response = await edgeFunctionClient.get('alpaca-documents');
 
       if (response.success && response.data) {
         setDocuments(response.data);
@@ -53,10 +50,7 @@ export default function DocumentsPanel({ accountId }: DocumentsPanelProps) {
     try {
       setDownloadingId(documentId);
 
-      const response = await edgeFunctionClient.post('alpaca-proxy', {
-        endpoint: `/v1/accounts/${accountId}/documents/${documentId}/download`,
-        method: 'GET',
-      });
+      const response = await edgeFunctionClient.get(`alpaca-documents/${documentId}`);
 
       if (response.success && response.data?.download_url) {
         // Open the download URL in a new tab
