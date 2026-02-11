@@ -1,7 +1,7 @@
 /// <reference lib="deno.ns" />
 
 import { AlpacaClient } from '../_shared/alpaca-client.ts'
-import { authenticateRequest } from '../_shared/auth.ts'
+import { validateAuth } from '../_shared/auth.ts'
 import { corsHeaders, handleCors } from '../_shared/cors.ts'
 import { createErrorResponse, createSuccessResponse } from '../_shared/response.ts'
 import { logInfo, logError } from '../_shared/logging.ts'
@@ -61,13 +61,13 @@ Deno.serve(async (req: Request) => {
 
   try {
     // Authenticate request
-    const authResult = await authenticateRequest(req)
-    if (!authResult.success || !authResult.context) {
-      logError('Authentication failed', { error: authResult.error })
-      return createErrorResponse(authResult.error || 'Authentication failed', 401, corsHeaders)
+    const authResult = await validateAuth(req)
+    if ('status' in authResult) {
+      logError('Authentication failed', { error: authResult.message })
+      return createErrorResponse(authResult.message, authResult.status, corsHeaders)
     }
 
-    const { context } = authResult
+    const context = authResult
     const url = new URL(req.url)
     const pathParts = url.pathname.split('/').filter(Boolean)
 
