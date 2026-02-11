@@ -1,8 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { FileText, Download, Loader2, AlertCircle, Calendar } from 'lucide-react';
+import { FileText, Download, Loader2, AlertCircle, Calendar, Filter } from 'lucide-react';
 import { edgeFunctionClient } from '@/lib/edgeFunctionClient';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
 
 interface Document {
   id: string;
@@ -18,13 +25,24 @@ interface DocumentsPanelProps {
 
 export default function DocumentsPanel({ accountId }: DocumentsPanelProps) {
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<string>('all');
 
   useEffect(() => {
     loadDocuments();
   }, []); // Remove accountId dependency since function gets it from auth
+
+  useEffect(() => {
+    // Filter documents when filter changes
+    if (filterType === 'all') {
+      setFilteredDocuments(documents);
+    } else {
+      setFilteredDocuments(documents.filter(doc => doc.type === filterType));
+    }
+  }, [filterType, documents]);
 
   const loadDocuments = async () => {
     try {
@@ -46,23 +64,18 @@ export default function DocumentsPanel({ accountId }: DocumentsPanelProps) {
     }
   };
 
-  const downloadDocument = async (documentId: string, documentName: string) => {
+  const downloadDocument = async (documentId: string) => {
     try {
       setDownloadingId(documentId);
 
       const response = await edgeFunctionClient.get(`alpaca-documents/${documentId}`);
 
-      console.log('Download response:', response);
-
       if (response.success && response.data) {
-        // The response.data should contain the download_url
         const downloadUrl = response.data.download_url || response.data;
 
         if (typeof downloadUrl === 'string' && downloadUrl.startsWith('http')) {
-          // Open the download URL in a new tab
           window.open(downloadUrl, '_blank');
         } else {
-          console.error('Invalid download URL:', response.data);
           throw new Error('Invalid download URL received from server');
         }
       } else {
@@ -99,6 +112,9 @@ export default function DocumentsPanel({ accountId }: DocumentsPanelProps) {
     return typeMap[type] || type;
   };
 
+  // Get unique document types from the documents
+  const documentTypes = Array.from(new Set(documents.map(doc => doc.type)));
+
   return (
     <Card>
       <CardHeader>
@@ -112,14 +128,30 @@ export default function DocumentsPanel({ accountId }: DocumentsPanelProps) {
               View and download your account statements, trade confirmations, and tax documents
             </CardDescription>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={loadDocuments}
-            disabled={loading}
-          >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Refresh'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="w-[200px]">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Filter by type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Documents</SelectItem>
+                {documentTypes.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {getDocumentTypeLabel(type)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={loadDocuments}
+              disabled={loading}
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Refresh'}
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -143,19 +175,23 @@ export default function DocumentsPanel({ accountId }: DocumentsPanelProps) {
               </Button>
             </div>
           </div>
-        ) : documents.length === 0 ? (
+        ) : filteredDocuments.length === 0 ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center space-y-2">
               <FileText className="h-12 w-12 mx-auto text-muted-foreground/50" />
-              <p className="text-sm font-medium">No documents available</p>
+              <p className="text-sm font-medium">
+                {filterType === 'all' ? 'No documents available' : 'No documents found for this type'}
+              </p>
               <p className="text-xs text-muted-foreground">
-                Documents will appear here once they are generated
+                {filterType === 'all' 
+                  ? 'Documents will appear here once they are generated'
+                  : 'Try selecting a different document type'}
               </p>
             </div>
           </div>
         ) : (
           <div className="space-y-2">
-            {documents.map((doc) => (
+            {filteredDocuments.map((doc) => (
               <div
                 key={doc.id}
                 className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
@@ -180,7 +216,7 @@ export default function DocumentsPanel({ accountId }: DocumentsPanelProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => downloadDocument(doc.id, doc.name)}
+                  onClick={() => downloadDocument(doc.id)}
                   disabled={downloadingId === doc.id}
                 >
                   {downloadingId === doc.id ? (
