@@ -41,7 +41,7 @@ export default function DocumentsPanel({ accountId }: DocumentsPanelProps) {
     const displayableDocuments = documents.filter(
       doc => doc.type !== 'trade_confirmation_json' && doc.type !== 'account_application'
     );
-    
+
     if (filterType === 'all') {
       setFilteredDocuments(displayableDocuments);
     } else {
