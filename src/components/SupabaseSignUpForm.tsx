@@ -445,7 +445,7 @@ export default function SupabaseSignUpForm({ returnUrl = '/dashboard' }: Supabas
           tax_id: alpacaAccountData.tax_id ? '***masked***' : 'missing'
         });
 
-        const alpacaResponse = await edgeFunctionClient.request('create-alpaca-account', {
+        const alpacaResponse = await edgeFunctionClient.request('streamlined-signup', {
           method: 'POST',
           body: alpacaAccountData,
           requireAuth: false,
