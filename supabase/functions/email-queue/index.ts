@@ -47,15 +47,15 @@ serve(async (req) => {
 
   try {
     // Get pending emails from queue (only trading emails need rate limiting)
+    // Note: We can't directly compare two columns in PostgREST filter, so we fetch and filter in code
     const { data: pendingEmails, error: fetchError } = await supabase
       .from('email_queue')
       .select('*')
       .in('status', ['pending', 'failed']) // Process both pending and failed emails
       .eq('category', 'trading') // Only queue trading emails (Resend)
       .lte('scheduled_for', new Date().toISOString())
-      .filter('attempts', 'lt', 'max_attempts') // Only process if attempts < max_attempts
       .order('created_at', { ascending: true })
-      .limit(10) // Process 10 at a time
+      .limit(50) // Fetch more, then filter in code
 
     if (fetchError) {
       console.error('Error fetching emails:', fetchError)
@@ -65,7 +65,12 @@ serve(async (req) => {
       )
     }
 
-    if (!pendingEmails || pendingEmails.length === 0) {
+    // Filter emails where attempts < max_attempts (done in code since PostgREST can't compare columns)
+    const eligibleEmails = (pendingEmails || [])
+      .filter(email => email.attempts < email.max_attempts)
+      .slice(0, 10) // Process 10 at a time
+
+    if (!eligibleEmails || eligibleEmails.length === 0) {
       return new Response(
         JSON.stringify({ success: true, processed: 0, message: 'No emails to process' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -75,7 +80,7 @@ serve(async (req) => {
     let processed = 0
     let failed = 0
 
-    for (const email of pendingEmails) {
+    for (const email of eligibleEmails) {
       // Mark as processing
       await supabase
         .from('email_queue')
@@ -142,7 +147,7 @@ serve(async (req) => {
         success: true,
         processed,
         failed,
-        total: pendingEmails.length,
+        total: eligibleEmails.length,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
