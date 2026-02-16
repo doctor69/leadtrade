@@ -335,7 +335,24 @@ export default function NavigationBar() {
                                         return (
                                             <div key={`mobile-${item.name}`} className="relative">
                                                 <button
-                                                    className="flex w-full items-center px-4 py-3 rounded-lg text-sm font-medium text-foreground hover:bg-primary/20 hover:text-primary active:bg-primary/30 transition-all duration-200 min-h-[44px]"
+                                                    className={`flex w-full items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 min-h-[44px] ${
+                                                        isActive 
+                                                            ? 'bg-primary/10 text-primary' 
+                                                            : 'text-foreground active:bg-primary/20 active:text-primary'
+                                                    }`}
+                                                    style={{
+                                                        WebkitTapHighlightColor: 'transparent'
+                                                    }}
+                                                    onTouchStart={(e) => {
+                                                        e.currentTarget.style.backgroundColor = 'hsl(var(--primary) / 0.2)';
+                                                        e.currentTarget.style.color = 'hsl(var(--primary))';
+                                                    }}
+                                                    onTouchEnd={(e) => {
+                                                        if (!isActive) {
+                                                            e.currentTarget.style.backgroundColor = '';
+                                                            e.currentTarget.style.color = '';
+                                                        }
+                                                    }}
                                                     onClick={() => {
                                                         setMobileMenuOpen(false);
                                                         safeNavigate(item.href);
