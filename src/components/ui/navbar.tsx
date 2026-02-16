@@ -336,10 +336,6 @@ export default function NavigationBar() {
                                             <div key={`mobile-${item.name}`} className="relative">
                                                 <button
                                                     className="flex w-full items-center px-4 py-3 rounded-lg text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground active:bg-accent/80 transition-all duration-200 min-h-[44px]"
-                                                    style={{ 
-                                                        backgroundColor: 'hsl(var(--background))',
-                                                        opacity: 1
-                                                    }}
                                                     onClick={() => {
                                                         setMobileMenuOpen(false);
                                                         safeNavigate(item.href);
@@ -363,10 +359,6 @@ export default function NavigationBar() {
                                                 variant="outline" 
                                                 size="sm" 
                                                 className="w-full justify-start min-h-[44px]"
-                                                style={{ 
-                                                    backgroundColor: 'hsl(var(--background))',
-                                                    opacity: 1
-                                                }}
                                             >
                                                 <Palette className="h-4 w-4 mr-2" />
                                                 Theme Customizer
@@ -385,10 +377,6 @@ export default function NavigationBar() {
                                     variant="outline"
                                     size="sm"
                                     className="w-full justify-start min-h-[44px]"
-                                    style={{ 
-                                        backgroundColor: 'hsl(var(--background))',
-                                        opacity: 1
-                                    }}
                                     onClick={() => {
                                         setMobileMenuOpen(false);
                                         safeNavigate('/settings');
