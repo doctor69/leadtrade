@@ -120,6 +120,15 @@ leadtrade/
 
 ## Key Components
 
+### Navigation & Layout
+- **NavigationBar**: Responsive navigation with mobile menu, theme customizer, and settings access
+  - Desktop: Horizontal menu with active page indicators
+  - Mobile: Slide-down menu with touch gestures (swipe up to close)
+  - Auth-aware: Shows different menu items based on login status
+  - Real-time path tracking for active state highlighting
+  - Integrated theme customizer dropdown
+  - Session management with Supabase Auth
+
 ### Trading Components
 - **TradingDashboard**: Main trading interface with tabs for overview, assets, performance, events, corporate actions, and options
 - **TradeForm**: Order entry with validation, market data, and execution
@@ -130,8 +139,17 @@ leadtrade/
 
 ### Account Components
 - **SettingsPageContent**: Unified settings interface
-- **KYCStatus**: Identity verification status and document upload
+- **KYCVerificationPanel**: Identity verification with document upload (supports ID, address verification, W-8BEN)
+  - File validation (JPEG, PNG, PDF up to 10MB)
+  - Base64 encoding for secure upload
+  - Upload status tracking with success/error states
+  - Privacy and security notices
 - **DocumentsPanel**: Access to statements, confirmations, and tax documents
+  - Document type filtering (account statements, trade confirmations, tax documents)
+  - Download functionality with progress indicators
+  - Excludes internal document types (trade_confirmation_json, account_application)
+  - FINRA/SEC compliance notices
+- **KYCStatus**: Identity verification status display
 - **PDTStatusPanel**: Pattern Day Trader monitoring and removal
 - **FundingPageContent**: Bank linking, ACH/wire transfers, and funding history
 - **TradingModeSwitch**: Toggle between paper and live trading

@@ -335,13 +335,23 @@ export default function NavigationBar() {
                                         return (
                                             <div key={`mobile-${item.name}`} className="relative">
                                                 <button
-                                                    className={`flex w-full items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 min-h-[44px] ${
-                                                        isActive 
-                                                            ? 'bg-primary/10 text-primary' 
-                                                            : 'text-foreground active:bg-primary/20 active:text-primary'
-                                                    }`}
+                                                    className="flex w-full items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 min-h-[44px]"
                                                     style={{
-                                                        WebkitTapHighlightColor: 'transparent'
+                                                        WebkitTapHighlightColor: 'transparent',
+                                                        backgroundColor: isActive ? 'hsl(var(--primary) / 0.1)' : 'transparent',
+                                                        color: isActive ? 'hsl(var(--primary))' : 'hsl(var(--foreground))'
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        if (!isActive) {
+                                                            e.currentTarget.style.backgroundColor = 'hsl(var(--primary) / 0.2)';
+                                                            e.currentTarget.style.color = 'hsl(var(--primary))';
+                                                        }
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        if (!isActive) {
+                                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                                            e.currentTarget.style.color = 'hsl(var(--foreground))';
+                                                        }
                                                     }}
                                                     onTouchStart={(e) => {
                                                         e.currentTarget.style.backgroundColor = 'hsl(var(--primary) / 0.2)';
@@ -349,8 +359,8 @@ export default function NavigationBar() {
                                                     }}
                                                     onTouchEnd={(e) => {
                                                         if (!isActive) {
-                                                            e.currentTarget.style.backgroundColor = '';
-                                                            e.currentTarget.style.color = '';
+                                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                                            e.currentTarget.style.color = 'hsl(var(--foreground))';
                                                         }
                                                     }}
                                                     onClick={() => {
