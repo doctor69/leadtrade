@@ -335,32 +335,27 @@ export default function NavigationBar() {
                                         return (
                                             <div key={`mobile-${item.name}`} className="relative">
                                                 <button
-                                                    className="flex w-full items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 min-h-[44px]"
+                                                    className="flex w-full items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 min-h-[44px] text-foreground"
                                                     style={{
                                                         WebkitTapHighlightColor: 'transparent',
-                                                        backgroundColor: isActive ? 'hsl(var(--primary) / 0.1)' : 'transparent',
-                                                        color: isActive ? 'hsl(var(--primary))' : 'hsl(var(--foreground))'
+                                                        backgroundColor: isActive ? 'hsl(var(--primary) / 0.1)' : 'transparent'
                                                     }}
                                                     onMouseEnter={(e) => {
                                                         if (!isActive) {
                                                             e.currentTarget.style.backgroundColor = 'hsl(var(--primary) / 0.2)';
-                                                            e.currentTarget.style.color = 'hsl(var(--primary))';
                                                         }
                                                     }}
                                                     onMouseLeave={(e) => {
                                                         if (!isActive) {
                                                             e.currentTarget.style.backgroundColor = 'transparent';
-                                                            e.currentTarget.style.color = 'hsl(var(--foreground))';
                                                         }
                                                     }}
                                                     onTouchStart={(e) => {
                                                         e.currentTarget.style.backgroundColor = 'hsl(var(--primary) / 0.2)';
-                                                        e.currentTarget.style.color = 'hsl(var(--primary))';
                                                     }}
                                                     onTouchEnd={(e) => {
                                                         if (!isActive) {
                                                             e.currentTarget.style.backgroundColor = 'transparent';
-                                                            e.currentTarget.style.color = 'hsl(var(--foreground))';
                                                         }
                                                     }}
                                                     onClick={() => {
