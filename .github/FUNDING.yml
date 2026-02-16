@@ -1,0 +1,35 @@
+# These are supported funding model platforms
+
+# GitHub Sponsors - Free to set up, 0% fees
+# To enable: Go to github.com/sponsors and apply
+# github: [doctor69]
+
+# Buy Me a Coffee - Popular, easy to set up
+# Sign up at: buymeacoffee.com
+# buy_me_a_coffee: doctor
+
+# Ko-fi - Similar to Buy Me a Coffee
+# Sign up at: ko-fi.com
+# ko_fi: doctor
+
+# Patreon - For recurring support
+# Sign up at: patreon.com
+# patreon: leadtrade
+
+# Open Collective - Transparent finances
+# Sign up at: opencollective.com
+# open_collective: leadtrade
+
+# Polar - For open source projects
+# Sign up at: polar.sh
+# polar: doctor69
+
+# Custom donation links
+# You can add any custom URLs here
+custom: ['https://leadtrade.app/donate']
+
+# INSTRUCTIONS:
+# 1. Uncomment the platforms you want to use
+# 2. Replace usernames with your actual usernames
+# 3. Sign up for the platforms first
+# 4. Commit this file to enable the Sponsor button
