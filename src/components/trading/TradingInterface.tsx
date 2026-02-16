@@ -1,3 +1,12 @@
+/**
+ * LEADTRADE - Social Copy Trading Platform
+ * Copyright (c) 2025 doctor
+ * 
+ * Licensed under the Fair Source License.
+ * Non-commercial use permitted. Commercial use requires a paid license.
+ * See LICENSE file for details or contact license@leadtrade.app
+ */
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

@@ -1,3 +1,12 @@
+/**
+ * LEADTRADE - Social Copy Trading Platform
+ * Copyright (c) 2025 doctor
+ * 
+ * Licensed under the Fair Source License.
+ * Non-commercial use permitted. Commercial use requires a paid license.
+ * See LICENSE file for details or contact license@leadtrade.app
+ */
+
 # LeadTrade
 
 A modern paper/live trading platform with social copy trading capabilities, built on Alpaca Markets infrastructure.
@@ -126,14 +135,29 @@ leadtrade/
 
 ## Key Components
 
+### Core Layout
+- **AppShell**: Main application wrapper with theme provider, navigation, footer, and PWA install prompt
+  - Responsive container with max-width constraints
+  - Consistent padding across breakpoints (mobile: 4px, tablet: 6px, desktop: 8px)
+  - Flex layout for sticky footer
+  - Global CSS integration
+
 ### Navigation & Layout
 - **NavigationBar**: Responsive navigation with mobile menu, theme customizer, and settings access
-  - Desktop: Horizontal menu with active page indicators
+  - Desktop: Horizontal menu with active page indicators and underline animation
   - Mobile: Slide-down menu with touch gestures (swipe up to close)
   - Auth-aware: Shows different menu items based on login status
   - Real-time path tracking for active state highlighting
-  - Integrated theme customizer dropdown
+  - Integrated theme customizer dropdown (modal-like, 96rem width)
   - Session management with Supabase Auth
+  - Backdrop blur overlay for mobile menu
+  - Touch-optimized buttons (44px minimum)
+  - Escape key support for closing mobile menu
+  - Storage event listener for cross-tab login state sync
+- **Footer**: Application footer with links and copyright information
+- **ThemeProvider**: Global theme context provider with CSS variable management
+- **ThemeCustomizer**: Advanced theme customization with color pickers and presets
+- **SimpleThemeToggle**: Quick light/dark mode toggle
 
 ### Trading Components
 - **TradingInterface**: Unified trading interface with responsive grid-based tab navigation
@@ -146,55 +170,292 @@ leadtrade/
   - Real-time stock data fetching with URL parameter support (?symbol=AAPL)
   - Six main tabs: Trade (order entry + market grid), Portfolio (charts + summary), Positions, Orders, Performance, Corporate Actions
   - Consistent label display: "Trade" and "Orders" always show full text, others abbreviate on mobile
+  - Security details card with symbol, price, change, and volume
+  - Integrated AssetChart for price visualization
 - **TradeForm**: Order entry with validation, market data, and execution
+  - Support for market, limit, stop, and stop-limit orders
+  - Real-time price validation
+  - Buying power checks
+  - Order preview and confirmation
 - **Leaderboard**: Social trading discovery with search, filters, and trader profiles
+  - Sortable columns (returns, win rate, trade count)
+  - Trader profile modals with detailed statistics
+  - Follow/unfollow functionality
+  - Privacy-aware display (respects trader settings)
 - **CopyTradingDashboard**: Manage copy trading subscriptions and allocations
+  - Active subscription list with allocation percentages
+  - Subscription management (pause, resume, cancel)
+  - Performance tracking per subscription
 - **OptionsExercise**: Options contract management and exercise functionality
+- **OptionsSelector**: Options chain browser with strike/expiration selection
 - **EventStreamFeed**: Real-time account event stream (trades, transfers, corporate actions)
+  - Server-Sent Events (SSE) integration
+  - Auto-reconnect on connection loss
+  - Event filtering and categorization
 - **SimpleMarketGrid**: Market overview grid for quick stock selection
+  - Popular stocks with real-time prices
+  - Click to select for trading
 - **AccountPositions**: Real-time position tracking with P&L
+  - Stock and options positions
+  - Unrealized P&L calculations
+  - Position closure actions
 - **OrderHistory**: Complete order history with filtering and status tracking
+  - Status badges (filled, pending, cancelled, rejected)
+  - Order type and side indicators
+  - Timestamp and execution details
 - **PortfolioChart**: Historical portfolio performance visualization
+  - Recharts integration
+  - Multiple timeframes (1D, 1W, 1M, 3M, 1Y, ALL)
+  - Equity curve with P&L overlay
 - **AllCorporateActions**: Corporate action notifications and management
+  - Dividend announcements
+  - Stock splits
+  - Merger/acquisition notices
+- **TraderProfileModal**: Detailed trader statistics and follow button
+- **TraderSelection**: Copy trading trader picker with search
+- **SmartMarketData**: Intelligent market data fetching with fallback
+- **RealTimeMarketData**: WebSocket-based live market data
+- **SubscriptionManager**: WebSocket subscription management for market data
+- **TradeNotifications**: Real-time trade execution notifications
 
 ### Account Components
 - **SettingsPageContent**: Unified settings interface
-- **KYCVerificationPanel**: Identity verification with document upload (supports ID, address verification, W-8BEN)
+  - Profile management
+  - Privacy controls
+  - Trading preferences
+  - Notification settings
+- **KYCVerificationPanel**: Identity verification with document upload
+  - Supports ID, address verification, W-8BEN
   - File validation (JPEG, PNG, PDF up to 10MB)
   - Base64 encoding for secure upload
   - Upload status tracking with success/error states
   - Privacy and security notices
+- **KYCCompletionForm**: Post-OAuth KYC completion flow
+- **OAuthKYCForm**: OAuth-based KYC initiation
 - **DocumentsPanel**: Access to statements, confirmations, and tax documents
   - Document type filtering (account statements, trade confirmations, tax documents)
   - Download functionality with progress indicators
   - Excludes internal document types (trade_confirmation_json, account_application)
   - FINRA/SEC compliance notices
-- **KYCStatus**: Identity verification status display
+- **DocumentUpload**: Reusable document upload component
+- **KYCStatus**: Identity verification status display with badges
 - **PDTStatusPanel**: Pattern Day Trader monitoring and removal
+  - Current day trade count
+  - PDT status indicator
+  - Removal request functionality
 - **FundingPageContent**: Bank linking, ACH/wire transfers, and funding history
+  - ACH relationship management
+  - Wire transfer instructions
+  - Transfer history with status tracking
+- **ACHTransferForm**: ACH transfer initiation
+- **WireTransferForm**: Wire transfer details display
+- **BankLinking**: Plaid integration for bank account linking
+- **BankTransferModal**: Transfer confirmation modal
+- **FundingWalletManager**: Instant funding wallet management
+- **QuickSandboxFunding**: Quick funding for sandbox accounts
+- **TransferHistory**: Transfer history table with filtering
 - **TradingModeSwitch**: Toggle between paper and live trading
+  - Confirmation dialog for mode switching
+  - Account status validation
 
 ### Dashboard Components
 - **PortfolioSummary**: Account overview with equity, buying power, and P&L
+  - Real-time account data
+  - Performance metrics
+  - Asset allocation breakdown
 - **AssetGrid**: Position grid with real-time prices and performance
-- **PortfolioChart**: Historical portfolio value visualization
+  - Sortable columns
+  - P&L calculations
+  - Quick trade actions
 - **AssetChart**: Individual asset price charts
+  - Multiple timeframes
+  - Technical indicators
+  - Volume overlay
+- **OptionsPositions**: Options-specific position display
+  - Greeks display (delta, gamma, theta, vega)
+  - Expiration tracking
+  - Exercise functionality
+- **CorporateActionImpacts**: Corporate action impact on portfolio
+- **PortfolioTransferHistory**: Portfolio-level transfer history
+
+### Admin Components
+- **AuthVerificationDashboard**: Admin dashboard for auth verification
+  - User verification queue
+  - Approval/rejection workflow
+  - Audit trail
+- **FundingVerificationDashboard**: Admin dashboard for funding verification
+  - Transfer verification queue
+  - Fraud detection alerts
+  - Manual review tools
+- **TradingModeIndicator**: Display current trading mode (paper/live)
+- **TradingModeSwitch** (Admin): Admin-level trading mode control
+
+### Authentication Components
+- **SupabaseSignInForm**: Email/password sign-in form
+- **SupabaseSignUpForm**: Email/password sign-up form
+- **EnhancedSupabaseSignUpForm**: Enhanced sign-up with additional fields
+- **SignInForm**: Legacy sign-in form
+- **ForgotPasswordForm**: Password reset request form
+- **ResetPasswordForm**: Password reset completion form
+- **ProtectedRoute**: Route guard for authenticated pages
+- **HomePageRedirect**: Redirect logic for home page based on auth status
+
+### PWA Components
+- **PWAInstallPrompt**: Native app install prompt
+  - Platform detection (iOS, Android, Desktop)
+  - Install instructions
+  - Dismissible with localStorage persistence
+- **BackgroundSyncManager**: Background sync for offline trades
+  - Queue management
+  - Retry logic
+  - Sync status indicators
+- **OfflineStatusIndicator**: Network status indicator
+  - Online/offline detection
+  - Reconnection notifications
+- **NotificationPermissionPrompt**: Push notification permission request
+- **MobilePerformanceOptimizer**: Mobile-specific performance optimizations
+
+### UI Components (shadcn/ui)
+- **Alert**: Alert messages with variants
+- **Avatar**: User avatar display
+- **Badge**: Status badges with color variants
+- **Button**: Primary UI button with variants and sizes
+- **Card**: Content card container
+- **Carousel**: Image/content carousel
+- **Chart**: Recharts wrapper components
+- **Checkbox**: Form checkbox
+- **ColorPicker**: Color selection input
+- **DataTable**: TanStack Table wrapper
+- **Dialog**: Modal dialog
+- **DropdownMenu**: Dropdown menu component
+- **Input**: Text input field
+- **Label**: Form label
+- **Popover**: Popover overlay
+- **Progress**: Progress bar
+- **ScrollArea**: Scrollable container
+- **Select**: Dropdown select
+- **Separator**: Visual separator
+- **Sheet**: Slide-out panel
+- **Skeleton**: Loading skeleton
+- **Slider**: Range slider
+- **Switch**: Toggle switch
+- **Table**: Data table
+- **Tabs**: Tab navigation
+- **Textarea**: Multi-line text input
+
+### Utility Components
+- **ErrorBoundary**: React error boundary for graceful error handling
+- **ErrorDisplay**: Formatted error message display
+- **LazyComponent**: Code-splitting wrapper
+- **PerformanceDashboard**: Performance monitoring dashboard
+- **UserSettings**: User preferences management
+- **NotificationSettings**: Notification preferences
 
 ## API Endpoints
 
+### Astro API Routes (src/pages/api)
+
+#### Authentication
+- `POST /api/auth/signin` - User sign-in with email/password
+- `POST /api/auth/signup` - User registration
+- `POST /api/auth/signout` - User sign-out
+
+#### Admin
+- `GET /api/admin/auth-stats` - Authentication statistics dashboard
+- `GET /api/admin/funding-stats` - Funding verification statistics
+
+#### Test Accounts
+- `POST /api/test-accounts/create` - Create test/sandbox accounts
+
 ### Supabase Edge Functions
-- **Account Management**: `alpaca-account`, `alpaca-account-activities`
-- **Trading**: `alpaca-orders`, `alpaca-positions`, `alpaca-advanced-orders`
-- **Market Data**: `alpaca-market-data-enhanced`, `alpaca-market-quotes`
-- **Options**: `alpaca-options-contracts`, `alpaca-options-exercise`
-- **Funding**: `alpaca-ach-relationships`, `alpaca-bank-relationships`, `alpaca-transfers`
-- **Documents**: `alpaca-documents`
-- **KYC**: `alpaca-kyc-cip`, `alpaca-oauth`
-- **Corporate Actions**: `alpaca-corporate-actions`
-- **Events**: `alpaca-events` (SSE streaming)
-- **Social**: `get-leaderboard`, `copy-trading-subscriptions`, `execute-copy-trades`
-- **Email**: `email-queue`, `send-email`
-- **Admin**: Auth and funding verification dashboards
+
+#### Account Management
+- `GET /alpaca-account` - Get account details
+- `GET /alpaca-account-activities` - Get account activity history
+- `POST /sync-alpaca-accounts` - Sync Alpaca account data
+
+#### Trading
+- `GET /alpaca-orders` - List orders
+- `POST /alpaca-orders` - Create new order
+- `PATCH /alpaca-orders/:id` - Modify order
+- `DELETE /alpaca-orders/:id` - Cancel order
+- `GET /alpaca-positions` - List positions
+- `DELETE /alpaca-positions/:symbol` - Close position
+- `POST /alpaca-advanced-orders` - Create advanced order types (bracket, OCO, OTO)
+- `GET /alpaca-order-executions` - Get order execution details
+
+#### Market Data
+- `GET /alpaca-market-data-enhanced` - Enhanced market data with fallback
+- `GET /alpaca-market-quotes` - Real-time quotes
+- `GET /alpaca-assets` - List tradable assets
+- `GET /alpaca-assets-search` - Search assets by symbol/name
+- `GET /alpaca-calendar` - Market calendar (holidays, early closes)
+- `GET /alpaca-clock` - Market clock (open/closed status)
+- `GET /alpaca-portfolio-history` - Historical portfolio performance
+
+#### Options Trading
+- `GET /alpaca-options-contracts` - Search options contracts
+- `POST /alpaca-options-exercise` - Exercise options contract
+- `GET /alpaca-securities` - Get security details
+
+#### Funding & Transfers
+- `GET /alpaca-ach-relationships` - List ACH relationships
+- `POST /alpaca-ach-relationships` - Create ACH relationship
+- `DELETE /alpaca-ach-relationships/:id` - Remove ACH relationship
+- `GET /alpaca-bank-relationships` - List bank relationships
+- `POST /alpaca-bank-relationships` - Create bank relationship
+- `DELETE /alpaca-bank-relationships/:id` - Remove bank relationship
+- `GET /alpaca-transfers` - List transfers
+- `POST /alpaca-transfers` - Create transfer
+- `DELETE /alpaca-transfers/:id` - Cancel transfer
+- `GET /alpaca-funding-wallets` - Get funding wallet details
+- `POST /alpaca-instant-funding` - Request instant funding
+
+#### Documents & KYC
+- `GET /alpaca-documents` - List account documents
+- `POST /alpaca-documents` - Upload document
+- `GET /alpaca-kyc-cip` - Get KYC/CIP status
+- `POST /alpaca-kyc-cip` - Submit KYC information
+- `GET /alpaca-oauth` - OAuth flow initiation
+- `POST /alpaca-oauth` - OAuth callback handling
+
+#### Corporate Actions
+- `GET /alpaca-corporate-actions` - List corporate actions
+- `GET /alpaca-corporate-actions/:id` - Get corporate action details
+
+#### Events & Streaming
+- `GET /alpaca-events` - Server-Sent Events stream for account updates
+- `GET /alpaca-events-test` - Test event stream endpoint
+
+#### Portfolio Management
+- `GET /alpaca-journals` - List journal entries
+- `POST /alpaca-journals` - Create journal entry (transfer between accounts)
+- `POST /alpaca-rebalancing` - Rebalance portfolio
+- `GET /alpaca-reports` - Generate account reports
+- `GET /alpaca-risk-management` - Risk metrics and analysis
+
+#### Pattern Day Trading
+- `POST /alpaca-pdt-removal` - Request PDT flag removal
+
+#### Social Trading
+- `GET /get-leaderboard` - Get ranked trader leaderboard
+- `GET /copy-trading-subscriptions` - List copy trading subscriptions
+- `POST /copy-trading-subscriptions` - Create subscription
+- `PATCH /copy-trading-subscriptions/:id` - Update subscription
+- `DELETE /copy-trading-subscriptions/:id` - Cancel subscription
+- `POST /execute-copy-trades` - Execute copy trades for followers
+- `POST /update-leaderboard-stats` - Update leaderboard statistics
+
+#### Email System
+- `POST /send-email` - Send email via Resend/Brevo
+- `POST /email-queue` - Process email queue
+- `GET /email-queue` - Get email queue status
+
+#### Utilities
+- `GET /alpaca-broker-status` - Broker API status check
+- `POST /check-user-exists` - Check if user exists
+- `POST /streamlined-signup` - Streamlined account creation flow
+- `POST /test-accounts-create` - Create test accounts (Edge Function version)
 
 ## Development
 
@@ -373,7 +634,7 @@ This is a proprietary project. For internal development:
 
 ## License
 
-Proprietary - All rights reserved
+See LICENSE file for details
 
 ## Support
 

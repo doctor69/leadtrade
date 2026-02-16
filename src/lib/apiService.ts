@@ -1,3 +1,12 @@
+/**
+ * LEADTRADE - Social Copy Trading Platform
+ * Copyright (c) 2025 doctor
+ * 
+ * Licensed under the Fair Source License.
+ * Non-commercial use permitted. Commercial use requires a paid license.
+ * See LICENSE file for details or contact license@leadtrade.app
+ */
+
 // Comprehensive API service for all endpoints
 import { edgeFunctionClient } from './edgeFunctionClient';
 import { marketDataCache, userDataCache, cacheKeys, cacheUtils } from './cache';
