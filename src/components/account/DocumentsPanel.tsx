@@ -20,10 +20,10 @@ interface Document {
 }
 
 interface DocumentsPanelProps {
-  accountId: string; // Still needed for the component key/identification
+  accountId?: string; // Optional - used for component key/identification, auth context used for API calls
 }
 
-export default function DocumentsPanel({ accountId }: DocumentsPanelProps) {
+export default function DocumentsPanel({ accountId: _accountId }: DocumentsPanelProps) {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);

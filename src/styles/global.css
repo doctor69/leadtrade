@@ -188,6 +188,29 @@ td {
   font-size: 0.875rem;
 }
 
+/* Light mode button hover for better visibility */
+button:hover:not([disabled]):not(:active),
+[role="button"]:hover:not([disabled]):not(:active) {
+  background-color: hsl(var(--primary) / 0.15) !important;
+  transition: background-color 150ms;
+}
+
+button:active:not([disabled]),
+[role="button"]:active:not([disabled]) {
+  background-color: hsl(var(--primary) / 0.25) !important;
+  transition: background-color 50ms;
+}
+
+button[data-variant="outline"]:hover:not([disabled]):not(:active),
+button[data-variant="ghost"]:hover:not([disabled]):not(:active) {
+  background-color: hsl(var(--primary) / 0.15) !important;
+}
+
+button[data-variant="outline"]:active:not([disabled]),
+button[data-variant="ghost"]:active:not([disabled]) {
+  background-color: hsl(var(--primary) / 0.25) !important;
+}
+
 /* Dark mode button hover overrides for better visibility */
 .dark button:hover:not([disabled]):not(:active),
 .dark [role="button"]:hover:not([disabled]):not(:active) {

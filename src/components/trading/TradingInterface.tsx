@@ -1,3 +1,12 @@
+/**
+ * LEADTRADE - Social Copy Trading Platform
+ * Copyright (c) 2025 doctor
+ * 
+ * Licensed under the Fair Source License.
+ * Non-commercial use permitted. Commercial use requires a paid license.
+ * See LICENSE file for details or contact license@leadtrade.app
+ */
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -256,30 +265,34 @@ export default function TradingInterface() {
 
       {/* Main Trading Interface */}
       <Tabs defaultValue="trade" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="trade" className="flex items-center gap-2">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 h-auto">
+          <TabsTrigger value="trade" className="flex items-center gap-1 sm:gap-2 min-h-[44px] text-xs sm:text-sm">
             <Search className="h-4 w-4" />
-            Trade
+            <span>Trade</span>
           </TabsTrigger>
-          <TabsTrigger value="portfolio" className="flex items-center gap-2">
+          <TabsTrigger value="portfolio" className="flex items-center gap-1 sm:gap-2 min-h-[44px] text-xs sm:text-sm">
             <Wallet className="h-4 w-4" />
-            Portfolio
+            <span className="hidden xs:inline">Portfolio</span>
+            <span className="xs:hidden">Port</span>
           </TabsTrigger>
-          <TabsTrigger value="positions" className="flex items-center gap-2">
+          <TabsTrigger value="positions" className="flex items-center gap-1 sm:gap-2 min-h-[44px] text-xs sm:text-sm">
             <BarChart3 className="h-4 w-4" />
-            Positions
+            <span className="hidden xs:inline">Positions</span>
+            <span className="xs:hidden">Pos</span>
           </TabsTrigger>
-          <TabsTrigger value="orders" className="flex items-center gap-2">
+          <TabsTrigger value="orders" className="flex items-center gap-1 sm:gap-2 min-h-[44px] text-xs sm:text-sm">
             <History className="h-4 w-4" />
-            Orders
+            <span>Orders</span>
           </TabsTrigger>
-          <TabsTrigger value="chart" className="flex items-center gap-2">
+          <TabsTrigger value="chart" className="flex items-center gap-1 sm:gap-2 min-h-[44px] text-xs sm:text-sm">
             <TrendingUp className="h-4 w-4" />
-            Performance
+            <span className="hidden xs:inline">Performance</span>
+            <span className="xs:hidden">Perf</span>
           </TabsTrigger>
-          <TabsTrigger value="corporate" className="flex items-center gap-2">
+          <TabsTrigger value="corporate" className="flex items-center gap-1 sm:gap-2 min-h-[44px] text-xs sm:text-sm">
             <AlertCircle className="h-4 w-4" />
-            Corp Actions
+            <span className="hidden xs:inline">Corp Actions</span>
+            <span className="xs:hidden">Corp</span>
           </TabsTrigger>
         </TabsList>
 

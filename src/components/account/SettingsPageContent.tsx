@@ -6,6 +6,7 @@ import UserSettings from '../ui/UserSettings';
 import PDTStatusPanel from './PDTStatusPanel';
 import KYCStatus from './KYCStatus';
 import DocumentsPanel from './DocumentsPanel';
+import KYCVerificationPanel from './KYCVerificationPanel';
 import { apiService } from '../../lib/apiService';
 
 export default function SettingsPageContent() {
@@ -122,6 +123,11 @@ export default function SettingsPageContent() {
               {/* KYC Verification Status */}
               <div id="kyc-status">
                 <KYCStatus accountId={accountId} />
+              </div>
+
+              {/* KYC Verification & Document Upload */}
+              <div id="kyc-verification">
+                <KYCVerificationPanel accountId={accountId} />
               </div>
               
               {/* PDT Status */}

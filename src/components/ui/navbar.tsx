@@ -198,45 +198,59 @@ export default function NavigationBar() {
 
                     {/* Right side - Auth buttons, Theme Customizer, and Settings */}
                     <div className="flex items-center space-x-2">
-                        {/* Auth buttons */}
-                        {isLoggedIn ? (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={async () => {
-                                    // Sign out from Supabase and clear tokens
-                                    try {
-                                        const { supabase } = await import('@/lib/supabase');
-                                        await supabase.auth.signOut();
-                                    } catch (error) {
-                                        console.error('Supabase sign out error:', error);
-                                    }
-                                    localStorage.removeItem('sb-access-token');
-                                    localStorage.removeItem('sb-refresh-token');
-                                    localStorage.removeItem('sb-token-expires-at');
-                                    localStorage.removeItem('sb-token-refreshed-at');
-                                    setIsLoggedIn(false);
-                                    safeNavigate('/');
-                                }}
-                            >
-                                Logout
-                            </Button>
-                        ) : (
-                            <div className="flex items-center space-x-2">
+                        {/* Auth buttons - Desktop */}
+                        <div className="hidden md:flex items-center space-x-2">
+                            {isLoggedIn ? (
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => safeNavigate('/signin')}
+                                    onClick={async () => {
+                                        // Sign out from Supabase and clear tokens
+                                        try {
+                                            const { supabase } = await import('@/lib/supabase');
+                                            await supabase.auth.signOut();
+                                        } catch (error) {
+                                            console.error('Supabase sign out error:', error);
+                                        }
+                                        localStorage.removeItem('sb-access-token');
+                                        localStorage.removeItem('sb-refresh-token');
+                                        localStorage.removeItem('sb-token-expires-at');
+                                        localStorage.removeItem('sb-token-refreshed-at');
+                                        setIsLoggedIn(false);
+                                        safeNavigate('/');
+                                    }}
                                 >
-                                    Sign In
+                                    Logout
                                 </Button>
-                                <Button
-                                    size="sm"
-                                    onClick={() => safeNavigate('/signup')}
-                                >
-                                    Sign Up
-                                </Button>
-                            </div>
+                            ) : (
+                                <>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => safeNavigate('/signin')}
+                                    >
+                                        Sign In
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => safeNavigate('/signup')}
+                                    >
+                                        Sign Up
+                                    </Button>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Mobile - Show Trade button for logged in users */}
+                        {isLoggedIn && (
+                            <Button
+                                variant="default"
+                                size="sm"
+                                className="md:hidden"
+                                onClick={() => safeNavigate('/trade')}
+                            >
+                                Trade
+                            </Button>
                         )}
 
                         {/* Theme Customizer Dropdown - icon only, modal-like dropdown */}
@@ -291,9 +305,21 @@ export default function NavigationBar() {
                             onClick={() => setMobileMenuOpen(false)}
                         />
 
-                        {/* Mobile menu panel */}
-                        <div className="fixed top-16 left-0 right-0 bg-card border-b shadow-lg z-50 md:hidden animate-in slide-in-from-top-2 duration-200">
-                            <div className="px-4 py-4 space-y-2 max-h-[calc(100vh-4rem)] overflow-y-auto">
+                        {/* Mobile menu panel - Fixed opacity issue with explicit styles */}
+                        <div 
+                            className="fixed top-16 left-0 right-0 border-b shadow-lg z-50 md:hidden animate-in slide-in-from-top-2 duration-200"
+                            style={{ 
+                                backgroundColor: 'hsl(var(--background))',
+                                opacity: 1
+                            }}
+                        >
+                            <div 
+                                className="px-4 py-4 space-y-2 max-h-[calc(100vh-4rem)] overflow-y-auto"
+                                style={{ 
+                                    backgroundColor: 'hsl(var(--background))',
+                                    opacity: 1
+                                }}
+                            >
                                 {menu
                                     .filter(item => {
                                         // Show all items when logged in, only public items when not logged in
@@ -309,7 +335,29 @@ export default function NavigationBar() {
                                         return (
                                             <div key={`mobile-${item.name}`} className="relative">
                                                 <button
-                                                    className="flex w-full items-center px-4 py-3 rounded-lg text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground active:bg-accent/80 transition-all duration-200 min-h-[44px]"
+                                                    className="flex w-full items-center px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 min-h-[44px] text-foreground"
+                                                    style={{
+                                                        WebkitTapHighlightColor: 'transparent',
+                                                        backgroundColor: isActive ? 'hsl(var(--primary) / 0.1)' : 'transparent'
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        if (!isActive) {
+                                                            e.currentTarget.style.backgroundColor = 'hsl(var(--primary) / 0.2)';
+                                                        }
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        if (!isActive) {
+                                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                                        }
+                                                    }}
+                                                    onTouchStart={(e) => {
+                                                        e.currentTarget.style.backgroundColor = 'hsl(var(--primary) / 0.2)';
+                                                    }}
+                                                    onTouchEnd={(e) => {
+                                                        if (!isActive) {
+                                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                                        }
+                                                    }}
                                                     onClick={() => {
                                                         setMobileMenuOpen(false);
                                                         safeNavigate(item.href);
@@ -329,7 +377,11 @@ export default function NavigationBar() {
                                 <div className="pt-2 border-t">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="outline" size="sm" className="w-full justify-start min-h-[44px]">
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm" 
+                                                className="w-full justify-start min-h-[44px]"
+                                            >
                                                 <Palette className="h-4 w-4 mr-2" />
                                                 Theme Customizer
                                             </Button>
@@ -355,6 +407,33 @@ export default function NavigationBar() {
                                     <Settings className="h-4 w-4 mr-2" />
                                     Settings
                                 </Button>
+
+                                {/* Mobile Logout - Only show if logged in */}
+                                {isLoggedIn && (
+                                    <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        className="w-full justify-start min-h-[44px]"
+                                        onClick={async () => {
+                                            setMobileMenuOpen(false);
+                                            // Sign out from Supabase and clear tokens
+                                            try {
+                                                const { supabase } = await import('@/lib/supabase');
+                                                await supabase.auth.signOut();
+                                            } catch (error) {
+                                                console.error('Supabase sign out error:', error);
+                                            }
+                                            localStorage.removeItem('sb-access-token');
+                                            localStorage.removeItem('sb-refresh-token');
+                                            localStorage.removeItem('sb-token-expires-at');
+                                            localStorage.removeItem('sb-token-refreshed-at');
+                                            setIsLoggedIn(false);
+                                            safeNavigate('/');
+                                        }}
+                                    >
+                                        Logout
+                                    </Button>
+                                )}
                             </div>
                         </div>
                     </>
