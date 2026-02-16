@@ -33,6 +33,12 @@ LeadTrade is a Progressive Web App (PWA) that enables users to trade stocks and 
 ### Progressive Web App
 - **Offline Support**: Service worker-based caching for offline functionality
 - **Mobile Optimized**: Responsive design with touch-friendly interfaces
+  - 44px minimum touch targets for accessibility compliance
+  - Grid-based tab navigation with responsive columns (2/3/6 columns)
+  - Responsive breakpoints: mobile (2 cols), tablet (3 cols), desktop (6 cols)
+  - Touch gesture support in navigation components
+  - Smart label display: critical tabs (Trade, Orders) always show full text
+  - Equal-width tabs prevent layout shifts and ensure consistent UX
 - **Install Prompt**: Native app-like experience on mobile and desktop
 - **Background Sync**: Queue trades and sync when connection is restored
 - **Push Notifications**: Real-time trade alerts and corporate action notifications
@@ -130,12 +136,26 @@ leadtrade/
   - Session management with Supabase Auth
 
 ### Trading Components
-- **TradingDashboard**: Main trading interface with tabs for overview, assets, performance, events, corporate actions, and options
+- **TradingInterface**: Unified trading interface with responsive grid-based tab navigation
+  - Responsive grid layout: 2 columns (mobile), 3 columns (tablet), 6 columns (desktop)
+  - Mobile-optimized tabs with abbreviated labels (Trade, Port, Pos, Ord, Perf, Corp)
+  - Desktop view shows full labels (Trade, Portfolio, Positions, Orders, Performance, Corp Actions)
+  - Touch-friendly 44px minimum height for mobile accessibility
+  - Grid-based layout ensures equal-width tabs and prevents overflow issues
+  - Integrated account overview cards with portfolio value, buying power, cash, and day trade count
+  - Real-time stock data fetching with URL parameter support (?symbol=AAPL)
+  - Six main tabs: Trade (order entry + market grid), Portfolio (charts + summary), Positions, Orders, Performance, Corporate Actions
+  - Consistent label display: "Trade" and "Orders" always show full text, others abbreviate on mobile
 - **TradeForm**: Order entry with validation, market data, and execution
 - **Leaderboard**: Social trading discovery with search, filters, and trader profiles
 - **CopyTradingDashboard**: Manage copy trading subscriptions and allocations
 - **OptionsExercise**: Options contract management and exercise functionality
 - **EventStreamFeed**: Real-time account event stream (trades, transfers, corporate actions)
+- **SimpleMarketGrid**: Market overview grid for quick stock selection
+- **AccountPositions**: Real-time position tracking with P&L
+- **OrderHistory**: Complete order history with filtering and status tracking
+- **PortfolioChart**: Historical portfolio performance visualization
+- **AllCorporateActions**: Corporate action notifications and management
 
 ### Account Components
 - **SettingsPageContent**: Unified settings interface
@@ -316,6 +336,12 @@ The platform uses a sophisticated email queue system:
 - **Database Indexes**: Optimized query performance
 - **WebSocket Pooling**: Efficient real-time connections
 - **Edge Functions**: Global CDN distribution
+- **Mobile Performance**: 
+  - Responsive breakpoints (xs: 475px, sm: 640px, md: 768px, lg: 1024px)
+  - Conditional rendering for mobile vs desktop layouts
+  - Grid-based tab navigation with responsive columns for optimal mobile UX
+  - Touch-optimized UI elements (44px minimum height)
+  - Equal-width tabs prevent layout shifts and ensure consistent experience
 
 ## Browser Support
 

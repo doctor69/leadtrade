@@ -256,11 +256,10 @@ export default function TradingInterface() {
 
       {/* Main Trading Interface */}
       <Tabs defaultValue="trade" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 h-auto">
           <TabsTrigger value="trade" className="flex items-center gap-1 sm:gap-2 min-h-[44px] text-xs sm:text-sm">
             <Search className="h-4 w-4" />
-            <span className="hidden xs:inline">Trade</span>
-            <span className="xs:hidden">Trade</span>
+            <span>Trade</span>
           </TabsTrigger>
           <TabsTrigger value="portfolio" className="flex items-center gap-1 sm:gap-2 min-h-[44px] text-xs sm:text-sm">
             <Wallet className="h-4 w-4" />
@@ -274,8 +273,7 @@ export default function TradingInterface() {
           </TabsTrigger>
           <TabsTrigger value="orders" className="flex items-center gap-1 sm:gap-2 min-h-[44px] text-xs sm:text-sm">
             <History className="h-4 w-4" />
-            <span className="hidden xs:inline">Orders</span>
-            <span className="xs:hidden">Ord</span>
+            <span>Orders</span>
           </TabsTrigger>
           <TabsTrigger value="chart" className="flex items-center gap-1 sm:gap-2 min-h-[44px] text-xs sm:text-sm">
             <TrendingUp className="h-4 w-4" />
