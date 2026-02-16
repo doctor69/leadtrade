@@ -216,17 +216,29 @@ npm run supabase:start
 
 ### Build & Deploy
 ```bash
-# Production build
-npm run build            # Outputs to dist/
+# Development build
+npm run build            # Standard build, outputs to dist/
+
+# Environment-specific builds
+npm run build:test       # Build for test environment
+npm run build:prod       # Build for production environment
 
 # Build PWA
 npm run build:pwa        # Optimized PWA build
 
+# Preview builds
+npm run preview          # Preview standard build
+npm run preview:test     # Preview test build
+npm run preview:prod     # Preview production build
+
 # Deploy Edge Functions
-npm run deploy:functions
+npm run deploy:functions              # Deploy to default project
+npm run deploy:functions:test         # Deploy to test project
+npm run deploy:functions:prod         # Deploy to production project
 
 # Deploy to production
-npm run deploy:full      # Functions + static assets
+npm run deploy:full                   # Functions + static assets (default)
+npm run deploy:full:prod              # Functions + static assets (production)
 ```
 
 ### Testing
