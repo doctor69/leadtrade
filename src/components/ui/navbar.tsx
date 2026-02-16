@@ -335,7 +335,7 @@ export default function NavigationBar() {
                                         return (
                                             <div key={`mobile-${item.name}`} className="relative">
                                                 <button
-                                                    className="flex w-full items-center px-4 py-3 rounded-lg text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground active:bg-accent/80 transition-all duration-200 min-h-[44px]"
+                                                    className="flex w-full items-center px-4 py-3 rounded-lg text-sm font-medium text-foreground hover:bg-primary/20 hover:text-primary active:bg-primary/30 transition-all duration-200 min-h-[44px]"
                                                     onClick={() => {
                                                         setMobileMenuOpen(false);
                                                         safeNavigate(item.href);
