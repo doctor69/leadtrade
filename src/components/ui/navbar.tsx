@@ -305,9 +305,21 @@ export default function NavigationBar() {
                             onClick={() => setMobileMenuOpen(false)}
                         />
 
-                        {/* Mobile menu panel - Fixed opacity issue */}
-                        <div className="fixed top-16 left-0 right-0 bg-background border-b shadow-lg z-50 md:hidden animate-in slide-in-from-top-2 duration-200">
-                            <div className="px-4 py-4 space-y-2 max-h-[calc(100vh-4rem)] overflow-y-auto bg-background">
+                        {/* Mobile menu panel - Fixed opacity issue with explicit styles */}
+                        <div 
+                            className="fixed top-16 left-0 right-0 border-b shadow-lg z-50 md:hidden animate-in slide-in-from-top-2 duration-200"
+                            style={{ 
+                                backgroundColor: 'hsl(var(--background))',
+                                opacity: 1
+                            }}
+                        >
+                            <div 
+                                className="px-4 py-4 space-y-2 max-h-[calc(100vh-4rem)] overflow-y-auto"
+                                style={{ 
+                                    backgroundColor: 'hsl(var(--background))',
+                                    opacity: 1
+                                }}
+                            >
                                 {menu
                                     .filter(item => {
                                         // Show all items when logged in, only public items when not logged in
@@ -323,7 +335,11 @@ export default function NavigationBar() {
                                         return (
                                             <div key={`mobile-${item.name}`} className="relative">
                                                 <button
-                                                    className="flex w-full items-center px-4 py-3 rounded-lg text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground active:bg-accent/80 transition-all duration-200 min-h-[44px] bg-background"
+                                                    className="flex w-full items-center px-4 py-3 rounded-lg text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground active:bg-accent/80 transition-all duration-200 min-h-[44px]"
+                                                    style={{ 
+                                                        backgroundColor: 'hsl(var(--background))',
+                                                        opacity: 1
+                                                    }}
                                                     onClick={() => {
                                                         setMobileMenuOpen(false);
                                                         safeNavigate(item.href);
@@ -343,7 +359,15 @@ export default function NavigationBar() {
                                 <div className="pt-2 border-t">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="outline" size="sm" className="w-full justify-start min-h-[44px] bg-background">
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm" 
+                                                className="w-full justify-start min-h-[44px]"
+                                                style={{ 
+                                                    backgroundColor: 'hsl(var(--background))',
+                                                    opacity: 1
+                                                }}
+                                            >
                                                 <Palette className="h-4 w-4 mr-2" />
                                                 Theme Customizer
                                             </Button>
@@ -360,7 +384,11 @@ export default function NavigationBar() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="w-full justify-start min-h-[44px] bg-background"
+                                    className="w-full justify-start min-h-[44px]"
+                                    style={{ 
+                                        backgroundColor: 'hsl(var(--background))',
+                                        opacity: 1
+                                    }}
                                     onClick={() => {
                                         setMobileMenuOpen(false);
                                         safeNavigate('/settings');
