@@ -279,7 +279,8 @@ leadtrade/
 │   │   │   ├── rate-limit.ts          # Rate limiting
 │   │   │   ├── response.ts            # Response helpers
 │   │   │   └── websocket-manager.ts   # WebSocket manager
-│   │   ├── alpaca-account/            # Account management
+│   │   ├── alpaca-account/            # Account management (GET)
+│   │   ├── alpaca-account-update/     # Account updates (PATCH)
 │   │   ├── alpaca-account-activities/ # Account activities
 │   │   ├── alpaca-ach-relationships/  # ACH relationships
 │   │   ├── alpaca-assets/             # Asset data

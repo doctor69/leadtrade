@@ -308,21 +308,27 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
                     : profile?.full_name || 'Not set'}
                 </div>
               </div>
-              {alpacaAccount?.contact?.street_address && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Address</label>
-                  <div className="text-sm font-medium">
-                    {alpacaAccount.contact.street_address.join(', ')}
-                    {alpacaAccount.contact.city && `, ${alpacaAccount.contact.city}`}
-                    {alpacaAccount.contact.state && `, ${alpacaAccount.contact.state}`}
-                    {alpacaAccount.contact.postal_code && ` ${alpacaAccount.contact.postal_code}`}
-                  </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Address</label>
+                <div className="text-sm font-medium">
+                  {alpacaAccount?.contact?.street_address?.[0] || 'Not set'}
+                  {alpacaAccount?.contact?.city && alpacaAccount?.contact?.street_address?.[0] && <br />}
+                  {alpacaAccount?.contact?.city && `${alpacaAccount.contact.city}, `}
+                  {alpacaAccount?.contact?.state && `${alpacaAccount.contact.state} `}
+                  {alpacaAccount?.contact?.postal_code && alpacaAccount.contact.postal_code}
                 </div>
-              )}
+              </div>
             </>
           ) : (
             // Edit mode
             <>
+              {alpacaAccount?.status === 'ACTIVE' && (
+                <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    <strong>Note:</strong> Name and identity information cannot be changed after KYC verification. Contact support if you need to update these fields.
+                  </p>
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-email">Email</Label>
