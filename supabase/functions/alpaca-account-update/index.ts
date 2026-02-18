@@ -124,6 +124,49 @@ serve(async (req) => {
 
     const updatedAccount = await updateResponse.json()
 
+    // Sync common fields to Supabase profile
+    const profileUpdates: any = {}
+    
+    // Sync email if updated
+    if (updates.contact?.email_address) {
+      profileUpdates.email = updates.contact.email_address
+      
+      // Also update Supabase Auth email
+      const { error: authError } = await supabaseClient.auth.updateUser({
+        email: updates.contact.email_address,
+      })
+      
+      if (authError) {
+        console.error('Failed to update Supabase Auth email:', authError)
+        // Note: User will need to confirm new email via link
+      } else {
+        console.log('Supabase Auth email update initiated (requires confirmation)')
+      }
+    }
+    
+    // Sync name if updated (only before KYC approval)
+    if (updates.identity?.given_name || updates.identity?.family_name) {
+      const fullName = `${updates.identity.given_name || ''} ${updates.identity.family_name || ''}`.trim()
+      if (fullName) {
+        profileUpdates.full_name = fullName
+      }
+    }
+
+    // Update Supabase profile if there are changes
+    if (Object.keys(profileUpdates).length > 0) {
+      const { error: profileError } = await supabaseClient
+        .from('profiles')
+        .update(profileUpdates)
+        .eq('id', user.id)
+
+      if (profileError) {
+        console.error('Failed to sync to Supabase profile:', profileError)
+        // Don't fail the request, just log the error
+      } else {
+        console.log('Synced to Supabase profile:', profileUpdates)
+      }
+    }
+
     return new Response(JSON.stringify({ success: true, account: updatedAccount }), {
       headers: {
         'Content-Type': 'application/json',

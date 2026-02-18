@@ -244,6 +244,9 @@ export default function EditProfilePanel({ accountId }: EditProfilePanelProps) {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
               />
+              <p className="text-xs text-muted-foreground">
+                Changing your email will require confirmation via email link
+              </p>
             </div>
 
             <div className="space-y-2">
