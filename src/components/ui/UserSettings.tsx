@@ -85,7 +85,6 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
 
       if (result.success && result.data) {
         const data = result.data as unknown as AlpacaAccountData;
-        console.log('Loaded Alpaca account:', data);
         setAlpacaAccount(data);
         // Populate edit form
         setEditEmail(data.contact?.email_address || '');
@@ -95,11 +94,9 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
         setEditCity(data.contact?.city || '');
         setEditState(data.contact?.state || '');
         setEditZip(data.contact?.postal_code || '');
-      } else {
-        console.error('Failed to load Alpaca account:', result.error);
       }
     } catch (err) {
-      console.error('Error loading Alpaca account:', err);
+      // Silent fail - account will show as not loaded
     }
   };
 
@@ -188,11 +185,13 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
         },
       };
 
+      const session = await supabase.auth.getSession();
+      
       const response = await fetch(`${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-account-update`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'Authorization': `Bearer ${session.data.session?.access_token}`,
         },
         body: JSON.stringify({
           account_id: accountId,
@@ -200,14 +199,15 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
         }),
       });
 
+      const result = await response.json();
+      
       if (!response.ok) {
-        throw new Error('Failed to update profile');
+        throw new Error(result.error || 'Failed to update profile');
       }
 
       await loadAlpacaAccount();
       setIsEditingProfile(false);
     } catch (err) {
-      console.error('Error updating profile:', err);
       setError(err instanceof Error ? err.message : 'Failed to update profile');
     } finally {
       setSaving(false);

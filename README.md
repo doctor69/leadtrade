@@ -380,7 +380,13 @@ leadtrade/
 ### UI Components (`src/components/ui/`)
 - **shadcn/ui primitives**: button, card, dialog, dropdown, input, select, table, tabs, etc.
 - **ThemeCustomizer**: Visual theme editor with color picker
-- **UserSettings**: User preferences, privacy controls, and profile editing with Alpaca account integration
+- **UserSettings**: Comprehensive user preferences with integrated profile editing
+  - Privacy controls (share trades, show portfolio values)
+  - Leaderboard stats management with manual update trigger
+  - Integrated Alpaca account profile editor (email, phone, address)
+  - Trusted contact management
+  - Real-time sync with Alpaca Broker API
+  - Form validation and error handling with improved error messages
 - **NotificationSettings**: Configure push notification preferences
 - **ErrorDisplay**: Consistent error message display
 - **LazyComponent**: Code-splitting wrapper for performance
@@ -417,8 +423,12 @@ leadtrade/
 ### Supabase Edge Functions (`supabase/functions/`)
 
 #### Account Management
-- `alpaca-account` - Get account details
-- `alpaca-account-update` - Update account contact information and trusted contacts (PATCH)
+- `alpaca-account` - Get account details (GET)
+- `alpaca-account-update` - Update account contact information, address, and trusted contacts (PATCH)
+  - Updates email, phone, street address, city, state, postal code
+  - Manages trusted contact information
+  - Returns detailed error messages for validation failures
+  - Requires valid Alpaca account ID and authentication
 - `alpaca-account-activities` - Fetch account activities
 - `alpaca-kyc-cip` - KYC/CIP verification submission
 - `alpaca-documents` - Upload/retrieve documents
@@ -709,14 +719,19 @@ See LICENSE file for details
 
 ## Recent Updates
 
-### Profile Editing Integration (Latest)
-✅ Enhanced UserSettings component with profile editing
-- Integrated Alpaca account profile editing directly into UserSettings
-- Edit contact information (email, phone, address)
-- Update trusted contact details
-- Real-time sync with Alpaca Broker API via `alpaca-account-update` Edge Function
-- Form validation and error handling
-- Cancel/save functionality with state management
+### UserSettings Profile Editing Enhancement (Latest)
+✅ Improved error handling and code quality in UserSettings component
+- Enhanced error messages from API responses for better debugging
+- Refactored authentication session handling for cleaner code
+- Improved error propagation from `alpaca-account-update` Edge Function
+- Better user feedback when profile updates fail
+- Maintained all existing features:
+  - Integrated Alpaca account profile editing (email, phone, address)
+  - Privacy controls (share trades, show portfolio values)
+  - Leaderboard stats management
+  - Trusted contact management
+  - Real-time sync with Alpaca Broker API
+  - Form validation and cancel/save functionality
 - Standalone `EditProfilePanel` component available as alternative implementation
 
 ### Settings Page Refinement

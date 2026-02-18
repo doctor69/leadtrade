@@ -118,7 +118,6 @@ serve(async (req) => {
 
     if (!updateResponse.ok) {
       const errorText = await updateResponse.text()
-      console.error('Alpaca API error:', errorText)
       throw new Error(`Failed to update account: ${errorText}`)
     }
 
@@ -137,10 +136,7 @@ serve(async (req) => {
       })
       
       if (authError) {
-        console.error('Failed to update Supabase Auth email:', authError)
         // Note: User will need to confirm new email via link
-      } else {
-        console.log('Supabase Auth email update initiated (requires confirmation)')
       }
     }
     
@@ -160,10 +156,7 @@ serve(async (req) => {
         .eq('id', user.id)
 
       if (profileError) {
-        console.error('Failed to sync to Supabase profile:', profileError)
         // Don't fail the request, just log the error
-      } else {
-        console.log('Synced to Supabase profile:', profileUpdates)
       }
     }
 
@@ -174,7 +167,6 @@ serve(async (req) => {
       },
     })
   } catch (error) {
-    console.error('Error updating account:', error)
     return new Response(
       JSON.stringify({
         success: false,
