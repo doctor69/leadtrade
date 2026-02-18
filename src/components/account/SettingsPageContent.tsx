@@ -7,7 +7,6 @@ import PDTStatusPanel from './PDTStatusPanel';
 import KYCStatus from './KYCStatus';
 import DocumentsPanel from './DocumentsPanel';
 import KYCVerificationPanel from './KYCVerificationPanel';
-import EditProfilePanel from './EditProfilePanel';
 import { apiService } from '../../lib/apiService';
 
 export default function SettingsPageContent() {
@@ -65,7 +64,7 @@ export default function SettingsPageContent() {
         
         <div className="space-y-8">
           {/* User Profile & Privacy Settings */}
-          <UserSettings />
+          <UserSettings accountId={accountId} />
           
           {/* Show Alpaca-related settings only if account is linked */}
           {error === 'no_account' ? (
@@ -121,11 +120,6 @@ export default function SettingsPageContent() {
             </Card>
           ) : accountId ? (
             <>
-              {/* Edit Profile Information */}
-              <div id="edit-profile">
-                <EditProfilePanel accountId={accountId} />
-              </div>
-
               {/* KYC Verification Status */}
               <div id="kyc-status">
                 <KYCStatus accountId={accountId} />

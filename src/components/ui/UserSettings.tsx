@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
 import { Switch } from './switch';
 import { Button } from './button';
-import { AlertCircle, User, Shield, TrendingUp, RefreshCw } from 'lucide-react';
+import { Input } from './input';
+import { Label } from './label';
+import { AlertCircle, User, Shield, TrendingUp, RefreshCw, Edit, Save, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { apiService } from '@/lib/apiService';
 
@@ -17,10 +19,11 @@ interface UserProfile {
 
 interface UserSettingsProps {
   userId?: string;
+  accountId?: string | null;
   onSettingsChange?: (settings: Partial<UserProfile>) => void;
 }
 
-export default function UserSettings({ userId, onSettingsChange }: UserSettingsProps) {
+export default function UserSettings({ userId, accountId, onSettingsChange }: UserSettingsProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -28,11 +31,52 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
   const [updatingStats, setUpdatingStats] = useState(false);
   const [statsMessage, setStatsMessage] = useState<string | null>(null);
   const [settingsChanged, setSettingsChanged] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  
+  // Alpaca account data
+  const [alpacaAccount, setAlpacaAccount] = useState<any>(null);
+  const [loadingAlpaca, setLoadingAlpaca] = useState(false);
+  
+  // Edit form state
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editStreet, setEditStreet] = useState('');
+  const [editCity, setEditCity] = useState('');
+  const [editState, setEditState] = useState('');
+  const [editZip, setEditZip] = useState('');
 
   // Load user profile
   useEffect(() => {
     loadUserProfile();
-  }, [userId]);
+    if (accountId) {
+      loadAlpacaAccount();
+    }
+  }, [userId, accountId]);
+
+  const loadAlpacaAccount = async () => {
+    if (!accountId) return;
+    
+    try {
+      setLoadingAlpaca(true);
+      const result = await apiService.getAccount();
+      
+      if (result.success && result.data) {
+        setAlpacaAccount(result.data);
+        // Populate edit form
+        setEditEmail(result.data.contact?.email_address || '');
+        setEditPhone(result.data.contact?.phone_number || '');
+        const street = result.data.contact?.street_address || [];
+        setEditStreet(street[0] || '');
+        setEditCity(result.data.contact?.city || '');
+        setEditState(result.data.contact?.state || '');
+        setEditZip(result.data.contact?.postal_code || '');
+      }
+    } catch (err) {
+      console.error('Error loading Alpaca account:', err);
+    } finally {
+      setLoadingAlpaca(false);
+    }
+  };
 
   const loadUserProfile = async () => {
     try {
@@ -101,6 +145,65 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
     setSettingsChanged(true);
   };
 
+  const handleSaveProfile = async () => {
+    if (!accountId) return;
+    
+    try {
+      setSaving(true);
+      setError(null);
+
+      const updates = {
+        contact: {
+          email_address: editEmail,
+          phone_number: editPhone,
+          street_address: [editStreet].filter(Boolean),
+          city: editCity,
+          state: editState,
+          postal_code: editZip,
+        },
+      };
+
+      const response = await fetch(`${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-account-update`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+        body: JSON.stringify({
+          account_id: accountId,
+          updates,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
+
+      await loadAlpacaAccount();
+      setIsEditingProfile(false);
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingProfile(false);
+    setError(null);
+    // Reset form to current values
+    if (alpacaAccount) {
+      setEditEmail(alpacaAccount.contact?.email_address || '');
+      setEditPhone(alpacaAccount.contact?.phone_number || '');
+      const street = alpacaAccount.contact?.street_address || [];
+      setEditStreet(street[0] || '');
+      setEditCity(alpacaAccount.contact?.city || '');
+      setEditState(alpacaAccount.contact?.state || '');
+      setEditZip(alpacaAccount.contact?.postal_code || '');
+    }
+  };
+
   const handleUpdateLeaderboardStats = async () => {
     try {
       setUpdatingStats(true);
@@ -165,29 +268,137 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
       {/* Account Information */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Account Information
-          </CardTitle>
-          <CardDescription>
-            Your basic account details and profile information
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Account Information
+              </CardTitle>
+              <CardDescription>
+                Your basic account details and profile information
+              </CardDescription>
+            </div>
+            {accountId && alpacaAccount && !isEditingProfile && (
+              <Button variant="outline" size="sm" onClick={() => setIsEditingProfile(true)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">Email</label>
-              <div className="text-sm font-medium">{profile?.email}</div>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">Username</label>
-              <div className="text-sm font-medium">{profile?.username || 'Not set'}</div>
-            </div>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-muted-foreground">Full Name</label>
-            <div className="text-sm font-medium">{profile?.full_name || 'Not set'}</div>
-          </div>
+          {!isEditingProfile ? (
+            // Read-only view
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Email</label>
+                  <div className="text-sm font-medium">{alpacaAccount?.contact?.email_address || profile?.email || 'Not set'}</div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Phone</label>
+                  <div className="text-sm font-medium">{alpacaAccount?.contact?.phone_number || 'Not set'}</div>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Full Name</label>
+                <div className="text-sm font-medium">
+                  {alpacaAccount?.identity?.given_name && alpacaAccount?.identity?.family_name
+                    ? `${alpacaAccount.identity.given_name} ${alpacaAccount.identity.family_name}`
+                    : profile?.full_name || 'Not set'}
+                </div>
+              </div>
+              {alpacaAccount?.contact?.street_address && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Address</label>
+                  <div className="text-sm font-medium">
+                    {alpacaAccount.contact.street_address.join(', ')}
+                    {alpacaAccount.contact.city && `, ${alpacaAccount.contact.city}`}
+                    {alpacaAccount.contact.state && `, ${alpacaAccount.contact.state}`}
+                    {alpacaAccount.contact.postal_code && ` ${alpacaAccount.contact.postal_code}`}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            // Edit mode
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email">Email</Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-phone">Phone</Label>
+                  <Input
+                    id="edit-phone"
+                    type="tel"
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-street">Street Address</Label>
+                <Input
+                  id="edit-street"
+                  value={editStreet}
+                  onChange={(e) => setEditStreet(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-city">City</Label>
+                  <Input
+                    id="edit-city"
+                    value={editCity}
+                    onChange={(e) => setEditCity(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-state">State</Label>
+                  <Input
+                    id="edit-state"
+                    value={editState}
+                    onChange={(e) => setEditState(e.target.value)}
+                    maxLength={2}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-zip">ZIP Code</Label>
+                  <Input
+                    id="edit-zip"
+                    value={editZip}
+                    onChange={(e) => setEditZip(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={handleCancelEdit} disabled={saving}>
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveProfile} disabled={saving}>
+                  {saving ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Changes
+                    </>
+                  )}
+                </Button>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

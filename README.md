@@ -339,7 +339,6 @@ leadtrade/
 ## Key Components
 
 ### Account Management (`src/components/account/`)
-- **EditProfilePanel**: Edit contact information, address, and trusted contacts (read-only identity fields for KYC-verified accounts)
 - **KYCVerificationPanel**: Submit identity verification documents and information
 - **KYCStatus**: Display current KYC verification status and next steps
 - **DocumentsPanel**: View and download account statements, confirmations, and tax documents
@@ -350,7 +349,8 @@ leadtrade/
 - **FundingWalletManager**: Manage funding wallets and instant deposits
 - **TransferHistory**: View transfer history with status tracking
 - **TradingModeSwitch**: Toggle between paper and live trading modes
-- **SettingsPageContent**: Main settings page layout with conditional rendering
+- **SettingsPageContent**: Main settings page layout with user preferences, KYC status, and document management
+- **EditProfilePanel**: Standalone profile editor for contact information, address, and trusted contacts (alternative to integrated UserSettings editor)
 
 ### Trading Components (`src/components/trading/`)
 - **TradingInterface**: Main trading dashboard with order entry and positions
@@ -379,7 +379,7 @@ leadtrade/
 ### UI Components (`src/components/ui/`)
 - **shadcn/ui primitives**: button, card, dialog, dropdown, input, select, table, tabs, etc.
 - **ThemeCustomizer**: Visual theme editor with color picker
-- **UserSettings**: User preferences and privacy controls
+- **UserSettings**: User preferences, privacy controls, and profile editing with Alpaca account integration
 - **NotificationSettings**: Configure push notification preferences
 - **ErrorDisplay**: Consistent error message display
 - **LazyComponent**: Code-splitting wrapper for performance
@@ -416,7 +416,8 @@ leadtrade/
 ### Supabase Edge Functions (`supabase/functions/`)
 
 #### Account Management
-- `alpaca-account` - Get/update account details
+- `alpaca-account` - Get account details
+- `alpaca-account-update` - Update account contact information and trusted contacts (PATCH)
 - `alpaca-account-activities` - Fetch account activities
 - `alpaca-kyc-cip` - KYC/CIP verification submission
 - `alpaca-documents` - Upload/retrieve documents
@@ -563,34 +564,198 @@ See `.env.example` for complete configuration.
 
 ## Architecture
 
-- **Frontend**: Astro + React + TypeScript
-- **Backend**: Supabase (PostgreSQL + Edge Functions)
-- **Trading**: Alpaca Broker API
-- **Auth**: Supabase Auth with JWT
-- **Real-time**: WebSocket connections for market data
-- **Email**: Resend + Brevo with queue system
-- **Deployment**: Cloudflare Pages
+### Frontend Architecture
+- **Framework**: Astro 5.15+ for static site generation with islands architecture
+- **UI Library**: React 19 with TypeScript for interactive components
+- **Styling**: Tailwind CSS v4 with custom design system
+- **State Management**: React hooks and context for local state
+- **Routing**: Astro file-based routing with dynamic routes
+- **Code Splitting**: Automatic code splitting via Astro islands
+
+### Backend Architecture
+- **Database**: Supabase PostgreSQL with Row Level Security (RLS)
+- **API Layer**: Supabase Edge Functions (Deno runtime)
+- **Authentication**: Supabase Auth with JWT tokens
+- **Real-time**: WebSocket connections for market data and events
+- **Caching**: Multi-layer caching (browser, service worker, API)
+- **Queue System**: Database-backed queue for email and background jobs
+
+### Trading Infrastructure
+- **Broker Integration**: Alpaca Markets Broker API
+- **Market Data**: Alpaca Market Data API with WebSocket streaming
+- **Order Execution**: Trade execution engine with validation
+- **Copy Trading**: Event-driven copy trading system
+- **Risk Management**: Position limits and validation
+
+### Security Architecture
+- **Authentication**: JWT-based with secure httpOnly cookies
+- **Authorization**: Row Level Security on all database tables
+- **Encryption**: AES-256 encryption for sensitive data
+- **API Security**: Rate limiting, CORS, input validation
+- **Compliance**: KYC/CIP integration with Alpaca
+
+### Data Flow
+1. **User Action** → React Component
+2. **Component** → API Service Layer (`apiService.ts`)
+3. **API Service** → Supabase Edge Function
+4. **Edge Function** → Alpaca Broker API
+5. **Response** → Edge Function → API Service → Component
+6. **Real-time Updates** → WebSocket → Component State
+
+### Deployment Architecture
+- **Frontend**: Cloudflare Pages (CDN + Edge)
+- **Backend**: Supabase (managed PostgreSQL + Edge Functions)
+- **Assets**: Cloudflare CDN with aggressive caching
+- **Service Worker**: Offline-first PWA with background sync
 
 ## Security
 
-- Row Level Security (RLS) on all database tables
-- Encrypted API keys and credentials
-- JWT-based authentication
-- Input validation with Zod schemas
+### Authentication & Authorization
+- **JWT Tokens**: Secure token-based authentication via Supabase Auth
+- **Row Level Security**: PostgreSQL RLS policies on all tables
+- **Session Management**: Secure session handling with automatic refresh
+- **OAuth Integration**: Alpaca OAuth for account linking
+
+### Data Protection
+- **Encryption at Rest**: AES-256 encryption for sensitive data (API keys, credentials)
+- **Encryption in Transit**: TLS 1.3 for all API communications
+- **PII Handling**: Secure handling of personally identifiable information
+- **Credential Storage**: Encrypted storage in Supabase with service role access only
+
+### API Security
+- **Rate Limiting**: Request throttling to prevent abuse
+- **CORS Configuration**: Strict CORS policies for API endpoints
+- **Input Validation**: Zod schema validation on all inputs
+- **SQL Injection Prevention**: Parameterized queries and ORM usage
+- **XSS Protection**: Content Security Policy and input sanitization
+
+### Compliance
+- **KYC/CIP**: Identity verification via Alpaca's compliance system
+- **Audit Logging**: Comprehensive audit trail for all transactions
+- **Data Privacy**: GDPR-compliant data handling
+- **Financial Regulations**: SEC and FINRA compliance via Alpaca
+
+### Best Practices
+- **Principle of Least Privilege**: Minimal permissions for all operations
+- **Secure Defaults**: Security-first configuration
+- **Regular Updates**: Dependency updates and security patches
+- **Error Handling**: Secure error messages without sensitive data exposure
 
 ## Contributing
 
-This is a proprietary project. For internal development:
+This is a proprietary project under the Fair Source License. For internal development:
 
+### Development Workflow
 1. Create feature branch from `main`
-2. Write tests for new features
-3. Ensure all tests pass: `npm run test:run`
-4. Submit PR with detailed description
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. Make changes and write tests
+   - Add unit tests for new functions
+   - Add integration tests for API endpoints
+   - Add component tests for UI changes
+
+3. Run test suite
+   ```bash
+   npm run test:run
+   ```
+
+4. Check for type errors
+   ```bash
+   npm run astro check
+   ```
+
+5. Build and verify
+   ```bash
+   npm run build
+   npm run preview
+   ```
+
+6. Submit PR with detailed description
+   - Describe the changes and motivation
+   - Include screenshots for UI changes
+   - Reference any related issues
+
+### Code Standards
+- **TypeScript**: Strict mode enabled, no `any` types
+- **React**: Functional components with hooks
+- **Styling**: Tailwind CSS utility classes
+- **Testing**: Vitest for unit/integration tests
+- **Linting**: Follow existing code style
+- **Comments**: Document complex logic and business rules
+
+### Commit Messages
+Follow conventional commits format:
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation changes
+- `style:` Code style changes (formatting)
+- `refactor:` Code refactoring
+- `test:` Test additions or changes
+- `chore:` Build process or tooling changes
+
+### Pull Request Guidelines
+- Keep PRs focused and reasonably sized
+- Update documentation for new features
+- Ensure all tests pass
+- Add migration scripts for database changes
+- Update environment variable documentation if needed
 
 ## License
 
 See LICENSE file for details
 
+## Recent Updates
+
+### Profile Editing Integration (Latest)
+✅ Enhanced UserSettings component with profile editing
+- Integrated Alpaca account profile editing directly into UserSettings
+- Edit contact information (email, phone, address)
+- Update trusted contact details
+- Real-time sync with Alpaca Broker API via `alpaca-account-update` Edge Function
+- Form validation and error handling
+- Cancel/save functionality with state management
+- Standalone `EditProfilePanel` component available as alternative implementation
+
+### Settings Page Refinement
+✅ Streamlined settings page layout
+- Focused on core account management features
+- KYC verification status and submission
+- Document management and viewing
+- PDT status monitoring
+- User preferences and privacy controls
+
+### Enhanced 404 Page
+✅ Improved 404 error page with better UX
+- Clear error messaging
+- Quick navigation to home and dashboard
+- SEO-optimized meta tags
+- Responsive design
+
+### Account Management Features
+✅ Comprehensive account settings interface
+- KYC verification status tracking
+- Document upload and management
+- PDT status monitoring
+- Bank account linking
+- Transfer history tracking
+- Trading mode switching (paper/live)
+
+### Social Trading Features
+✅ Copy trading system with leaderboard
+- Real-time trader rankings
+- Customizable copy trading allocations
+- Privacy controls for traders
+- Performance metrics and analytics
+
+### Progressive Web App
+✅ Full PWA implementation
+- Offline support with service worker
+- Install prompts for mobile and desktop
+- Background sync for queued operations
+- Push notifications for trade alerts
+
 ## Support
 
-For issues or questions, contact the development team.
+For issues or questions, contact the development team at support@leadtrade.app

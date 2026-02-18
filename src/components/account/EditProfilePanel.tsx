@@ -19,7 +19,7 @@ interface EditProfilePanelProps {
   accountId: string;
 }
 
-interface AccountData {
+interface AlpacaAccountData {
   id: string;
   status: string;
   contact: {
@@ -45,7 +45,7 @@ interface AccountData {
 }
 
 export default function EditProfilePanel({ accountId }: EditProfilePanelProps) {
-  const [account, setAccount] = useState<AccountData | null>(null);
+  const [account, setAccount] = useState<AlpacaAccountData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +75,7 @@ export default function EditProfilePanel({ accountId }: EditProfilePanelProps) {
       const result = await apiService.getAccount();
 
       if (result.success && result.data) {
-        const data = result.data as AccountData;
+        const data = result.data as unknown as AlpacaAccountData;
         setAccount(data);
         
         // Check if KYC is approved
