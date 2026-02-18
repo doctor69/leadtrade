@@ -17,6 +17,31 @@ interface UserProfile {
   show_asset_amounts: boolean;
 }
 
+interface AlpacaAccountData {
+  id: string;
+  status: string;
+  contact?: {
+    email_address?: string;
+    phone_number?: string;
+    street_address?: string[];
+    city?: string;
+    state?: string;
+    postal_code?: string;
+  };
+  identity?: {
+    given_name?: string;
+    family_name?: string;
+    date_of_birth?: string;
+    tax_id?: string;
+    country_of_citizenship?: string;
+  };
+  trusted_contact?: {
+    given_name?: string;
+    family_name?: string;
+    email_address?: string;
+  };
+}
+
 interface UserSettingsProps {
   userId?: string;
   accountId?: string | null;
@@ -32,11 +57,10 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
   const [statsMessage, setStatsMessage] = useState<string | null>(null);
   const [settingsChanged, setSettingsChanged] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  
+
   // Alpaca account data
-  const [alpacaAccount, setAlpacaAccount] = useState<any>(null);
-  const [loadingAlpaca, setLoadingAlpaca] = useState(false);
-  
+  const [alpacaAccount, setAlpacaAccount] = useState<AlpacaAccountData | null>(null);
+
   // Edit form state
   const [editEmail, setEditEmail] = useState('');
   const [editPhone, setEditPhone] = useState('');
@@ -55,26 +79,27 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
 
   const loadAlpacaAccount = async () => {
     if (!accountId) return;
-    
+
     try {
-      setLoadingAlpaca(true);
       const result = await apiService.getAccount();
-      
+
       if (result.success && result.data) {
-        setAlpacaAccount(result.data);
+        const data = result.data as unknown as AlpacaAccountData;
+        console.log('Loaded Alpaca account:', data);
+        setAlpacaAccount(data);
         // Populate edit form
-        setEditEmail(result.data.contact?.email_address || '');
-        setEditPhone(result.data.contact?.phone_number || '');
-        const street = result.data.contact?.street_address || [];
+        setEditEmail(data.contact?.email_address || '');
+        setEditPhone(data.contact?.phone_number || '');
+        const street = data.contact?.street_address || [];
         setEditStreet(street[0] || '');
-        setEditCity(result.data.contact?.city || '');
-        setEditState(result.data.contact?.state || '');
-        setEditZip(result.data.contact?.postal_code || '');
+        setEditCity(data.contact?.city || '');
+        setEditState(data.contact?.state || '');
+        setEditZip(data.contact?.postal_code || '');
+      } else {
+        console.error('Failed to load Alpaca account:', result.error);
       }
     } catch (err) {
       console.error('Error loading Alpaca account:', err);
-    } finally {
-      setLoadingAlpaca(false);
     }
   };
 
@@ -147,7 +172,7 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
 
   const handleSaveProfile = async () => {
     if (!accountId) return;
-    
+
     try {
       setSaving(true);
       setError(null);
@@ -208,9 +233,9 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
     try {
       setUpdatingStats(true);
       setStatsMessage(null);
-      
+
       const result = await apiService.updateLeaderboardStats();
-      
+
       if (result.success) {
         setStatsMessage('Leaderboard stats updated successfully!');
         setSettingsChanged(false); // Reset the changed state
@@ -279,10 +304,23 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
               </CardDescription>
             </div>
             {accountId && alpacaAccount && !isEditingProfile && (
-              <Button variant="outline" size="sm" onClick={() => setIsEditingProfile(true)}>
+              <Button variant="outline" size="sm" onClick={() => {
+                // Populate form with current values when entering edit mode
+                setEditEmail(alpacaAccount.contact?.email_address || '');
+                setEditPhone(alpacaAccount.contact?.phone_number || '');
+                const street = alpacaAccount.contact?.street_address || [];
+                setEditStreet(street[0] || '');
+                setEditCity(alpacaAccount.contact?.city || '');
+                setEditState(alpacaAccount.contact?.state || '');
+                setEditZip(alpacaAccount.contact?.postal_code || '');
+                setIsEditingProfile(true);
+              }}>
                 <Edit className="h-4 w-4 mr-2" />
                 Edit
               </Button>
+            )}
+            {!accountId && !isEditingProfile && (
+              <p className="text-xs text-muted-foreground">Link Alpaca account to edit profile</p>
             )}
           </div>
         </CardHeader>
@@ -456,7 +494,7 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
 
           <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <div className="text-sm text-blue-800 dark:text-blue-200">
-              <strong>Privacy Note:</strong> When sharing is enabled, other users can see your trading activity and performance. 
+              <strong>Privacy Note:</strong> When sharing is enabled, other users can see your trading activity and performance.
               You can disable portfolio value visibility while still allowing trade copying.
             </div>
           </div>
@@ -494,11 +532,10 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
                 </Button>
               </div>
               {statsMessage && (
-                <div className={`mt-3 text-sm p-2 rounded ${
-                  statsMessage.includes('success') 
-                    ? 'bg-green-50 dark:bg-green-950 text-green-800 dark:text-green-200' 
-                    : 'bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-200'
-                }`}>
+                <div className={`mt-3 text-sm p-2 rounded ${statsMessage.includes('success')
+                  ? 'bg-green-50 dark:bg-green-950 text-green-800 dark:text-green-200'
+                  : 'bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-200'
+                  }`}>
                   {statsMessage}
                 </div>
               )}
