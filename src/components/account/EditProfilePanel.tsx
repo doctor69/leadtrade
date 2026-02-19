@@ -67,12 +67,12 @@ export default function EditProfilePanel({ accountId }: EditProfilePanelProps) {
     loadAccountData();
   }, [accountId]);
 
-  const loadAccountData = async () => {
+  const loadAccountData = async (forceRefresh = false) => {
     try {
       setLoading(true);
       setError(null);
 
-      const result = await apiService.getAccount();
+      const result = await apiService.getAccount(forceRefresh);
 
       if (result.success && result.data) {
         const data = result.data as unknown as AlpacaAccountData;
@@ -146,7 +146,7 @@ export default function EditProfilePanel({ accountId }: EditProfilePanelProps) {
       }
 
       setSuccess(true);
-      await loadAccountData(); // Reload to show updated data
+      await loadAccountData(true); // Reload to show updated data with force refresh
 
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(false), 3000);

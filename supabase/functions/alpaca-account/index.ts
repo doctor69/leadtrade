@@ -57,38 +57,78 @@ serve(async (req: Request) => {
               )
             }
             
-            // Get the user's trading account with full financial details
-            const response = await alpacaClient.getTradingAccount(authContext.alpacaAccountId)
+            // Get both account metadata (contact/identity) and trading account (financial data)
+            const [accountResponse, tradingResponse] = await Promise.all([
+              alpacaClient.getAccount(authContext.alpacaAccountId),
+              alpacaClient.getTradingAccount(authContext.alpacaAccountId)
+            ])
             
-            if (!response.success) {
+            if (!accountResponse.success) {
               return createErrorResponse(
                 {
-                  code: response.error?.code || 'ALPACA_API_ERROR',
-                  message: response.error?.message || 'Failed to fetch account data',
-                  details: response.error?.details
+                  code: accountResponse.error?.code || 'ALPACA_API_ERROR',
+                  message: accountResponse.error?.message || 'Failed to fetch account metadata',
+                  details: accountResponse.error?.details
                 },
-                response.error?.status || 400
+                accountResponse.error?.status || 400
+              )
+            }
+
+            if (!tradingResponse.success) {
+              return createErrorResponse(
+                {
+                  code: tradingResponse.error?.code || 'ALPACA_API_ERROR',
+                  message: tradingResponse.error?.message || 'Failed to fetch trading account data',
+                  details: tradingResponse.error?.details
+                },
+                tradingResponse.error?.status || 400
               )
             }
             
-            return createSuccessResponse(response.data)
+            // Merge both responses - trading data takes precedence for financial fields
+            const mergedData = {
+              ...accountResponse.data,
+              ...tradingResponse.data
+            }
+            
+            return createSuccessResponse(mergedData)
           }
           
-          // Get specific account by ID (trading account with financial details)
-          const response = await alpacaClient.getTradingAccount(accountIdFromPath)
+          // Get specific account by ID - fetch both metadata and trading data
+          const [accountResponse, tradingResponse] = await Promise.all([
+            alpacaClient.getAccount(accountIdFromPath),
+            alpacaClient.getTradingAccount(accountIdFromPath)
+          ])
           
-          if (!response.success) {
+          if (!accountResponse.success) {
             return createErrorResponse(
               {
-                code: response.error?.code || 'ALPACA_API_ERROR',
-                message: response.error?.message || 'Failed to fetch account data',
-                details: response.error?.details
+                code: accountResponse.error?.code || 'ALPACA_API_ERROR',
+                message: accountResponse.error?.message || 'Failed to fetch account metadata',
+                details: accountResponse.error?.details
               },
-              response.error?.status || 400
+              accountResponse.error?.status || 400
+            )
+          }
+
+          if (!tradingResponse.success) {
+            return createErrorResponse(
+              {
+                code: tradingResponse.error?.code || 'ALPACA_API_ERROR',
+                message: tradingResponse.error?.message || 'Failed to fetch trading account data',
+                details: tradingResponse.error?.details
+              },
+              tradingResponse.error?.status || 400
             )
           }
           
-          return createSuccessResponse(response.data)
+          // Merge both responses - trading data takes precedence for financial fields
+          const mergedData = {
+            ...accountResponse.data,
+            ...tradingResponse.data
+          }
+          
+          return createSuccessResponse(mergedData)
         }
         
         // Handle PATCH requests (update account)

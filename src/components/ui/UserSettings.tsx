@@ -77,11 +77,11 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
     }
   }, [userId, accountId]);
 
-  const loadAlpacaAccount = async () => {
+  const loadAlpacaAccount = async (forceRefresh = false) => {
     if (!accountId) return;
 
     try {
-      const result = await apiService.getAccount();
+      const result = await apiService.getAccount(forceRefresh);
 
       if (result.success && result.data) {
         const data = result.data as unknown as AlpacaAccountData;
@@ -208,7 +208,8 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
         throw new Error(response.error?.message || 'Failed to update profile');
       }
 
-      await loadAlpacaAccount();
+      // Force refresh to get updated data from API
+      await loadAlpacaAccount(true);
       setIsEditingProfile(false);
     } catch (err) {
       console.error('Update error:', err);

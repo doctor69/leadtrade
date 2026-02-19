@@ -427,7 +427,12 @@ leadtrade/
 ### Supabase Edge Functions (`supabase/functions/`)
 
 #### Account Management
-- `alpaca-account` - Get account details (GET)
+- `alpaca-account` - Get comprehensive account details (GET)
+  - Fetches both account metadata (contact, identity) and trading account data (financial details) in parallel
+  - Merges responses for complete account view with contact info, identity, and portfolio data
+  - Supports fetching user's linked account or specific account by ID
+  - Returns unified account object with all relevant fields
+  - Optimized performance with parallel API calls
 - `alpaca-account-update` - Update account contact information, address, and trusted contacts (PATCH)
   - Updates email, phone, street address, city, state, postal code
   - Manages trusted contact information
@@ -731,7 +736,30 @@ See LICENSE file for details
 
 ## Recent Updates
 
-### Environment Variable Standardization (Latest)
+### Alpaca Account Data Fetching Enhancement (Latest)
+✅ Improved account data retrieval in `alpaca-account` Edge Function
+- Now fetches both account metadata (contact, identity) and trading account data (financial details) in parallel
+- Merges responses to provide complete account view with all relevant fields
+- Optimized performance with `Promise.all` for parallel API calls
+- Better separation of concerns: metadata from `/accounts/{id}` and financial data from `/trading/accounts/{id}`
+- Improved error handling with specific error messages for each API call
+- Benefits both UserSettings and EditProfilePanel components with richer account data
+- Maintains backward compatibility with existing API consumers
+
+### UserSettings Cache Control Enhancement
+✅ Added force refresh capability to UserSettings component
+- Enhanced `loadAlpacaAccount` function to support cache-busting via `forceRefresh` parameter
+- Allows manual refresh of account data when needed (e.g., after profile updates)
+- Improves data consistency between UI and backend
+- Maintains all existing functionality:
+  - Integrated Alpaca account profile editing (email, phone, address)
+  - Privacy controls (share trades, show portfolio values)
+  - Leaderboard stats management with manual update trigger
+  - Trusted contact management
+  - Real-time sync with Alpaca Broker API
+  - Form validation and error handling
+
+### Environment Variable Standardization
 ✅ Standardized Alpaca API credentials across Edge Functions
 - Updated `alpaca-account-update` to use consistent environment variable names
 - Now uses `PUBLIC_ALPACA_BROKER_SANDBOX_API_KEY` and `PUBLIC_ALPACA_BROKER_SANDBOX_API_SECRET`
