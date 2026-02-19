@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 
 // Social media metadata for 404 page
 const pageTitle = "Page Not Found - LEADTRADE";
-const pageDescription = "The page you're looking for doesn't exist. Return to LEADTRADE to continue trading with real market data.";
+const pageDescription =
+  "The page you're looking for doesn't exist. Return to LEADTRADE to continue trading with real market data.";
 const pageImage = "/social/default-thumbnail.svg";
 const pageKeywords = "page not found, 404 error, LEADTRADE, trading platform";
 ---
 
-<Layout 
+<Layout
   title={pageTitle}
   description={pageDescription}
   image={pageImage}
@@ -26,17 +27,13 @@ const pageKeywords = "page not found, 404 error, LEADTRADE, trading platform";
           The page you're looking for doesn't exist or has been moved.
         </p>
       </div>
-      
+
       <div class="flex flex-col sm:flex-row gap-4 justify-center">
         <a href="/">
-          <Button size="lg">
-            Go Home
-          </Button>
+          <Button size="lg"> Go Home </Button>
         </a>
         <a href="/dashboard">
-          <Button variant="outline" size="lg">
-            Dashboard
-          </Button>
+          <Button variant="outline" size="lg"> Dashboard </Button>
         </a>
       </div>
     </div>
