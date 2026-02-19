@@ -107,6 +107,11 @@ export default function EditProfilePanel({ accountId }: EditProfilePanelProps) {
   };
 
   const handleSave = async () => {
+    if (!account?.id) {
+      setError('No account ID available');
+      return;
+    }
+
     try {
       setSaving(true);
       setError(null);
@@ -127,10 +132,12 @@ export default function EditProfilePanel({ accountId }: EditProfilePanelProps) {
         } : undefined,
       };
 
+      console.log('Updating account with ID:', account.id);
+
       // Use apiService or edgeFunctionClient for proper auth handling
       const { edgeFunctionClient } = await import('@/lib/edgeFunctionClient');
       const response = await edgeFunctionClient.patch('alpaca-account-update', {
-        account_id: accountId,
+        account_id: account.id,
         updates,
       });
 

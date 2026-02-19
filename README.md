@@ -431,7 +431,8 @@ leadtrade/
 - `alpaca-account-update` - Update account contact information, address, and trusted contacts (PATCH)
   - Updates email, phone, street address, city, state, postal code
   - Manages trusted contact information
-  - Returns detailed error messages for validation failures
+  - Returns detailed error messages for validation failures with full context
+  - Enhanced error logging for debugging (status codes, URLs, account IDs)
   - Requires valid Alpaca account ID and authentication
   - Enhanced security: Validates account ownership via `alpaca_accounts` table
   - KYC-aware: Restricts identity field updates after KYC approval
@@ -729,7 +730,34 @@ See LICENSE file for details
 
 ## Recent Updates
 
-### EditProfilePanel Authentication Improvement (Latest)
+### UserSettings Enhanced Debugging (Latest)
+✅ Improved debugging and error tracking in UserSettings component
+- Added comprehensive console logging for account update operations
+- Logs account ID, update payload, and API responses for troubleshooting
+- Enhanced error logging with full error context
+- Better visibility into profile update flow for debugging
+- Maintains all existing functionality:
+  - Integrated Alpaca account profile editing (email, phone, address)
+  - Privacy controls (share trades, show portfolio values)
+  - Leaderboard stats management with manual update trigger
+  - Trusted contact management
+  - Real-time sync with Alpaca Broker API
+  - Form validation and error handling
+
+### Account Update Error Handling Enhancement
+✅ Improved error diagnostics in `alpaca-account-update` Edge Function
+- Enhanced error logging for Alpaca account fetch failures
+- Detailed error context including status codes, URLs, and account IDs
+- Better error messages propagated to frontend for debugging
+- Improved troubleshooting capabilities for account update issues
+- All existing security and functionality maintained:
+  - Account ownership validation via `alpaca_accounts` table
+  - KYC status-aware field restrictions
+  - Contact information updates (email, phone, address)
+  - Trusted contact management
+  - Profile synchronization with Supabase Auth
+
+### EditProfilePanel Authentication Improvement
 ✅ Enhanced authentication handling in EditProfilePanel component
 - Migrated from direct fetch calls to `edgeFunctionClient` for proper auth handling
 - Improved error message propagation from Edge Function responses

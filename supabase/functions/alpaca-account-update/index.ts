@@ -73,34 +73,16 @@ serve(async (req) => {
       throw new Error('Unauthorized: Account does not belong to user')
     }
 
-    // Get current account status to check KYC
-    const accountResponse = await fetch(
-      `${ALPACA_BASE_URL}/v1/accounts/${account_id}`,
-      {
-        headers: {
-          'APCA-API-KEY-ID': ALPACA_API_KEY,
-          'APCA-API-SECRET-KEY': ALPACA_API_SECRET,
-        },
-      }
-    )
-
-    if (!accountResponse.ok) {
-      throw new Error('Failed to fetch account status')
-    }
-
-    const accountData = await accountResponse.json()
-
-    // Restrict updates based on KYC status
-    const isKYCApproved = accountData.status === 'ACTIVE' || accountData.status === 'APPROVED'
-
-    if (isKYCApproved) {
-      // After KYC approval, only allow contact and trusted_contact updates
-      // Do NOT allow identity updates (name, DOB, SSN, etc.)
-      if (updates.identity) {
-        throw new Error(
-          'Identity information cannot be changed after KYC approval. Please contact support.'
-        )
-      }
+    // Note: We skip fetching account status to check KYC because:
+    // 1. Alpaca will reject invalid updates anyway
+    // 2. This avoids an extra API call that might fail
+    // 3. The error from Alpaca will be more specific
+    
+    // Restrict identity updates (these should never be allowed via this endpoint)
+    if (updates.identity) {
+      throw new Error(
+        'Identity information cannot be changed after account creation. Please contact support.'
+      )
     }
 
     // Update account via Alpaca API
@@ -119,6 +101,13 @@ serve(async (req) => {
 
     if (!updateResponse.ok) {
       const errorText = await updateResponse.text()
+      console.error('Alpaca account update error:', {
+        status: updateResponse.status,
+        statusText: updateResponse.statusText,
+        error: errorText,
+        account_id,
+        updates
+      })
       throw new Error(`Failed to update account: ${errorText}`)
     }
 

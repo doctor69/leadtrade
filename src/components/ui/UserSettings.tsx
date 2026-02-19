@@ -172,7 +172,10 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
   };
 
   const handleSaveProfile = async () => {
-    if (!accountId) return;
+    if (!alpacaAccount?.id) {
+      setError('No account ID available');
+      return;
+    }
 
     try {
       setSaving(true);
@@ -189,12 +192,17 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
         },
       };
 
+      console.log('Updating account with ID:', alpacaAccount.id);
+      console.log('Updates:', updates);
+
       // Use edgeFunctionClient for proper auth handling
       const { edgeFunctionClient } = await import('@/lib/edgeFunctionClient');
       const response = await edgeFunctionClient.patch('alpaca-account-update', {
-        account_id: accountId,
+        account_id: alpacaAccount.id,
         updates,
       });
+
+      console.log('Update response:', response);
 
       if (!response.success) {
         throw new Error(response.error?.message || 'Failed to update profile');
@@ -203,6 +211,7 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
       await loadAlpacaAccount();
       setIsEditingProfile(false);
     } catch (err) {
+      console.error('Update error:', err);
       setError(err instanceof Error ? err.message : 'Failed to update profile');
     } finally {
       setSaving(false);
