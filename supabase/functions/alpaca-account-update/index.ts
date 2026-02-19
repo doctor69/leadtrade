@@ -62,13 +62,14 @@ serve(async (req) => {
     }
 
     // Validate that user owns this account
-    const { data: profile } = await supabaseClient
-      .from('profiles')
+    const { data: alpacaAccount, error: accountError } = await supabaseClient
+      .from('alpaca_accounts')
       .select('alpaca_account_id')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
+      .eq('alpaca_account_id', account_id)
       .single()
 
-    if (profile?.alpaca_account_id !== account_id) {
+    if (accountError || !alpacaAccount) {
       throw new Error('Unauthorized: Account does not belong to user')
     }
 

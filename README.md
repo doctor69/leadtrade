@@ -352,6 +352,9 @@ leadtrade/
 - **TradingModeSwitch**: Toggle between paper and live trading modes
 - **SettingsPageContent**: Main settings page layout with user preferences, KYC status, and document management
 - **EditProfilePanel**: Standalone profile editor for contact information, address, and trusted contacts (alternative to integrated UserSettings editor)
+  - Uses `edgeFunctionClient` for authenticated API calls
+  - Comprehensive form validation and error handling
+  - KYC-aware field restrictions (read-only identity fields after verification)
 
 ### Trading Components (`src/components/trading/`)
 - **TradingInterface**: Main trading dashboard with order entry and positions
@@ -387,6 +390,7 @@ leadtrade/
   - Trusted contact management
   - Real-time sync with Alpaca Broker API
   - Form validation and error handling with improved error messages
+  - Uses `edgeFunctionClient` for authenticated API calls
 - **NotificationSettings**: Configure push notification preferences
 - **ErrorDisplay**: Consistent error message display
 - **LazyComponent**: Code-splitting wrapper for performance
@@ -429,6 +433,8 @@ leadtrade/
   - Manages trusted contact information
   - Returns detailed error messages for validation failures
   - Requires valid Alpaca account ID and authentication
+  - Enhanced security: Validates account ownership via `alpaca_accounts` table
+  - KYC-aware: Restricts identity field updates after KYC approval
 - `alpaca-account-activities` - Fetch account activities
 - `alpaca-kyc-cip` - KYC/CIP verification submission
 - `alpaca-documents` - Upload/retrieve documents
@@ -626,6 +632,10 @@ See `.env.example` for complete configuration.
 - **Row Level Security**: PostgreSQL RLS policies on all tables
 - **Session Management**: Secure session handling with automatic refresh
 - **OAuth Integration**: Alpaca OAuth for account linking
+- **Account Ownership Validation**: Multi-table verification ensures users can only access their own accounts
+  - Edge Functions validate ownership via `alpaca_accounts` table
+  - Prevents unauthorized access to other users' trading accounts
+  - Applied to all account modification endpoints
 
 ### Data Protection
 - **Encryption at Rest**: AES-256 encryption for sensitive data (API keys, credentials)
@@ -719,20 +729,51 @@ See LICENSE file for details
 
 ## Recent Updates
 
-### UserSettings Profile Editing Enhancement (Latest)
+### EditProfilePanel Authentication Improvement (Latest)
+✅ Enhanced authentication handling in EditProfilePanel component
+- Migrated from direct fetch calls to `edgeFunctionClient` for proper auth handling
+- Improved error message propagation from Edge Function responses
+- Better integration with Supabase authentication layer
+- Consistent API client usage across the application
+- All existing features maintained:
+  - Contact information updates (email, phone, address)
+  - Trusted contact management
+  - KYC status-aware restrictions
+  - Read-only identity fields display
+  - Form validation and error handling
+
+### Account Update Security Enhancement
+✅ Improved security validation in `alpaca-account-update` Edge Function
+- Enhanced account ownership verification using `alpaca_accounts` table
+- Validates user owns the specific Alpaca account before allowing updates
+- Prevents unauthorized access to accounts not belonging to the authenticated user
+- More robust security check compared to profile-based validation
+- Maintains all existing functionality:
+  - Contact information updates (email, phone, address)
+  - Trusted contact management
+  - KYC status-aware restrictions
+  - Profile synchronization with Supabase Auth
+
+### UserSettings Code Quality Improvements
+✅ Code cleanup and formatting improvements in UserSettings component
+- Removed trailing whitespace for cleaner code
+- Improved code consistency and readability
+- All existing features maintained:
+  - Integrated Alpaca account profile editing (email, phone, address)
+  - Privacy controls (share trades, show portfolio values)
+  - Leaderboard stats management with manual update trigger
+  - Trusted contact management
+  - Real-time sync with Alpaca Broker API
+  - Form validation and error handling
+  - Cancel/save functionality with state management
+- Standalone `EditProfilePanel` component available as alternative implementation
+
+### UserSettings Profile Editing Enhancement
 ✅ Improved error handling and code quality in UserSettings component
 - Enhanced error messages from API responses for better debugging
 - Refactored authentication session handling for cleaner code
 - Improved error propagation from `alpaca-account-update` Edge Function
 - Better user feedback when profile updates fail
-- Maintained all existing features:
-  - Integrated Alpaca account profile editing (email, phone, address)
-  - Privacy controls (share trades, show portfolio values)
-  - Leaderboard stats management
-  - Trusted contact management
-  - Real-time sync with Alpaca Broker API
-  - Form validation and cancel/save functionality
-- Standalone `EditProfilePanel` component available as alternative implementation
 
 ### Settings Page Refinement
 ✅ Streamlined settings page layout

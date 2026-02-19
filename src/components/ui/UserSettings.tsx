@@ -86,18 +86,22 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
       if (result.success && result.data) {
         const data = result.data as unknown as AlpacaAccountData;
         setAlpacaAccount(data);
-        // Populate edit form
-        setEditEmail(data.contact?.email_address || '');
-        setEditPhone(data.contact?.phone_number || '');
-        const street = data.contact?.street_address || [];
-        setEditStreet(street[0] || '');
-        setEditCity(data.contact?.city || '');
-        setEditState(data.contact?.state || '');
-        setEditZip(data.contact?.postal_code || '');
+        // Populate edit form with loaded data
+        populateEditForm(data);
       }
     } catch (err) {
       // Silent fail - account will show as not loaded
     }
+  };
+
+  const populateEditForm = (data: AlpacaAccountData) => {
+    setEditEmail(data.contact?.email_address || '');
+    setEditPhone(data.contact?.phone_number || '');
+    const street = data.contact?.street_address || [];
+    setEditStreet(street[0] || '');
+    setEditCity(data.contact?.city || '');
+    setEditState(data.contact?.state || '');
+    setEditZip(data.contact?.postal_code || '');
   };
 
   const loadUserProfile = async () => {
@@ -185,24 +189,15 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
         },
       };
 
-      const session = await supabase.auth.getSession();
-      
-      const response = await fetch(`${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-account-update`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.data.session?.access_token}`,
-        },
-        body: JSON.stringify({
-          account_id: accountId,
-          updates,
-        }),
+      // Use edgeFunctionClient for proper auth handling
+      const { edgeFunctionClient } = await import('@/lib/edgeFunctionClient');
+      const response = await edgeFunctionClient.patch('alpaca-account-update', {
+        account_id: accountId,
+        updates,
       });
 
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to update profile');
+      if (!response.success) {
+        throw new Error(response.error?.message || 'Failed to update profile');
       }
 
       await loadAlpacaAccount();
@@ -219,13 +214,7 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
     setError(null);
     // Reset form to current values
     if (alpacaAccount) {
-      setEditEmail(alpacaAccount.contact?.email_address || '');
-      setEditPhone(alpacaAccount.contact?.phone_number || '');
-      const street = alpacaAccount.contact?.street_address || [];
-      setEditStreet(street[0] || '');
-      setEditCity(alpacaAccount.contact?.city || '');
-      setEditState(alpacaAccount.contact?.state || '');
-      setEditZip(alpacaAccount.contact?.postal_code || '');
+      populateEditForm(alpacaAccount);
     }
   };
 
@@ -306,13 +295,7 @@ export default function UserSettings({ userId, accountId, onSettingsChange }: Us
             {accountId && alpacaAccount && !isEditingProfile && (
               <Button variant="outline" size="sm" onClick={() => {
                 // Populate form with current values when entering edit mode
-                setEditEmail(alpacaAccount.contact?.email_address || '');
-                setEditPhone(alpacaAccount.contact?.phone_number || '');
-                const street = alpacaAccount.contact?.street_address || [];
-                setEditStreet(street[0] || '');
-                setEditCity(alpacaAccount.contact?.city || '');
-                setEditState(alpacaAccount.contact?.state || '');
-                setEditZip(alpacaAccount.contact?.postal_code || '');
+                populateEditForm(alpacaAccount);
                 setIsEditingProfile(true);
               }}>
                 <Edit className="h-4 w-4 mr-2" />

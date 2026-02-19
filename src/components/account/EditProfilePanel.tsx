@@ -82,15 +82,7 @@ export default function EditProfilePanel({ accountId }: EditProfilePanelProps) {
         setIsKYCApproved(data.status === 'ACTIVE' || data.status === 'APPROVED');
 
         // Populate form
-        setEmail(data.contact?.email_address || '');
-        setPhone(data.contact?.phone_number || '');
-        setStreet1(data.contact?.street_address?.[0] || '');
-        setStreet2(data.contact?.street_address?.[1] || '');
-        setCity(data.contact?.city || '');
-        setState(data.contact?.state || '');
-        setPostalCode(data.contact?.postal_code || '');
-        setTrustedContactName(data.trusted_contact?.given_name || '');
-        setTrustedContactEmail(data.trusted_contact?.email_address || '');
+        populateForm(data);
       } else {
         setError(result.error || 'Failed to load account data');
       }
@@ -100,6 +92,18 @@ export default function EditProfilePanel({ accountId }: EditProfilePanelProps) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const populateForm = (data: AlpacaAccountData) => {
+    setEmail(data.contact?.email_address || '');
+    setPhone(data.contact?.phone_number || '');
+    setStreet1(data.contact?.street_address?.[0] || '');
+    setStreet2(data.contact?.street_address?.[1] || '');
+    setCity(data.contact?.city || '');
+    setState(data.contact?.state || '');
+    setPostalCode(data.contact?.postal_code || '');
+    setTrustedContactName(data.trusted_contact?.given_name || '');
+    setTrustedContactEmail(data.trusted_contact?.email_address || '');
   };
 
   const handleSave = async () => {
@@ -123,20 +127,15 @@ export default function EditProfilePanel({ accountId }: EditProfilePanelProps) {
         } : undefined,
       };
 
-      // Call Edge Function to update account
-      const response = await fetch(`${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/alpaca-account-update`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          account_id: accountId,
-          updates,
-        }),
+      // Use apiService or edgeFunctionClient for proper auth handling
+      const { edgeFunctionClient } = await import('@/lib/edgeFunctionClient');
+      const response = await edgeFunctionClient.patch('alpaca-account-update', {
+        account_id: accountId,
+        updates,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to update account');
+      if (!response.success) {
+        throw new Error(response.error?.message || 'Failed to update account');
       }
 
       setSuccess(true);
