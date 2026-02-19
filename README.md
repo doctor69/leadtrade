@@ -560,6 +560,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 # Alpaca Broker API (Sandbox)
 PUBLIC_ALPACA_BROKER_SANDBOX_API_KEY=your_key
 PUBLIC_ALPACA_BROKER_SANDBOX_API_SECRET=your_secret
+PUBLIC_ALPACA_BROKER_SANDBOX_BASE_URL=https://broker-api.sandbox.alpaca.markets
 
 # Email Services
 RESEND_API_KEY=your_resend_key
@@ -730,7 +731,19 @@ See LICENSE file for details
 
 ## Recent Updates
 
-### UserSettings Enhanced Debugging (Latest)
+### Environment Variable Standardization (Latest)
+✅ Standardized Alpaca API credentials across Edge Functions
+- Updated `alpaca-account-update` to use consistent environment variable names
+- Now uses `PUBLIC_ALPACA_BROKER_SANDBOX_API_KEY` and `PUBLIC_ALPACA_BROKER_SANDBOX_API_SECRET`
+- Aligns with other Edge Functions for consistent configuration
+- Improves maintainability and reduces configuration errors
+- All existing functionality maintained:
+  - Contact information updates (email, phone, address)
+  - Trusted contact management
+  - Account ownership validation
+  - Profile synchronization with Supabase Auth
+
+### UserSettings Enhanced Debugging
 ✅ Improved debugging and error tracking in UserSettings component
 - Added comprehensive console logging for account update operations
 - Logs account ID, update payload, and API responses for troubleshooting

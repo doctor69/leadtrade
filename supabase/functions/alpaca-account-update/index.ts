@@ -10,9 +10,10 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const ALPACA_API_KEY = Deno.env.get('ALPACA_API_KEY')!
-const ALPACA_API_SECRET = Deno.env.get('ALPACA_API_SECRET')!
-const ALPACA_BASE_URL = Deno.env.get('ALPACA_BASE_URL') || 'https://broker-api.sandbox.alpaca.markets'
+// Get Alpaca credentials based on environment
+const ALPACA_API_KEY = Deno.env.get('PUBLIC_ALPACA_BROKER_SANDBOX_API_KEY')!
+const ALPACA_API_SECRET = Deno.env.get('PUBLIC_ALPACA_BROKER_SANDBOX_API_SECRET')!
+const ALPACA_BASE_URL = Deno.env.get('PUBLIC_ALPACA_BROKER_SANDBOX_BASE_URL') || 'https://broker-api.sandbox.alpaca.markets'
 
 serve(async (req) => {
   // CORS headers
@@ -85,6 +86,10 @@ serve(async (req) => {
       )
     }
 
+    // Use HTTP Basic authentication as required by Broker API
+    const credentials = `${ALPACA_API_KEY}:${ALPACA_API_SECRET}`
+    const encodedCredentials = btoa(credentials)
+
     // Update account via Alpaca API
     const updateResponse = await fetch(
       `${ALPACA_BASE_URL}/v1/accounts/${account_id}`,
@@ -92,8 +97,7 @@ serve(async (req) => {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'APCA-API-KEY-ID': ALPACA_API_KEY,
-          'APCA-API-SECRET-KEY': ALPACA_API_SECRET,
+          'Authorization': `Basic ${encodedCredentials}`,
         },
         body: JSON.stringify(updates),
       }
