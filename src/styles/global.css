@@ -1,56 +1,46 @@
 @import "tailwindcss";
 
+/* Inter font loaded from Layout.astro */
+
 @layer base {
   :root {
-    /* Professional Fintech Color Palette - Light Mode */
-    --background: 210 20% 94%;
+    /* ── Light Mode ─────────────────────────────────────────── */
+    --background: 210 20% 97%;
     --foreground: 222 47% 11%;
 
-    /* Component backgrounds - elevated surfaces */
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
 
-    /* Modal/Dialog backgrounds - highest elevation */
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primary - Professional Blue for Finance */
     --primary: 221 83% 53%;
     --primary-foreground: 210 40% 98%;
 
-    /* Secondary - Subtle Gray */
     --secondary: 210 40% 96%;
     --secondary-foreground: 222 47% 11%;
 
-    /* Muted - For less important content */
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
 
-    /* Accent - For highlights */
     --accent: 210 40% 96%;
     --accent-foreground: 222 47% 11%;
 
-    /* Destructive - For sell/negative */
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    /* Success - For buy/positive */
     --success: 142 76% 36%;
     --success-foreground: 210 40% 98%;
 
-    /* Warning */
     --warning: 38 92% 50%;
     --warning-foreground: 222 47% 11%;
 
-    /* Borders */
-    --border: 214 32% 91%;
+    --border: 214 32% 88%;
     --input: 214 32% 91%;
     --ring: 221 83% 53%;
 
-    /* Radius */
-    --radius: 0.5rem;
+    --radius: 0.625rem;
 
-    /* Charts - Professional palette */
     --chart-1: 221 83% 53%;
     --chart-2: 142 76% 36%;
     --chart-3: 0 84% 60%;
@@ -59,53 +49,42 @@
   }
 
   .dark {
-    /* Elite Dark Mode - Dark grey background with pure black components */
-    --background: 0 0% 12%;
-    --foreground: 210 40% 98%;
+    /* ── Premium Navy Dark Mode ─────────────────────────────── */
+    --background: 222 47% 6%;
+    --foreground: 210 40% 96%;
 
-    /* Component backgrounds - pure black for elite look */
-    --card: 0 0% 0%;
-    --card-foreground: 210 40% 98%;
+    --card: 222 47% 9%;
+    --card-foreground: 210 40% 96%;
 
-    /* Modal/Dialog backgrounds - pure black */
-    --popover: 0 0% 0%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 222 47% 9%;
+    --popover-foreground: 210 40% 96%;
 
-    /* Primary - Brighter blue for dark mode */
-    --primary: 217 91% 60%;
+    --primary: 217 91% 63%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary */
-    --secondary: 0 0% 8%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 222 47% 14%;
+    --secondary-foreground: 210 40% 96%;
 
-    /* Muted */
-    --muted: 0 0% 8%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 222 47% 14%;
+    --muted-foreground: 215 20% 60%;
 
-    /* Accent */
-    --accent: 0 0% 8%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 222 47% 14%;
+    --accent-foreground: 210 40% 96%;
 
-    /* Destructive */
-    --destructive: 0 63% 31%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    /* Success */
     --success: 142 70% 45%;
     --success-foreground: 0 0% 100%;
 
-    /* Warning */
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    /* Borders - subtle grey on black */
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 217 91% 60%;
+    --border: 222 47% 18%;
+    --input: 222 47% 14%;
+    --ring: 217 91% 63%;
 
-    /* Charts - Adjusted for dark mode */
-    --chart-1: 217 91% 60%;
+    --chart-1: 217 91% 63%;
     --chart-2: 142 70% 45%;
     --chart-3: 0 84% 60%;
     --chart-4: 38 92% 50%;
@@ -114,242 +93,240 @@
 
   * {
     border-color: hsl(var(--border));
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1, "cv02" 1, "cv03" 1, "cv04" 1;
+    line-height: 1.6;
   }
 }
 
-/* Dark mode */
-.dark {
-  color-scheme: dark;
+/* ── Dark mode scheme ─────────────────────────────────────────── */
+.dark { color-scheme: dark; }
+
+/* ── Market data colors ───────────────────────────────────────── */
+.text-positive  { color: hsl(var(--success)); }
+.text-negative  { color: hsl(var(--destructive)); }
+.bg-positive    { background-color: hsl(var(--success) / 0.1); }
+.bg-negative    { background-color: hsl(var(--destructive) / 0.1); }
+
+/* ── Glassmorphism utilities ──────────────────────────────────── */
+.glass {
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  background-color: hsl(var(--background) / 0.75);
+  border: 1px solid hsl(var(--border) / 0.5);
 }
 
-/* Button disabled state */
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.glass-card {
+  backdrop-filter: blur(8px) saturate(160%);
+  -webkit-backdrop-filter: blur(8px) saturate(160%);
+  background-color: hsl(var(--card) / 0.85);
+  border: 1px solid hsl(var(--border) / 0.6);
 }
 
-/* Market data colors */
-.text-positive {
-  color: hsl(var(--success));
+/* ── Gradient utilities ───────────────────────────────────────── */
+.gradient-primary {
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(200 100% 60%));
 }
 
-.text-negative {
-  color: hsl(var(--destructive));
+.gradient-text {
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(200 100% 60%));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.bg-positive {
-  background-color: hsl(var(--success) / 0.1);
+/* ── Glow effects ─────────────────────────────────────────────── */
+.glow-primary {
+  box-shadow: 0 0 20px hsl(var(--primary) / 0.25), 0 0 40px hsl(var(--primary) / 0.1);
 }
 
-.bg-negative {
-  background-color: hsl(var(--destructive) / 0.1);
+.dark .glow-primary {
+  box-shadow: 0 0 24px hsl(var(--primary) / 0.35), 0 0 48px hsl(var(--primary) / 0.15);
 }
 
-/* Z-index management */
-.z-dropdown {
-  z-index: 9999;
-}
+/* ── Z-index management ───────────────────────────────────────── */
+.z-dropdown { z-index: 9999; }
+[data-radix-popper-content-wrapper] { z-index: 9999 !important; }
 
-[data-radix-popper-content-wrapper] {
-  z-index: 9999 !important;
-}
+/* ── Table styling ────────────────────────────────────────────── */
+table { width: 100%; }
 
-/* Professional table styling */
-table {
-  width: 100%;
-}
-
-tbody tr {
-  transition: background-color 150ms;
-}
+tbody tr { transition: background-color 150ms ease; }
 
 tbody tr:hover {
-  background-color: hsl(var(--primary) / 0.05);
+  background-color: hsl(var(--primary) / 0.06);
 }
-
 .dark tbody tr:hover {
-  background-color: hsl(var(--primary) / 0.3) !important;
+  background-color: hsl(var(--primary) / 0.12) !important;
 }
 
 th {
   text-align: left;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: hsl(var(--muted-foreground));
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-td {
-  font-size: 0.875rem;
+td { font-size: 0.875rem; }
+
+/* ── Button states ────────────────────────────────────────────── */
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
-/* Light mode button hover for better visibility */
-button:hover:not([disabled]):not(:active),
-[role="button"]:hover:not([disabled]):not(:active) {
-  background-color: hsl(var(--primary) / 0.15) !important;
-  transition: background-color 150ms;
+/* ── Switch — green when checked ─────────────────────────────── */
+button[role="switch"][data-state="checked"] {
+  background-color: hsl(var(--success)) !important;
 }
 
-button:active:not([disabled]),
-[role="button"]:active:not([disabled]) {
-  background-color: hsl(var(--primary) / 0.25) !important;
-  transition: background-color 50ms;
+/* ── Card elevation system ────────────────────────────────────── */
+.card-elevated {
+  box-shadow:
+    0 1px 3px hsl(0 0% 0% / 0.06),
+    0 4px 12px hsl(0 0% 0% / 0.08);
+}
+.dark .card-elevated {
+  box-shadow:
+    0 1px 3px hsl(0 0% 0% / 0.3),
+    0 4px 16px hsl(0 0% 0% / 0.4),
+    inset 0 1px 0 hsl(var(--border) / 0.8);
 }
 
-button[data-variant="outline"]:hover:not([disabled]):not(:active),
-button[data-variant="ghost"]:hover:not([disabled]):not(:active) {
-  background-color: hsl(var(--primary) / 0.15) !important;
+/* ── Scrollbar styling ────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
 }
 
-button[data-variant="outline"]:active:not([disabled]),
-button[data-variant="ghost"]:active:not([disabled]) {
-  background-color: hsl(var(--primary) / 0.25) !important;
-}
-
-/* Dark mode button hover overrides for better visibility */
-.dark button:hover:not([disabled]):not(:active),
-.dark [role="button"]:hover:not([disabled]):not(:active) {
-  background-color: hsl(var(--primary) / 0.5) !important;
-  transition: background-color 150ms;
-}
-
-.dark button:active:not([disabled]),
-.dark [role="button"]:active:not([disabled]) {
-  background-color: hsl(var(--primary) / 0.7) !important;
-  transition: background-color 50ms;
-}
-
-.dark button[data-variant="outline"]:hover:not([disabled]):not(:active),
-.dark button[data-variant="ghost"]:hover:not([disabled]):not(:active) {
-  background-color: hsl(var(--primary) / 0.5) !important;
-}
-
-.dark button[data-variant="outline"]:active:not([disabled]),
-.dark button[data-variant="ghost"]:active:not([disabled]) {
-  background-color: hsl(var(--primary) / 0.7) !important;
-}
-
-/* Professional typography */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-weight: 600;
-  letter-spacing: -0.025em;
-}
-
-h1 {
-  font-size: 2.25rem;
-}
-
-h2 {
-  font-size: 1.875rem;
-}
-
-h3 {
-  font-size: 1.5rem;
-}
-
-h4 {
-  font-size: 1.25rem;
-}
-
-@media (min-width: 768px) {
-  h1 {
-    font-size: 3rem;
-  }
-
-  h2 {
-    font-size: 2.25rem;
-  }
-
-  h3 {
-    font-size: 1.875rem;
-  }
-
-  h4 {
-    font-size: 1.5rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  h1 {
-    font-size: 3.75rem;
-  }
-
-  h2 {
-    font-size: 3rem;
-  }
-}
-
-/* Better form inputs */
+/* ── Focus rings ──────────────────────────────────────────────── */
 input:focus,
 textarea:focus,
 select:focus {
   outline: none;
-  box-shadow: 0 0 0 2px hsl(var(--ring)), 0 0 0 4px hsl(var(--background));
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.6), 0 0 0 4px hsl(var(--background));
 }
 
-/* Mobile optimizations */
-.touch-manipulation {
-  touch-action: manipulation;
+/* ── Typography ───────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
 }
 
-.min-touch-target {
-  min-height: 44px;
-  min-width: 44px;
-}
+h1 { font-size: clamp(2rem, 5vw, 3.75rem); }
+h2 { font-size: clamp(1.5rem, 3vw, 3rem); }
+h3 { font-size: clamp(1.25rem, 2.5vw, 1.875rem); }
+h4 { font-size: clamp(1.125rem, 2vw, 1.5rem); }
 
-.scroll-smooth-mobile {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-}
-
-.select-none-touch {
+/* ── Mobile optimisations ─────────────────────────────────────── */
+.touch-manipulation  { touch-action: manipulation; }
+.min-touch-target    { min-height: 44px; min-width: 44px; }
+.select-none-touch   {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
 }
 
-/* Animations */
-@keyframes slide-in {
-  from {
-    transform: translateY(-8px);
-    opacity: 0;
+@supports (padding: max(0px)) {
+  body {
+    padding-left:   max(0px, env(safe-area-inset-left));
+    padding-right:  max(0px, env(safe-area-inset-right));
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
   }
+}
 
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+/* ── Animations ───────────────────────────────────────────────── */
+@keyframes slide-in-from-top {
+  from { transform: translateY(-10px); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+@keyframes slide-in-from-bottom {
+  from { transform: translateY(10px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
 }
 
 @keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-.animate-slide-in {
-  animation: slide-in 0.2s ease-out;
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px hsl(var(--primary) / 0.3); }
+  50%       { box-shadow: 0 0 20px hsl(var(--primary) / 0.6); }
 }
 
-.animate-fade-in {
-  animation: fade-in 0.2s ease-out;
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
 }
-/* Swi
-tch component - green when checked */
-button[role="switch"][data-state="checked"] {
-  background-color: hsl(var(--success)) !important;
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+
+.animate-slide-in    { animation: slide-in-from-top 0.2s ease-out; }
+.animate-slide-up    { animation: slide-in-from-bottom 0.25s ease-out; }
+.animate-fade-in     { animation: fade-in 0.2s ease-out; }
+.animate-pulse-glow  { animation: pulse-glow 2s ease-in-out infinite; }
+.animate-float       { animation: float 3s ease-in-out infinite; }
+
+/* ── Skeleton loading shimmer ─────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--border)) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius);
+}
+
+/* ── Hero background pattern ──────────────────────────────────── */
+.hero-grid {
+  background-image:
+    linear-gradient(hsl(var(--border) / 0.4) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--border) / 0.4) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ── Radial gradient surface ──────────────────────────────────── */
+.surface-gradient {
+  background: radial-gradient(
+    ellipse 80% 50% at 50% -10%,
+    hsl(var(--primary) / 0.1) 0%,
+    transparent 70%
+  );
+}
+
+.dark .surface-gradient {
+  background: radial-gradient(
+    ellipse 80% 50% at 50% -10%,
+    hsl(var(--primary) / 0.18) 0%,
+    transparent 70%
+  );
 }
