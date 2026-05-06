@@ -64,7 +64,7 @@ export default function SettingsPageContent() {
         
         <div className="space-y-8">
           {/* User Profile & Privacy Settings */}
-          <UserSettings />
+          <UserSettings accountId={accountId} />
           
           {/* Show Alpaca-related settings only if account is linked */}
           {error === 'no_account' ? (
