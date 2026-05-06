@@ -39,19 +39,18 @@ const pageKeywords = "trading platform, mirror trading, stock market, investment
 
 			<!-- ── Hero ──────────────────────────────────────────────── -->
 			<div class="relative text-center space-y-8 pt-8 pb-4 overflow-hidden">
-				<!-- Radial glow -->
+				<!-- Radial glow + grid (plain HTML, no React — safe string styles) -->
 				<div class="pointer-events-none absolute inset-0 -z-10">
-					<div class="absolute inset-x-0 -top-24 h-[500px] bg-gradient-radial from-primary/20 via-transparent to-transparent"
+					<div class="absolute inset-x-0 -top-24 h-[500px]"
 						style="background: radial-gradient(ellipse 70% 60% at 50% 0%, hsl(var(--primary)/0.18) 0%, transparent 70%);">
 					</div>
-					<!-- Subtle grid -->
 					<div class="absolute inset-0 hero-grid opacity-40"></div>
 				</div>
 
-				<!-- Badge -->
+				<!-- Badge — icon inherits color from parent via currentColor -->
 				<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border"
 					style="background: hsl(var(--primary)/0.1); border-color: hsl(var(--primary)/0.3); color: hsl(var(--primary));">
-					<Zap class="h-3 w-3" />
+					<Zap className="h-3 w-3" />
 					Institutional-grade trading, built for everyone
 				</div>
 
@@ -76,7 +75,7 @@ const pageKeywords = "trading platform, mirror trading, stock market, investment
 							style="background: linear-gradient(135deg, hsl(var(--primary)), hsl(200 100% 60%)); box-shadow: 0 4px 20px hsl(var(--primary)/0.4);"
 						>
 							Launch Platform
-							<ArrowRight class="h-4 w-4" />
+							<ArrowRight className="h-4 w-4" />
 						</button>
 					</a>
 					<a href="/leaderboard">
@@ -89,18 +88,18 @@ const pageKeywords = "trading platform, mirror trading, stock market, investment
 					</a>
 				</div>
 
-				<!-- Trust badges -->
+				<!-- Trust badges — icons inherit color from parent span -->
 				<div class="flex items-center justify-center gap-6 pt-4 flex-wrap">
 					<div class="flex items-center gap-1.5 text-xs text-muted-foreground">
-						<Shield class="h-3.5 w-3.5 text-success" style="color: hsl(var(--success));" />
+						<span style="color: hsl(var(--success));"><Shield className="h-3.5 w-3.5" /></span>
 						SEC-compliant
 					</div>
 					<div class="flex items-center gap-1.5 text-xs text-muted-foreground">
-						<Zap class="h-3.5 w-3.5" style="color: hsl(var(--primary));" />
+						<span style="color: hsl(var(--primary));"><Zap className="h-3.5 w-3.5" /></span>
 						Real-time data
 					</div>
 					<div class="flex items-center gap-1.5 text-xs text-muted-foreground">
-						<Globe class="h-3.5 w-3.5" style="color: hsl(200 100% 60%);" />
+						<span style="color: hsl(200 100% 60%);"><Globe className="h-3.5 w-3.5" /></span>
 						Global markets
 					</div>
 				</div>
@@ -108,24 +107,26 @@ const pageKeywords = "trading platform, mirror trading, stock market, investment
 
 			<!-- ── Stats row ──────────────────────────────────────────── -->
 			<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-				{[
-					{ label: "Active Traders", value: "10K+", color: "var(--primary)" },
-					{ label: "Markets Covered", value: "50+", color: "200 100% 60%" },
-					{ label: "Avg. Win Rate", value: "68%", color: "var(--success)" },
-					{ label: "Daily Volume", value: "$2.4M", color: "38 92% 50%" },
-				].map(stat => (
-					<div
-						class="rounded-2xl border p-5 text-center transition-all duration-200 hover:scale-[1.02]"
-						style="background: hsl(var(--card)); border-color: hsl(var(--border));"
-					>
-						<div class="text-2xl md:text-3xl font-bold mb-1"
-							style={`background: linear-gradient(135deg, hsl(${stat.color}), hsl(var(--primary))); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;`}
-						>
-							{stat.value}
-						</div>
-						<div class="text-xs text-muted-foreground font-medium">{stat.label}</div>
-					</div>
-				))}
+				<div class="rounded-2xl border p-5 text-center transition-all duration-200 hover:scale-[1.02]"
+					style="background: hsl(var(--card)); border-color: hsl(var(--border));">
+					<div class="text-2xl md:text-3xl font-bold mb-1 text-primary">10K+</div>
+					<div class="text-xs text-muted-foreground font-medium">Active Traders</div>
+				</div>
+				<div class="rounded-2xl border p-5 text-center transition-all duration-200 hover:scale-[1.02]"
+					style="background: hsl(var(--card)); border-color: hsl(var(--border));">
+					<div class="text-2xl md:text-3xl font-bold mb-1" style="color: hsl(200 100% 60%);">50+</div>
+					<div class="text-xs text-muted-foreground font-medium">Markets Covered</div>
+				</div>
+				<div class="rounded-2xl border p-5 text-center transition-all duration-200 hover:scale-[1.02]"
+					style="background: hsl(var(--card)); border-color: hsl(var(--border));">
+					<div class="text-2xl md:text-3xl font-bold mb-1 text-success">68%</div>
+					<div class="text-xs text-muted-foreground font-medium">Avg. Win Rate</div>
+				</div>
+				<div class="rounded-2xl border p-5 text-center transition-all duration-200 hover:scale-[1.02]"
+					style="background: hsl(var(--card)); border-color: hsl(var(--border));">
+					<div class="text-2xl md:text-3xl font-bold mb-1 text-warning">$2.4M</div>
+					<div class="text-xs text-muted-foreground font-medium">Daily Volume</div>
+				</div>
 			</div>
 
 			<!-- ── Feature cards ──────────────────────────────────────── -->
@@ -138,16 +139,13 @@ const pageKeywords = "trading platform, mirror trading, stock market, investment
 				</div>
 
 				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
-					<!-- Feature 1 -->
-					<div
-						class="group rounded-2xl border p-6 space-y-4 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1"
-						style="background: hsl(var(--card)); border-color: hsl(var(--border)); box-shadow: 0 2px 8px hsl(0 0% 0%/0.05);"
-					>
-						<div
-							class="w-11 h-11 rounded-xl flex items-center justify-center"
-							style="background: linear-gradient(135deg, hsl(var(--primary)/0.15), hsl(200 100% 60%/0.15));"
-						>
-							<TrendingUp class="h-5 w-5" style="color: hsl(var(--primary));" />
+
+					<!-- Feature 1 — icon color via parent span -->
+					<div class="group rounded-2xl border p-6 space-y-4 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1"
+						style="background: hsl(var(--card)); border-color: hsl(var(--border)); box-shadow: 0 2px 8px hsl(0 0% 0%/0.05);">
+						<div class="w-11 h-11 rounded-xl flex items-center justify-center"
+							style="background: linear-gradient(135deg, hsl(var(--primary)/0.15), hsl(200 100% 60%/0.15)); color: hsl(var(--primary));">
+							<TrendingUp className="h-5 w-5" />
 						</div>
 						<div>
 							<h3 class="font-semibold text-base mb-1">Real-Time Market Data</h3>
@@ -155,21 +153,17 @@ const pageKeywords = "trading platform, mirror trading, stock market, investment
 								Institutional-grade market data via Alpaca Markets. Execute with live pricing and intelligence.
 							</p>
 						</div>
-						<div class="flex items-center gap-1 text-xs font-medium" style="color: hsl(var(--primary));">
-							Learn more <ArrowRight class="h-3 w-3" />
+						<div class="flex items-center gap-1 text-xs font-medium text-primary">
+							Learn more <ArrowRight className="h-3 w-3" />
 						</div>
 					</div>
 
 					<!-- Feature 2 -->
-					<div
-						class="group rounded-2xl border p-6 space-y-4 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1"
-						style="background: hsl(var(--card)); border-color: hsl(var(--border)); box-shadow: 0 2px 8px hsl(0 0% 0%/0.05);"
-					>
-						<div
-							class="w-11 h-11 rounded-xl flex items-center justify-center"
-							style="background: linear-gradient(135deg, hsl(142 76% 36%/0.15), hsl(160 80% 45%/0.15));"
-						>
-							<Users class="h-5 w-5" style="color: hsl(var(--success));" />
+					<div class="group rounded-2xl border p-6 space-y-4 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1"
+						style="background: hsl(var(--card)); border-color: hsl(var(--border)); box-shadow: 0 2px 8px hsl(0 0% 0%/0.05);">
+						<div class="w-11 h-11 rounded-xl flex items-center justify-center"
+							style="background: linear-gradient(135deg, hsl(142 76% 36%/0.15), hsl(160 80% 45%/0.15)); color: hsl(var(--success));">
+							<Users className="h-5 w-5" />
 						</div>
 						<div>
 							<h3 class="font-semibold text-base mb-1">Mirror Trading</h3>
@@ -177,21 +171,17 @@ const pageKeywords = "trading platform, mirror trading, stock market, investment
 								Replicate elite trader strategies automatically. Customise allocation and risk parameters.
 							</p>
 						</div>
-						<div class="flex items-center gap-1 text-xs font-medium" style="color: hsl(var(--success));">
-							Learn more <ArrowRight class="h-3 w-3" />
+						<div class="flex items-center gap-1 text-xs font-medium text-success">
+							Learn more <ArrowRight className="h-3 w-3" />
 						</div>
 					</div>
 
 					<!-- Feature 3 -->
-					<div
-						class="group rounded-2xl border p-6 space-y-4 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1"
-						style="background: hsl(var(--card)); border-color: hsl(var(--border)); box-shadow: 0 2px 8px hsl(0 0% 0%/0.05);"
-					>
-						<div
-							class="w-11 h-11 rounded-xl flex items-center justify-center"
-							style="background: linear-gradient(135deg, hsl(280 65% 60%/0.15), hsl(260 70% 65%/0.15));"
-						>
-							<Trophy class="h-5 w-5" style="color: hsl(280 65% 60%);" />
+					<div class="group rounded-2xl border p-6 space-y-4 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1"
+						style="background: hsl(var(--card)); border-color: hsl(var(--border)); box-shadow: 0 2px 8px hsl(0 0% 0%/0.05);">
+						<div class="w-11 h-11 rounded-xl flex items-center justify-center"
+							style="background: linear-gradient(135deg, hsl(280 65% 60%/0.15), hsl(260 70% 65%/0.15)); color: hsl(280 65% 60%);">
+							<Trophy className="h-5 w-5" />
 						</div>
 						<div>
 							<h3 class="font-semibold text-base mb-1">Global Leaderboards</h3>
@@ -200,20 +190,16 @@ const pageKeywords = "trading platform, mirror trading, stock market, investment
 							</p>
 						</div>
 						<div class="flex items-center gap-1 text-xs font-medium" style="color: hsl(280 65% 60%);">
-							Learn more <ArrowRight class="h-3 w-3" />
+							Learn more <ArrowRight className="h-3 w-3" />
 						</div>
 					</div>
 
 					<!-- Feature 4 -->
-					<div
-						class="group rounded-2xl border p-6 space-y-4 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1"
-						style="background: hsl(var(--card)); border-color: hsl(var(--border)); box-shadow: 0 2px 8px hsl(0 0% 0%/0.05);"
-					>
-						<div
-							class="w-11 h-11 rounded-xl flex items-center justify-center"
-							style="background: linear-gradient(135deg, hsl(38 92% 50%/0.15), hsl(30 90% 55%/0.15));"
-						>
-							<BarChart3 class="h-5 w-5" style="color: hsl(38 92% 50%);" />
+					<div class="group rounded-2xl border p-6 space-y-4 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1"
+						style="background: hsl(var(--card)); border-color: hsl(var(--border)); box-shadow: 0 2px 8px hsl(0 0% 0%/0.05);">
+						<div class="w-11 h-11 rounded-xl flex items-center justify-center"
+							style="background: linear-gradient(135deg, hsl(38 92% 50%/0.15), hsl(30 90% 55%/0.15)); color: hsl(38 92% 50%);">
+							<BarChart3 className="h-5 w-5" />
 						</div>
 						<div>
 							<h3 class="font-semibold text-base mb-1">Advanced Analytics</h3>
@@ -221,26 +207,23 @@ const pageKeywords = "trading platform, mirror trading, stock market, investment
 								Portfolio analytics with performance attribution, risk metrics, and trade analysis.
 							</p>
 						</div>
-						<div class="flex items-center gap-1 text-xs font-medium" style="color: hsl(38 92% 50%);">
-							Learn more <ArrowRight class="h-3 w-3" />
+						<div class="flex items-center gap-1 text-xs font-medium text-warning">
+							Learn more <ArrowRight className="h-3 w-3" />
 						</div>
 					</div>
+
 				</div>
 			</div>
 
 			<!-- ── CTA Banner ─────────────────────────────────────────── -->
-			<div
-				class="relative rounded-3xl overflow-hidden p-8 md:p-12 text-center space-y-6"
-				style="background: linear-gradient(135deg, hsl(var(--primary)), hsl(200 100% 55%)); box-shadow: 0 8px 40px hsl(var(--primary)/0.35);"
-			>
-				<!-- Background pattern -->
+			<div class="relative rounded-3xl overflow-hidden p-8 md:p-12 text-center space-y-6"
+				style="background: linear-gradient(135deg, hsl(var(--primary)), hsl(200 100% 55%)); box-shadow: 0 8px 40px hsl(var(--primary)/0.35);">
 				<div class="pointer-events-none absolute inset-0 hero-grid opacity-10"></div>
-
 				<div class="relative space-y-4">
 					<h2 class="text-2xl md:text-4xl font-bold text-white tracking-tight">
 						Ready to trade like the best?
 					</h2>
-					<p class="text-white/80 max-w-md mx-auto text-sm md:text-base">
+					<p class="max-w-md mx-auto text-sm md:text-base" style="color: rgba(255,255,255,0.8);">
 						Join thousands of traders already using LEADTRADE to grow their portfolios.
 					</p>
 					<div class="flex flex-col sm:flex-row gap-3 justify-center pt-2">
@@ -250,12 +233,13 @@ const pageKeywords = "trading platform, mirror trading, stock market, investment
 								style="background: white; color: hsl(var(--primary));"
 							>
 								Get Started Free
-								<ArrowRight class="h-4 w-4" />
+								<ArrowRight className="h-4 w-4" />
 							</button>
 						</a>
 						<a href="/leaderboard">
 							<button
-								class="inline-flex items-center justify-center h-12 px-8 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] border border-white/30 text-white hover:bg-white/10"
+								class="inline-flex items-center justify-center h-12 px-8 rounded-xl text-sm font-semibold text-white transition-all duration-200 hover:scale-[1.02] border"
+								style="border-color: rgba(255,255,255,0.3);"
 							>
 								Browse Leaderboard
 							</button>
