@@ -380,6 +380,76 @@ export const prerender = true;
 
             strong { font-weight: 600; color: #0f172a; }
 
+            /* ── Project cards ──────────────────────────────── */
+            .project-card {
+                margin-bottom: 14px;
+                padding: 12px 14px;
+                border-radius: 10px;
+                border: 1px solid #e2e8f0;
+                background: #f8fafc;
+                transition: box-shadow 0.2s ease, border-color 0.2s ease;
+            }
+            .project-card:last-child { margin-bottom: 0; }
+            .project-card:hover {
+                box-shadow: 0 2px 12px rgba(37,99,235,0.1);
+                border-color: #bfdbfe;
+            }
+            .project-header {
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 6px;
+                margin-bottom: 5px;
+            }
+            .project-name {
+                font-size: 10pt;
+                font-weight: 700;
+                color: #0f172a;
+            }
+            .project-name a {
+                color: inherit;
+            }
+            .project-name a:hover { color: #2563eb; text-decoration: none; }
+            .project-tagline {
+                font-size: 8.5pt;
+                color: #2563eb;
+                font-weight: 500;
+            }
+            .project-tech {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 3px;
+                margin-bottom: 7px;
+            }
+            .project-tech-tag {
+                background: #eff6ff;
+                border: 1px solid #bfdbfe;
+                color: #1d4ed8;
+                padding: 1px 6px;
+                border-radius: 4px;
+                font-size: 7pt;
+                font-weight: 500;
+                line-height: 1.6;
+            }
+            .project-bullets { list-style: none; padding: 0; }
+            .project-bullets li {
+                padding-left: 13px;
+                margin-bottom: 3px;
+                font-size: 8.5pt;
+                line-height: 1.4;
+                position: relative;
+                color: #334155;
+            }
+            .project-bullets li::before {
+                content: '▸';
+                position: absolute;
+                left: 0;
+                top: 1px;
+                color: #2563eb;
+                font-size: 8pt;
+            }
+
             /* ── Achievements grid ──────────────────────────── */
             .achievement-grid {
                 display: grid;
@@ -600,6 +670,18 @@ export const prerender = true;
                                 <span class="skill-tag">Terraform</span>
                                 <span class="skill-tag">Jenkins</span>
                                 <span class="skill-tag">GitHub Actions</span>
+                                <span class="skill-tag">Cloudflare Pages</span>
+                            </div>
+                        </div>
+
+                        <div class="skill-group">
+                            <div class="skill-group-label">AI & Modern Stack</div>
+                            <div class="skill-tags">
+                                <span class="skill-tag">Anthropic Claude API</span>
+                                <span class="skill-tag">Astro</span>
+                                <span class="skill-tag">Supabase</span>
+                                <span class="skill-tag">Alpaca Markets</span>
+                                <span class="skill-tag">Prompt Engineering</span>
                             </div>
                         </div>
 
@@ -753,6 +835,95 @@ export const prerender = true;
                             <div class="achievement-item">Reduced production incidents by <strong>40%</strong> through testing and observability</div>
                             <div class="achievement-item">Cut infrastructure costs by <strong>35%</strong> via microservices containerization</div>
                         </div>
+                    </section>
+
+                    <!-- Personal Projects -->
+                    <section class="main-section anim-in" style="animation-delay:270ms">
+                        <div class="section-title">Personal Projects</div>
+
+                        <!-- LEADTRADE -->
+                        <div class="project-card">
+                            <div class="project-header">
+                                <span class="project-name">LEADTRADE</span>
+                                <span class="project-tagline">Social Mirror-Trading Platform</span>
+                            </div>
+                            <div class="project-tech">
+                                <span class="project-tech-tag">Astro</span>
+                                <span class="project-tech-tag">React</span>
+                                <span class="project-tech-tag">TypeScript</span>
+                                <span class="project-tech-tag">Tailwind CSS</span>
+                                <span class="project-tech-tag">Supabase</span>
+                                <span class="project-tech-tag">Alpaca Markets API</span>
+                                <span class="project-tech-tag">Cloudflare Pages</span>
+                                <span class="project-tech-tag">PWA</span>
+                            </div>
+                            <ul class="project-bullets">
+                                <li>Built an institutional-grade trading platform enabling users to mirror elite traders' portfolios in real time via the Alpaca Markets brokerage API</li>
+                                <li>Designed a global leaderboard engine with live rankings, win-rate analytics, and performance attribution dashboards</li>
+                                <li>Implemented row-level security in Supabase and OAuth2 auth with zero-trust API access from Cloudflare edge workers</li>
+                                <li>Shipped as a progressive web app with offline caching, achieving sub-2s initial load on mobile via Astro's island architecture</li>
+                            </ul>
+                        </div>
+
+                        <!-- JobHunt.ai -->
+                        <div class="project-card">
+                            <div class="project-header">
+                                <span class="project-name">JobHunt.ai</span>
+                                <span class="project-tagline">AI-Powered Job Application Assistant</span>
+                            </div>
+                            <div class="project-tech">
+                                <span class="project-tech-tag">Anthropic Claude API</span>
+                                <span class="project-tech-tag">React</span>
+                                <span class="project-tech-tag">TypeScript</span>
+                                <span class="project-tech-tag">Supabase</span>
+                                <span class="project-tech-tag">Tailwind CSS</span>
+                            </div>
+                            <ul class="project-bullets">
+                                <li>Engineered an AI assistant that tailors resumes and cover letters to specific job descriptions using Claude API with structured prompt chaining</li>
+                                <li>Built keyword-match scoring to benchmark resume alignment against ATS requirements, increasing interview callback rates for users</li>
+                                <li>Persisted application history and AI-generated drafts in Supabase with per-user RLS, supporting multi-device access</li>
+                            </ul>
+                        </div>
+
+                        <!-- Cinecraft -->
+                        <div class="project-card">
+                            <div class="project-header">
+                                <span class="project-name">Cinecraft</span>
+                                <span class="project-tagline">AI Cinematic Content Creation Tool</span>
+                            </div>
+                            <div class="project-tech">
+                                <span class="project-tech-tag">Anthropic Claude API</span>
+                                <span class="project-tech-tag">React</span>
+                                <span class="project-tech-tag">TypeScript</span>
+                                <span class="project-tech-tag">Tailwind CSS</span>
+                            </div>
+                            <ul class="project-bullets">
+                                <li>Created an AI-driven screenwriting tool that generates scene breakdowns, shot lists, and dialogue using Claude API with cinematic style presets</li>
+                                <li>Implemented multi-turn conversation flow to iteratively refine scripts, supporting genre-specific tone, pacing, and character voice</li>
+                                <li>Built an export pipeline generating industry-standard Final Draft-compatible screenplay format from AI-generated content</li>
+                            </ul>
+                        </div>
+
+                        <!-- Predix -->
+                        <div class="project-card">
+                            <div class="project-header">
+                                <span class="project-name">Predix</span>
+                                <span class="project-tagline">AI Prediction & Analytics Platform</span>
+                            </div>
+                            <div class="project-tech">
+                                <span class="project-tech-tag">React</span>
+                                <span class="project-tech-tag">TypeScript</span>
+                                <span class="project-tech-tag">AI/ML APIs</span>
+                                <span class="project-tech-tag">Supabase</span>
+                                <span class="project-tech-tag">Tailwind CSS</span>
+                            </div>
+                            <ul class="project-bullets">
+                                <li>Developed a predictive analytics dashboard surfacing AI-generated forecasts across user-defined data sets with confidence scoring</li>
+                                <li>Integrated multiple AI/ML model APIs with a unified adapter layer, enabling model-agnostic predictions and A/B comparison views</li>
+                                <li>Built real-time data pipelines with Supabase Realtime subscriptions for live prediction updates and alert notifications</li>
+                            </ul>
+                        </div>
+
                     </section>
 
                 </main>
