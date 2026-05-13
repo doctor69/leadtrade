@@ -247,11 +247,26 @@ INSERT INTO public.app_settings (setting_key, setting_value, description) VALUES
   ('maintenance_mode', 'false', 'Enable/disable maintenance mode')
 ON CONFLICT (setting_key) DO NOTHING;
 
--- Grant necessary permissions
-GRANT USAGE ON SCHEMA public TO anon, authenticated;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
-GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO anon, authenticated;
+-- Grant schema usage
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+
+-- Explicit per-table grants (required for Supabase Data API access after May 2026)
+-- Tables defined in this file
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.alpaca_accounts TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.copy_trading_subscriptions TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.app_settings TO anon, authenticated, service_role;
+
+-- Tables created via Supabase dashboard (grants confirmed from live DB)
+-- TODO: add CREATE TABLE definitions for these tables to this file
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.alpaca_cleanup_log TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.email_queue TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.leaderboard_stats TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.rollback_audit_log TO anon, authenticated, service_role;
+
+-- Sequences and functions
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO anon, authenticated, service_role;
 
 -- Add helpful comments
 COMMENT ON TABLE public.profiles IS 'User profiles with copy trading preferences and theme settings';
