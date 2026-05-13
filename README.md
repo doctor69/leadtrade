@@ -24,6 +24,7 @@ LeadTrade is a Progressive Web App (PWA) that enables users to trade stocks and 
 - **Real-time Market Data**: WebSocket-based live quotes and trade updates
 - **Portfolio Management**: Comprehensive portfolio analytics, performance tracking, and asset allocation
 - **Order Management**: Advanced order types, order history, and execution tracking
+- **Corporate Actions**: Dividend tracking, stock splits, and merger notifications
 
 ### Social Trading
 - **Leaderboard System**: Discover top-performing traders ranked by returns, win rate, and trade volume
@@ -31,13 +32,16 @@ LeadTrade is a Progressive Web App (PWA) that enables users to trade stocks and 
 - **Privacy Controls**: Traders can control visibility of portfolio amounts and trade sharing
 - **Follower Management**: Track followers and manage copy trading subscriptions
 - **Performance Metrics**: Detailed statistics including win rate, total return, and trade count
+- **Trader Profiles**: View detailed trader statistics and trading history
 
 ### Account Management
 - **KYC/CIP Integration**: Streamlined identity verification via Alpaca's compliance system
+- **Profile Management**: Edit contact information, address, and trusted contacts
 - **Bank Linking**: ACH and wire transfer support for funding accounts
-- **Document Management**: Access account statements, trade confirmations, and tax documents
+- **Document Management**: Upload identity documents, access statements and confirmations
 - **PDT Status**: Pattern Day Trader status monitoring and removal requests
 - **Funding Wallets**: Instant funding and transfer history tracking
+- **Trading Configuration**: Customize trading preferences and risk settings
 
 ### Progressive Web App
 - **Offline Support**: Service worker-based caching for offline functionality
@@ -51,6 +55,7 @@ LeadTrade is a Progressive Web App (PWA) that enables users to trade stocks and 
 - **Install Prompt**: Native app-like experience on mobile and desktop
 - **Background Sync**: Queue trades and sync when connection is restored
 - **Push Notifications**: Real-time trade alerts and corporate action notifications
+- **Theme Customization**: Light/dark mode with customizable color schemes
 
 ## Tech Stack
 
@@ -87,433 +92,465 @@ LeadTrade is a Progressive Web App (PWA) that enables users to trade stocks and 
 leadtrade/
 ├── src/
 │   ├── components/          # React components
-│   │   ├── account/        # Account management (KYC, funding, documents)
-│   │   ├── admin/          # Admin dashboards (verification, stats)
-│   │   ├── dashboard/      # Portfolio views (summary, charts, positions)
-│   │   ├── trading/        # Trading interfaces (orders, leaderboard, copy trading)
+│   │   ├── account/        # Account management components
+│   │   │   ├── ACHTransferForm.tsx        # ACH bank transfer form
+│   │   │   ├── BankLinking.tsx            # Bank account linking
+│   │   │   ├── BankTransferModal.tsx      # Transfer modal dialog
+│   │   │   ├── DocumentUpload.tsx         # Identity document upload
+│   │   │   ├── DocumentsPanel.tsx         # Account documents viewer
+│   │   │   ├── EditProfilePanel.tsx       # Profile editing (NEW)
+│   │   │   ├── FundingPageContent.tsx     # Funding page layout
+│   │   │   ├── FundingWalletManager.tsx   # Wallet management
+│   │   │   ├── KYCStatus.tsx              # KYC verification status
+│   │   │   ├── KYCVerificationPanel.tsx   # KYC submission form
+│   │   │   ├── PDTStatusPanel.tsx         # Pattern Day Trader status
+│   │   │   ├── QuickSandboxFunding.tsx    # Sandbox funding shortcuts
+│   │   │   ├── SettingsPageContent.tsx    # Settings page layout
+│   │   │   ├── TradingModeSwitch.tsx      # Paper/Live mode toggle
+│   │   │   ├── TransferHistory.tsx        # Transfer history table
+│   │   │   └── WireTransferForm.tsx       # Wire transfer form
+│   │   ├── admin/          # Admin dashboards
+│   │   │   ├── AuthVerificationDashboard.tsx  # User verification admin
+│   │   │   ├── FundingVerificationDashboard.tsx # Funding admin
+│   │   │   ├── TradingModeIndicator.tsx   # Mode display
+│   │   │   └── TradingModeSwitch.tsx      # Admin mode control
+│   │   ├── dashboard/      # Portfolio views
+│   │   │   ├── AssetChart.tsx             # Individual asset charts
+│   │   │   ├── AssetGrid.tsx              # Asset grid display
+│   │   │   ├── CorporateActionImpacts.tsx # Corporate action alerts
+│   │   │   ├── OptionsPositions.tsx       # Options holdings
+│   │   │   ├── PortfolioSummary.tsx       # Portfolio overview
+│   │   │   └── PortfolioTransferHistory.tsx # Transfer log
+│   │   ├── trading/        # Trading interfaces
+│   │   │   ├── AccountPositions.tsx       # Current positions
+│   │   │   ├── AllCorporateActions.tsx    # Corporate actions feed
+│   │   │   ├── AlpacaBrokerDashboard.tsx  # Broker integration
+│   │   │   ├── CopyTradingDashboard.tsx   # Copy trading UI
+│   │   │   ├── CorporateActionNotifications.tsx # Action alerts
+│   │   │   ├── EventStreamFeed.tsx        # Real-time events
+│   │   │   ├── Leaderboard.tsx            # Trader rankings
+│   │   │   ├── OptionsExercise.tsx        # Options exercise UI
+│   │   │   ├── OptionsSelector.tsx        # Options chain browser
+│   │   │   ├── OrderHistory.tsx           # Order history table
+│   │   │   ├── PortfolioChart.tsx         # Portfolio performance
+│   │   │   ├── RealTimeMarketData.tsx     # Live market quotes
+│   │   │   ├── SmartMarketData.tsx        # Market data with fallback
+│   │   │   ├── TradeForm.tsx              # Order entry form
+│   │   │   ├── TradeNotifications.tsx     # Trade alerts
+│   │   │   ├── TraderProfileModal.tsx     # Trader detail view
+│   │   │   ├── TraderSelection.tsx        # Copy trader picker
+│   │   │   └── TradingInterface.tsx       # Main trading UI
 │   │   ├── ui/             # Reusable UI components (shadcn/ui)
-│   │   └── settings/       # User settings and preferences
+│   │   │   ├── alert.tsx, avatar.tsx, badge.tsx, button.tsx
+│   │   │   ├── card.tsx, carousel.tsx, chart.tsx, checkbox.tsx
+│   │   │   ├── dialog.tsx, dropdown-menu.tsx, input.tsx, label.tsx
+│   │   │   ├── select.tsx, sheet.tsx, slider.tsx, switch.tsx
+│   │   │   ├── table.tsx, tabs.tsx, textarea.tsx
+│   │   │   ├── ErrorDisplay.tsx           # Error boundary UI
+│   │   │   ├── NotificationSettings.tsx   # Notification prefs
+│   │   │   ├── ThemeCustomizer.tsx        # Theme editor
+│   │   │   └── UserSettings.tsx           # User preferences
+│   │   ├── settings/       # Settings components
+│   │   │   └── OptionsTradingSettings.tsx # Options config
+│   │   ├── AppShell.tsx               # Main app layout
+│   │   ├── BackgroundSyncManager.tsx  # Offline sync
+│   │   ├── ErrorBoundary.tsx          # Error handling
+│   │   ├── Footer.tsx                 # App footer
+│   │   ├── HomePageRedirect.tsx       # Landing redirect
+│   │   ├── MetaTags.astro             # SEO meta tags
+│   │   ├── OfflineStatusIndicator.tsx # Offline indicator
+│   │   ├── ProtectedRoute.tsx         # Auth guard
+│   │   ├── PWAInstallPrompt.tsx       # PWA install banner
+│   │   ├── ThemeProvider.tsx          # Theme context
+│   │   └── ThemeToggle.tsx            # Light/dark toggle
 │   ├── lib/                # Core business logic
-│   │   ├── alpaca-*.ts     # Alpaca API clients (accounts, orders, options, etc.)
-│   │   ├── auth.ts         # Authentication utilities
-│   │   ├── database.ts     # Supabase database client
-│   │   ├── copy-trading-service.ts  # Copy trading logic
-│   │   ├── email/          # Email service and templates
-│   │   ├── websocket-*.ts  # WebSocket clients for real-time data
-│   │   └── __tests__/      # Comprehensive test suite (70+ test files)
+│   │   ├── alpaca-account.ts          # Account management
+│   │   ├── alpaca-ach-relationships.ts # ACH transfers
+│   │   ├── alpaca-bank-relationships.ts # Bank linking
+│   │   ├── alpaca-broker-client.ts    # Broker API client
+│   │   ├── alpaca-corporate-actions.ts # Corporate actions
+│   │   ├── alpaca-documents.ts        # Document management
+│   │   ├── alpaca-events.ts           # Event streaming
+│   │   ├── alpaca-funding-wallets.ts  # Wallet management
+│   │   ├── alpaca-instant-funding.ts  # Instant deposits
+│   │   ├── alpaca-journals.ts         # Journal entries
+│   │   ├── alpaca-kyc-cip.ts          # KYC/CIP verification
+│   │   ├── alpaca-oauth.ts            # OAuth integration
+│   │   ├── alpaca-options-contracts.ts # Options data
+│   │   ├── alpaca-rebalancing.ts      # Portfolio rebalancing
+│   │   ├── alpaca-reports.ts          # Account reports
+│   │   ├── alpaca-transfers.ts        # Transfer management
+│   │   ├── alpaca.tsx                 # Main Alpaca client
+│   │   ├── api-middleware.ts          # API middleware
+│   │   ├── api.ts                     # API utilities
+│   │   ├── apiService.ts              # Service layer
+│   │   ├── auth.ts                    # Authentication
+│   │   ├── cache.ts                   # Caching layer
+│   │   ├── copy-trading-service.ts    # Copy trading logic
+│   │   ├── database.ts                # Supabase client
+│   │   ├── email/                     # Email services
+│   │   │   ├── index.ts               # Email exports
+│   │   │   ├── monitoring.ts          # Email monitoring
+│   │   │   ├── queue.ts               # Email queue
+│   │   │   ├── service.ts             # Email service
+│   │   │   ├── templates/             # Email templates
+│   │   │   └── types.ts               # Email types
+│   │   ├── encryption.ts              # Data encryption
+│   │   ├── error-handler.ts           # Error handling
+│   │   ├── market-data-fallback.ts    # Market data fallback
+│   │   ├── market-data-service.ts     # Market data client
+│   │   ├── monitoring.ts              # Performance monitoring
+│   │   ├── notification-service.ts    # Push notifications
+│   │   ├── offline-storage.ts         # Offline storage
+│   │   ├── offline-sync.ts            # Sync manager
+│   │   ├── portfolio-calculator.ts    # Portfolio math
+│   │   ├── security-middleware.ts     # Security layer
+│   │   ├── signup-service.ts          # Account creation
+│   │   ├── theme-manager.ts           # Theme management
+│   │   ├── trade-execution-engine.ts  # Trade execution
+│   │   ├── trading-config.ts          # Trading configuration
+│   │   ├── validation.ts              # Input validation
+│   │   ├── websocket-client.ts        # WebSocket client
+│   │   ├── websocket-service.ts       # WebSocket service
+│   │   └── __tests__/                 # Test suite (70+ files)
 │   ├── pages/              # Astro pages and API routes
 │   │   ├── api/            # API endpoints
 │   │   │   ├── admin/      # Admin APIs
+│   │   │   │   ├── auth-stats.ts      # Auth statistics
+│   │   │   │   └── funding-stats.ts   # Funding statistics
 │   │   │   ├── alpaca/     # Alpaca proxy endpoints
+│   │   │   │   ├── events/ # Event streaming
+│   │   │   │   └── reports/ # Report generation
 │   │   │   ├── auth/       # Authentication endpoints
-│   │   │   └── webhooks/   # Webhook handlers
-│   │   ├── dashboard.astro # Portfolio dashboard
-│   │   ├── trade.astro     # Trading interface
-│   │   ├── leaderboard.astro # Social leaderboard
-│   │   ├── settings.astro  # Account settings
-│   │   └── funding.astro   # Funding management
+│   │   │   │   ├── signin.ts          # Sign in
+│   │   │   │   ├── signout.ts         # Sign out
+│   │   │   │   └── signup.ts          # Sign up
+│   │   │   ├── test-accounts/ # Test account creation
+│   │   │   │   └── create.ts
+│   │   │   ├── email/      # Email endpoints (reserved)
+│   │   │   ├── support/    # Support endpoints (reserved)
+│   │   │   └── webhooks/   # Webhook handlers (reserved)
+│   │   ├── admin/          # Admin pages
+│   │   │   ├── auth-verification.astro # User verification
+│   │   │   └── funding-verification.astro # Funding verification
+│   │   ├── auth/           # Auth pages
+│   │   │   └── callback.astro         # OAuth callback
+│   │   ├── 404.astro               # Not found page
+│   │   ├── dashboard.astro         # Portfolio dashboard
+│   │   ├── doctor.astro            # System diagnostics
+│   │   ├── forgot-password.astro   # Password reset request
+│   │   ├── funding.astro           # Funding management
+│   │   ├── index.astro             # Landing page
+│   │   ├── leaderboard.astro       # Social leaderboard
+│   │   ├── reset-password.astro    # Password reset form
+│   │   ├── settings.astro          # Account settings
+│   │   ├── signin.astro            # Sign in page
+│   │   ├── signup.astro            # Sign up page
+│   │   ├── theme-customizer.astro  # Theme editor
+│   │   └── trade.astro             # Trading interface
 │   ├── hooks/              # React hooks
+│   │   ├── useAlpacaBroker.ts         # Broker API hook
+│   │   ├── useAlpacaEvents.ts         # Event streaming hook
+│   │   ├── useAlpacaWebSocket.ts      # WebSocket hook
+│   │   ├── useMarketDataWithFallback.ts # Market data hook
+│   │   ├── useOfflineStatus.ts        # Offline detection
+│   │   ├── useOfflineSync.ts          # Sync hook
+│   │   ├── useTradeNotifications.ts   # Notification hook
+│   │   └── useTradingMode.ts          # Trading mode hook
 │   ├── types/              # TypeScript type definitions
+│   │   ├── documents.ts               # Document types
+│   │   ├── kyc.ts                     # KYC types
+│   │   ├── oauth.ts                   # OAuth types
+│   │   └── trading.ts                 # Trading types
+│   ├── layouts/            # Astro layouts
+│   │   └── Layout.astro               # Base layout
 │   └── styles/             # Global styles
+│       └── global.css                 # Global CSS
 ├── supabase/
 │   ├── functions/          # Edge Functions (40+ endpoints)
-│   │   ├── _shared/        # Shared utilities (auth, CORS, logging)
-│   │   ├── alpaca-*/       # Alpaca API proxies
-│   │   ├── email-queue/    # Email processing
-│   │   ├── get-leaderboard/ # Leaderboard data
-│   │   ├── execute-copy-trades/ # Copy trading execution
-│   │   └── streamlined-signup/ # Account creation
+│   │   ├── _shared/        # Shared utilities
+│   │   │   ├── alpaca-client.ts       # Alpaca client
+│   │   │   ├── auth.ts                # Auth helpers
+│   │   │   ├── cors.ts                # CORS handling
+│   │   │   ├── email-helper.ts        # Email utilities
+│   │   │   ├── email-queue-helper.ts  # Queue helpers
+│   │   │   ├── error-handling.ts      # Error handling
+│   │   │   ├── logging.ts             # Logging utilities
+│   │   │   ├── rate-limit.ts          # Rate limiting
+│   │   │   ├── response.ts            # Response helpers
+│   │   │   └── websocket-manager.ts   # WebSocket manager
+│   │   ├── alpaca-account/            # Account management (GET)
+│   │   ├── alpaca-account-update/     # Account updates (PATCH)
+│   │   ├── alpaca-account-activities/ # Account activities
+│   │   ├── alpaca-ach-relationships/  # ACH relationships
+│   │   ├── alpaca-assets/             # Asset data
+│   │   ├── alpaca-bank-relationships/ # Bank relationships
+│   │   ├── alpaca-calendar/           # Market calendar
+│   │   ├── alpaca-clock/              # Market clock
+│   │   ├── alpaca-corporate-actions/  # Corporate actions
+│   │   ├── alpaca-documents/          # Document management
+│   │   ├── alpaca-events/             # Event streaming
+│   │   ├── alpaca-funding-wallets/    # Funding wallets
+│   │   ├── alpaca-instant-funding/    # Instant funding
+│   │   ├── alpaca-journals/           # Journal entries
+│   │   ├── alpaca-kyc-cip/            # KYC/CIP
+│   │   ├── alpaca-market-data-enhanced/ # Market data
+│   │   ├── alpaca-oauth/              # OAuth
+│   │   ├── alpaca-options-contracts/  # Options contracts
+│   │   ├── alpaca-options-exercise/   # Options exercise
+│   │   ├── alpaca-orders/             # Order management
+│   │   ├── alpaca-pdt-removal/        # PDT removal
+│   │   ├── alpaca-portfolio-history/  # Portfolio history
+│   │   ├── alpaca-positions/          # Positions
+│   │   ├── alpaca-rebalancing/        # Rebalancing
+│   │   ├── alpaca-reports/            # Reports
+│   │   ├── alpaca-transfers/          # Transfers
+│   │   ├── check-user-exists/         # User lookup
+│   │   ├── copy-trading-subscriptions/ # Copy trading
+│   │   ├── email-queue/               # Email processing
+│   │   ├── execute-copy-trades/       # Trade execution
+│   │   ├── get-leaderboard/           # Leaderboard data
+│   │   ├── send-email/                # Email sending
+│   │   ├── streamlined-signup/        # Account creation
+│   │   ├── sync-alpaca-accounts/      # Account sync
+│   │   ├── test-accounts-create/      # Test accounts
+│   │   └── update-leaderboard-stats/  # Stats update
 │   ├── schema.sql          # Database schema
 │   └── seed_data.sql       # Seed data for development
 ├── public/                 # Static assets
 │   ├── sw.js              # Service worker
 │   ├── manifest.json      # PWA manifest
-│   └── icons/             # App icons
-└── scripts/               # Build and deployment scripts
-
+│   ├── config.js          # Public config
+│   ├── icons/             # App icons (72x72 to 512x512)
+│   ├── screenshots/       # PWA screenshots
+│   ├── social/            # Social media images
+│   └── _redirects         # Cloudflare redirects
+├── scripts/               # Build and deployment scripts
+│   ├── cleanup-api-build.js       # Build cleanup
+│   └── reset-failed-emails.js     # Email queue reset
+├── .env.example           # Environment template
+├── astro.config.mjs       # Astro configuration
+├── components.json        # shadcn/ui config
+├── package.json           # Dependencies
+├── tailwind.config.ts     # Tailwind configuration
+├── tsconfig.json          # TypeScript configuration
+└── vitest.config.ts       # Test configuration
 ```
 
 ## Key Components
 
-### Core Layout
-- **AppShell**: Main application wrapper with theme provider, navigation, footer, and PWA install prompt
-  - Responsive container with max-width constraints
-  - Consistent padding across breakpoints (mobile: 4px, tablet: 6px, desktop: 8px)
-  - Flex layout for sticky footer
-  - Global CSS integration
+### Account Management (`src/components/account/`)
+- **KYCVerificationPanel**: Submit identity verification documents and information
+- **KYCStatus**: Display current KYC verification status and next steps
+- **DocumentsPanel**: View and download account statements, confirmations, and tax documents
+- **PDTStatusPanel**: Monitor Pattern Day Trader status and request removal
+- **BankLinking**: Link bank accounts for ACH transfers
+- **ACHTransferForm**: Initiate ACH deposits and withdrawals
+- **WireTransferForm**: Generate wire transfer instructions
+- **FundingWalletManager**: Manage funding wallets and instant deposits
+- **TransferHistory**: View transfer history with status tracking
+- **TradingModeSwitch**: Toggle between paper and live trading modes
+- **SettingsPageContent**: Main settings page layout with user preferences, KYC status, and document management
+- **EditProfilePanel**: Standalone profile editor for contact information, address, and trusted contacts (alternative to integrated UserSettings editor)
+  - Uses `edgeFunctionClient` for authenticated API calls
+  - Comprehensive form validation and error handling
+  - KYC-aware field restrictions (read-only identity fields after verification)
 
-### Navigation & Layout
-- **NavigationBar**: Responsive navigation with mobile menu, theme customizer, and settings access
-  - Desktop: Horizontal menu with active page indicators and underline animation
-  - Mobile: Slide-down menu with touch gestures (swipe up to close)
-  - Auth-aware: Shows different menu items based on login status
-  - Real-time path tracking for active state highlighting
-  - Integrated theme customizer dropdown (modal-like, 96rem width)
-  - Session management with Supabase Auth
-  - Backdrop blur overlay for mobile menu
-  - Touch-optimized buttons (44px minimum)
-  - Escape key support for closing mobile menu
-  - Storage event listener for cross-tab login state sync
-- **Footer**: Application footer with links and copyright information
-- **ThemeProvider**: Global theme context provider with CSS variable management
-- **ThemeCustomizer**: Advanced theme customization with color pickers and presets
-- **SimpleThemeToggle**: Quick light/dark mode toggle
-
-### Trading Components
-- **TradingInterface**: Unified trading interface with responsive grid-based tab navigation
-  - Responsive grid layout: 2 columns (mobile), 3 columns (tablet), 6 columns (desktop)
-  - Mobile-optimized tabs with abbreviated labels (Trade, Port, Pos, Ord, Perf, Corp)
-  - Desktop view shows full labels (Trade, Portfolio, Positions, Orders, Performance, Corp Actions)
-  - Touch-friendly 44px minimum height for mobile accessibility
-  - Grid-based layout ensures equal-width tabs and prevents overflow issues
-  - Integrated account overview cards with portfolio value, buying power, cash, and day trade count
-  - Real-time stock data fetching with URL parameter support (?symbol=AAPL)
-  - Six main tabs: Trade (order entry + market grid), Portfolio (charts + summary), Positions, Orders, Performance, Corporate Actions
-  - Consistent label display: "Trade" and "Orders" always show full text, others abbreviate on mobile
-  - Security details card with symbol, price, change, and volume
-  - Integrated AssetChart for price visualization
-- **TradeForm**: Order entry with validation, market data, and execution
-  - Support for market, limit, stop, and stop-limit orders
-  - Real-time price validation
-  - Buying power checks
-  - Order preview and confirmation
-- **Leaderboard**: Social trading discovery with search, filters, and trader profiles
-  - Sortable columns (returns, win rate, trade count)
-  - Trader profile modals with detailed statistics
-  - Follow/unfollow functionality
-  - Privacy-aware display (respects trader settings)
-- **CopyTradingDashboard**: Manage copy trading subscriptions and allocations
-  - Active subscription list with allocation percentages
-  - Subscription management (pause, resume, cancel)
-  - Performance tracking per subscription
-- **OptionsExercise**: Options contract management and exercise functionality
-- **OptionsSelector**: Options chain browser with strike/expiration selection
-- **EventStreamFeed**: Real-time account event stream (trades, transfers, corporate actions)
-  - Server-Sent Events (SSE) integration
-  - Auto-reconnect on connection loss
-  - Event filtering and categorization
-- **SimpleMarketGrid**: Market overview grid for quick stock selection
-  - Popular stocks with real-time prices
-  - Click to select for trading
+### Trading Components (`src/components/trading/`)
+- **TradingInterface**: Main trading dashboard with order entry and positions
+- **TradeForm**: Order entry form with validation (market, limit, stop orders)
 - **AccountPositions**: Real-time position tracking with P&L
-  - Stock and options positions
-  - Unrealized P&L calculations
-  - Position closure actions
-- **OrderHistory**: Complete order history with filtering and status tracking
-  - Status badges (filled, pending, cancelled, rejected)
-  - Order type and side indicators
-  - Timestamp and execution details
-- **PortfolioChart**: Historical portfolio performance visualization
-  - Recharts integration
-  - Multiple timeframes (1D, 1W, 1M, 3M, 1Y, ALL)
-  - Equity curve with P&L overlay
-- **AllCorporateActions**: Corporate action notifications and management
-  - Dividend announcements
-  - Stock splits
-  - Merger/acquisition notices
-- **TraderProfileModal**: Detailed trader statistics and follow button
-- **TraderSelection**: Copy trading trader picker with search
-- **SmartMarketData**: Intelligent market data fetching with fallback
-- **RealTimeMarketData**: WebSocket-based live market data
-- **SubscriptionManager**: WebSocket subscription management for market data
-- **TradeNotifications**: Real-time trade execution notifications
+- **OrderHistory**: Order history table with filtering and sorting
+- **OptionsSelector**: Options chain browser with strike/expiry selection
+- **OptionsExercise**: Exercise options positions
+- **Leaderboard**: Social trading leaderboard with trader rankings
+- **CopyTradingDashboard**: Manage copy trading subscriptions
+- **TraderProfileModal**: View detailed trader statistics and performance
+- **RealTimeMarketData**: Live market quotes via WebSocket
+- **SmartMarketData**: Market data with automatic fallback handling
+- **PortfolioChart**: Portfolio performance visualization
+- **CorporateActionNotifications**: Alerts for dividends, splits, etc.
+- **EventStreamFeed**: Real-time account event feed
 
-### Account Components
-- **SettingsPageContent**: Unified settings interface
-  - Profile management
-  - Privacy controls
-  - Trading preferences
-  - Notification settings
-- **KYCVerificationPanel**: Identity verification with document upload
-  - Supports ID, address verification, W-8BEN
-  - File validation (JPEG, PNG, PDF up to 10MB)
-  - Base64 encoding for secure upload
-  - Upload status tracking with success/error states
-  - Privacy and security notices
-- **KYCCompletionForm**: Post-OAuth KYC completion flow
-- **OAuthKYCForm**: OAuth-based KYC initiation
-- **DocumentsPanel**: Access to statements, confirmations, and tax documents
-  - Document type filtering (account statements, trade confirmations, tax documents)
-  - Download functionality with progress indicators
-  - Excludes internal document types (trade_confirmation_json, account_application)
-  - FINRA/SEC compliance notices
-- **DocumentUpload**: Reusable document upload component
-- **KYCStatus**: Identity verification status display with badges
-- **PDTStatusPanel**: Pattern Day Trader monitoring and removal
-  - Current day trade count
-  - PDT status indicator
-  - Removal request functionality
-- **FundingPageContent**: Bank linking, ACH/wire transfers, and funding history
-  - ACH relationship management
-  - Wire transfer instructions
-  - Transfer history with status tracking
-- **ACHTransferForm**: ACH transfer initiation
-- **WireTransferForm**: Wire transfer details display
-- **BankLinking**: Plaid integration for bank account linking
-- **BankTransferModal**: Transfer confirmation modal
-- **FundingWalletManager**: Instant funding wallet management
-- **QuickSandboxFunding**: Quick funding for sandbox accounts
-- **TransferHistory**: Transfer history table with filtering
-- **TradingModeSwitch**: Toggle between paper and live trading
-  - Confirmation dialog for mode switching
-  - Account status validation
+### Dashboard Components (`src/components/dashboard/`)
+- **PortfolioSummary**: Portfolio overview with key metrics
+- **AssetGrid**: Grid view of portfolio holdings
+- **AssetChart**: Individual asset performance charts
+- **OptionsPositions**: Options holdings with Greeks
+- **CorporateActionImpacts**: Corporate action impact analysis
+- **PortfolioTransferHistory**: Transfer log with filtering
 
-### Dashboard Components
-- **PortfolioSummary**: Account overview with equity, buying power, and P&L
-  - Real-time account data
-  - Performance metrics
-  - Asset allocation breakdown
-- **AssetGrid**: Position grid with real-time prices and performance
-  - Sortable columns
-  - P&L calculations
-  - Quick trade actions
-- **AssetChart**: Individual asset price charts
-  - Multiple timeframes
-  - Technical indicators
-  - Volume overlay
-- **OptionsPositions**: Options-specific position display
-  - Greeks display (delta, gamma, theta, vega)
-  - Expiration tracking
-  - Exercise functionality
-- **CorporateActionImpacts**: Corporate action impact on portfolio
-- **PortfolioTransferHistory**: Portfolio-level transfer history
+### UI Components (`src/components/ui/`)
+- **shadcn/ui primitives**: button, card, dialog, dropdown, input, select, table, tabs, etc.
+- **ThemeCustomizer**: Visual theme editor with color picker
+- **UserSettings**: Comprehensive user preferences with integrated profile editing
+  - Privacy controls (share trades, show portfolio values)
+  - Leaderboard stats management with manual update trigger
+  - Integrated Alpaca account profile editor (email, phone, address)
+  - Trusted contact management
+  - Real-time sync with Alpaca Broker API
+  - Form validation and error handling with improved error messages
+  - Uses `edgeFunctionClient` for authenticated API calls
+- **NotificationSettings**: Configure push notification preferences
+- **ErrorDisplay**: Consistent error message display
+- **LazyComponent**: Code-splitting wrapper for performance
 
-### Admin Components
-- **AuthVerificationDashboard**: Admin dashboard for auth verification
-  - User verification queue
-  - Approval/rejection workflow
-  - Audit trail
-- **FundingVerificationDashboard**: Admin dashboard for funding verification
-  - Transfer verification queue
-  - Fraud detection alerts
-  - Manual review tools
-- **TradingModeIndicator**: Display current trading mode (paper/live)
-- **TradingModeSwitch** (Admin): Admin-level trading mode control
-
-### Authentication Components
-- **SupabaseSignInForm**: Email/password sign-in form
-- **SupabaseSignUpForm**: Email/password sign-up form
-- **EnhancedSupabaseSignUpForm**: Enhanced sign-up with additional fields
-- **SignInForm**: Legacy sign-in form
-- **ForgotPasswordForm**: Password reset request form
-- **ResetPasswordForm**: Password reset completion form
-- **ProtectedRoute**: Route guard for authenticated pages
-- **HomePageRedirect**: Redirect logic for home page based on auth status
-
-### PWA Components
-- **PWAInstallPrompt**: Native app install prompt
-  - Platform detection (iOS, Android, Desktop)
-  - Install instructions
-  - Dismissible with localStorage persistence
-- **BackgroundSyncManager**: Background sync for offline trades
-  - Queue management
-  - Retry logic
-  - Sync status indicators
-- **OfflineStatusIndicator**: Network status indicator
-  - Online/offline detection
-  - Reconnection notifications
-- **NotificationPermissionPrompt**: Push notification permission request
-- **MobilePerformanceOptimizer**: Mobile-specific performance optimizations
-
-### UI Components (shadcn/ui)
-- **Alert**: Alert messages with variants
-- **Avatar**: User avatar display
-- **Badge**: Status badges with color variants
-- **Button**: Primary UI button with variants and sizes
-- **Card**: Content card container
-- **Carousel**: Image/content carousel
-- **Chart**: Recharts wrapper components
-- **Checkbox**: Form checkbox
-- **ColorPicker**: Color selection input
-- **DataTable**: TanStack Table wrapper
-- **Dialog**: Modal dialog
-- **DropdownMenu**: Dropdown menu component
-- **Input**: Text input field
-- **Label**: Form label
-- **Popover**: Popover overlay
-- **Progress**: Progress bar
-- **ScrollArea**: Scrollable container
-- **Select**: Dropdown select
-- **Separator**: Visual separator
-- **Sheet**: Slide-out panel
-- **Skeleton**: Loading skeleton
-- **Slider**: Range slider
-- **Switch**: Toggle switch
-- **Table**: Data table
-- **Tabs**: Tab navigation
-- **Textarea**: Multi-line text input
-
-### Utility Components
-- **ErrorBoundary**: React error boundary for graceful error handling
-- **ErrorDisplay**: Formatted error message display
-- **LazyComponent**: Code-splitting wrapper
-- **PerformanceDashboard**: Performance monitoring dashboard
-- **UserSettings**: User preferences management
-- **NotificationSettings**: Notification preferences
+### Core Services (`src/lib/`)
+- **apiService**: Centralized API client with error handling
+- **alpaca-broker-client**: Main Alpaca Broker API client
+- **copy-trading-service**: Copy trading logic and execution
+- **trade-execution-engine**: Order execution with validation
+- **market-data-service**: Market data fetching and caching
+- **websocket-service**: WebSocket connection management
+- **email/service**: Email sending with queue and retry
+- **auth**: Authentication and session management
+- **database**: Supabase client with type safety
+- **encryption**: Sensitive data encryption
+- **validation**: Input validation with Zod schemas
 
 ## API Endpoints
 
-### Astro API Routes (src/pages/api)
+### Frontend API Routes (`src/pages/api/`)
 
-#### Authentication
-- `POST /api/auth/signin` - User sign-in with email/password
-- `POST /api/auth/signup` - User registration
-- `POST /api/auth/signout` - User sign-out
+#### Authentication (`/api/auth/`)
+- `POST /api/auth/signup` - Create new user account
+- `POST /api/auth/signin` - Sign in with email/password
+- `POST /api/auth/signout` - Sign out current user
 
-#### Admin
-- `GET /api/admin/auth-stats` - Authentication statistics dashboard
+#### Admin (`/api/admin/`)
+- `GET /api/admin/auth-stats` - User authentication statistics
 - `GET /api/admin/funding-stats` - Funding verification statistics
 
-#### Test Accounts
-- `POST /api/test-accounts/create` - Create test/sandbox accounts
+#### Test Accounts (`/api/test-accounts/`)
+- `POST /api/test-accounts/create` - Create test trading account
 
-### Supabase Edge Functions
+### Supabase Edge Functions (`supabase/functions/`)
 
 #### Account Management
-- `GET /alpaca-account` - Get account details
-- `GET /alpaca-account-activities` - Get account activity history
-- `POST /sync-alpaca-accounts` - Sync Alpaca account data
+- `alpaca-account` - Get comprehensive account details (GET)
+  - Fetches both account metadata (contact, identity) and trading account data (financial details) in parallel
+  - Merges responses for complete account view with contact info, identity, and portfolio data
+  - Supports fetching user's linked account or specific account by ID
+  - Returns unified account object with all relevant fields
+  - Optimized performance with parallel API calls
+- `alpaca-account-update` - Update account contact information, address, and trusted contacts (PATCH)
+  - Updates email, phone, street address, city, state, postal code
+  - Manages trusted contact information
+  - Returns detailed error messages for validation failures with full context
+  - Enhanced error logging for debugging (status codes, URLs, account IDs)
+  - Requires valid Alpaca account ID and authentication
+  - Enhanced security: Validates account ownership via `alpaca_accounts` table
+  - KYC-aware: Restricts identity field updates after KYC approval
+- `alpaca-account-activities` - Fetch account activities
+- `alpaca-kyc-cip` - KYC/CIP verification submission
+- `alpaca-documents` - Upload/retrieve documents
+- `alpaca-pdt-removal` - Request PDT status removal
 
 #### Trading
-- `GET /alpaca-orders` - List orders
-- `POST /alpaca-orders` - Create new order
-- `PATCH /alpaca-orders/:id` - Modify order
-- `DELETE /alpaca-orders/:id` - Cancel order
-- `GET /alpaca-positions` - List positions
-- `DELETE /alpaca-positions/:symbol` - Close position
-- `POST /alpaca-advanced-orders` - Create advanced order types (bracket, OCO, OTO)
-- `GET /alpaca-order-executions` - Get order execution details
+- `alpaca-orders` - Create, modify, cancel orders
+- `alpaca-positions` - Get current positions
+- `alpaca-portfolio-history` - Portfolio performance history
+- `alpaca-options-contracts` - Search options chains
+- `alpaca-options-exercise` - Exercise options positions
+- `alpaca-market-data-enhanced` - Real-time market data
+- `alpaca-assets` - Asset search and details
+- `alpaca-calendar` - Market calendar
+- `alpaca-clock` - Market hours and status
 
-#### Market Data
-- `GET /alpaca-market-data-enhanced` - Enhanced market data with fallback
-- `GET /alpaca-market-quotes` - Real-time quotes
-- `GET /alpaca-assets` - List tradable assets
-- `GET /alpaca-assets-search` - Search assets by symbol/name
-- `GET /alpaca-calendar` - Market calendar (holidays, early closes)
-- `GET /alpaca-clock` - Market clock (open/closed status)
-- `GET /alpaca-portfolio-history` - Historical portfolio performance
-
-#### Options Trading
-- `GET /alpaca-options-contracts` - Search options contracts
-- `POST /alpaca-options-exercise` - Exercise options contract
-- `GET /alpaca-securities` - Get security details
-
-#### Funding & Transfers
-- `GET /alpaca-ach-relationships` - List ACH relationships
-- `POST /alpaca-ach-relationships` - Create ACH relationship
-- `DELETE /alpaca-ach-relationships/:id` - Remove ACH relationship
-- `GET /alpaca-bank-relationships` - List bank relationships
-- `POST /alpaca-bank-relationships` - Create bank relationship
-- `DELETE /alpaca-bank-relationships/:id` - Remove bank relationship
-- `GET /alpaca-transfers` - List transfers
-- `POST /alpaca-transfers` - Create transfer
-- `DELETE /alpaca-transfers/:id` - Cancel transfer
-- `GET /alpaca-funding-wallets` - Get funding wallet details
-- `POST /alpaca-instant-funding` - Request instant funding
-
-#### Documents & KYC
-- `GET /alpaca-documents` - List account documents
-- `POST /alpaca-documents` - Upload document
-- `GET /alpaca-kyc-cip` - Get KYC/CIP status
-- `POST /alpaca-kyc-cip` - Submit KYC information
-- `GET /alpaca-oauth` - OAuth flow initiation
-- `POST /alpaca-oauth` - OAuth callback handling
-
-#### Corporate Actions
-- `GET /alpaca-corporate-actions` - List corporate actions
-- `GET /alpaca-corporate-actions/:id` - Get corporate action details
-
-#### Events & Streaming
-- `GET /alpaca-events` - Server-Sent Events stream for account updates
-- `GET /alpaca-events-test` - Test event stream endpoint
-
-#### Portfolio Management
-- `GET /alpaca-journals` - List journal entries
-- `POST /alpaca-journals` - Create journal entry (transfer between accounts)
-- `POST /alpaca-rebalancing` - Rebalance portfolio
-- `GET /alpaca-reports` - Generate account reports
-- `GET /alpaca-risk-management` - Risk metrics and analysis
-
-#### Pattern Day Trading
-- `POST /alpaca-pdt-removal` - Request PDT flag removal
+#### Funding
+- `alpaca-ach-relationships` - Manage ACH relationships
+- `alpaca-bank-relationships` - Manage bank relationships
+- `alpaca-transfers` - Create and track transfers
+- `alpaca-funding-wallets` - Manage funding wallets
+- `alpaca-instant-funding` - Instant deposit requests
 
 #### Social Trading
-- `GET /get-leaderboard` - Get ranked trader leaderboard
-- `GET /copy-trading-subscriptions` - List copy trading subscriptions
-- `POST /copy-trading-subscriptions` - Create subscription
-- `PATCH /copy-trading-subscriptions/:id` - Update subscription
-- `DELETE /copy-trading-subscriptions/:id` - Cancel subscription
-- `POST /execute-copy-trades` - Execute copy trades for followers
-- `POST /update-leaderboard-stats` - Update leaderboard statistics
+- `get-leaderboard` - Fetch trader leaderboard
+- `copy-trading-subscriptions` - Manage subscriptions
+- `execute-copy-trades` - Execute copy trades
+- `update-leaderboard-stats` - Update trader statistics
 
-#### Email System
-- `POST /send-email` - Send email via Resend/Brevo
-- `POST /email-queue` - Process email queue
-- `GET /email-queue` - Get email queue status
+#### Corporate Actions
+- `alpaca-corporate-actions` - Fetch corporate actions
+- `alpaca-journals` - Journal entries for corporate actions
 
-#### Utilities
-- `GET /alpaca-broker-status` - Broker API status check
-- `POST /check-user-exists` - Check if user exists
-- `POST /streamlined-signup` - Streamlined account creation flow
-- `POST /test-accounts-create` - Create test accounts (Edge Function version)
+#### Reports & Analytics
+- `alpaca-reports` - Generate account reports
+- `alpaca-rebalancing` - Portfolio rebalancing
+
+#### System
+- `alpaca-events` - Server-sent events stream
+- `alpaca-oauth` - OAuth integration
+- `streamlined-signup` - Streamlined account creation
+- `sync-alpaca-accounts` - Sync account data
+- `email-queue` - Process email queue
+- `send-email` - Send transactional emails
+- `check-user-exists` - User lookup
+
+All Edge Functions include:
+- JWT authentication via Supabase Auth
+- CORS handling for cross-origin requests
+- Rate limiting to prevent abuse
+- Comprehensive error handling and logging
+- Request/response validation
 
 ## Development
 
-### Setup
 ```bash
 # Install dependencies
 npm install
 
-# Copy environment variables
+# Configure environment
 cp .env.example .env
-# Configure Supabase, Alpaca, and email service credentials
+# Add your Supabase and Alpaca credentials
 
-# Start development server
-npm run dev              # Runs on localhost:4321
-
-# Start Supabase locally (optional)
+# Start local Supabase (optional, for local development)
 npm run supabase:start
-```
 
-### Build & Deploy
-```bash
-# Development build
-npm run build            # Standard build, outputs to dist/
+# Start dev server
+npm run dev
 
-# Environment-specific builds
-npm run build:test       # Build for test environment
-npm run build:prod       # Build for production environment
+# Run tests
+npm run test        # Watch mode
+npm run test:run    # Single run
 
-# Build PWA
-npm run build:pwa        # Optimized PWA build
+# Build for production
+npm run build
 
-# Preview builds
-npm run preview          # Preview standard build
-npm run preview:test     # Preview test build
-npm run preview:prod     # Preview production build
+# Preview production build
+npm run preview
 
 # Deploy Edge Functions
-npm run deploy:functions              # Deploy to default project
-npm run deploy:functions:test         # Deploy to test project
-npm run deploy:functions:prod         # Deploy to production project
+npm run deploy:functions
 
-# Deploy to production
-npm run deploy:full                   # Functions + static assets (default)
-npm run deploy:full:prod              # Functions + static assets (production)
+# Database operations
+npm run db:push     # Push schema changes
+npm run db:reset    # Reset database
+npm run db:migrate  # Run migrations
+npm run db:seed     # Seed data
 ```
 
-### Testing
+## Testing
+
+The project includes a comprehensive test suite with 70+ test files covering:
+
+- **Unit Tests**: Individual functions and utilities
+- **Integration Tests**: API endpoints and services
+- **Component Tests**: React component behavior
+- **E2E Tests**: Complete user flows (signup, trading, copy trading)
+- **Performance Tests**: Load testing and optimization
+
+Key test files:
+- `src/lib/__tests__/` - Core business logic tests
+- `supabase/functions/_shared/__tests__/` - Edge function tests
+- Test utilities in `src/lib/__tests__/test-utils.ts`
+
+Run specific test suites:
 ```bash
-# Run all tests
-npm run test:run
-
-# Run tests in watch mode
-npm test
-
-# Run specific test suites
-npm run test:signup
-npm run test:functions
-npm run test:performance
+npm run test:signup          # Signup flow tests
+npm run test:functions       # Edge function tests
+npm run test:performance     # Performance tests
+npm run test:database-setup  # Database tests
 ```
 
 ## Environment Variables
@@ -525,10 +562,10 @@ PUBLIC_SUPABASE_URL=your_supabase_url
 PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-# Alpaca Markets
-ALPACA_API_KEY=your_alpaca_key
-ALPACA_API_SECRET=your_alpaca_secret
-ALPACA_BROKER_API_URL=https://broker-api.sandbox.alpaca.markets
+# Alpaca Broker API (Sandbox)
+PUBLIC_ALPACA_BROKER_SANDBOX_API_KEY=your_key
+PUBLIC_ALPACA_BROKER_SANDBOX_API_SECRET=your_secret
+PUBLIC_ALPACA_BROKER_SANDBOX_BASE_URL=https://broker-api.sandbox.alpaca.markets
 
 # Email Services
 RESEND_API_KEY=your_resend_key
@@ -541,101 +578,310 @@ NODE_ENV=production
 
 ### Optional
 ```env
-# OAuth
-ALPACA_OAUTH_CLIENT_ID=your_oauth_client_id
-ALPACA_OAUTH_CLIENT_SECRET=your_oauth_secret
-
-# Encryption
-ENCRYPTION_KEY=your_encryption_key
-
 # Feature Flags
-ENABLE_LIVE_TRADING=true
-ENABLE_OPTIONS_TRADING=true
+PUBLIC_ENABLE_OPTIONS_TRADING=true
+PUBLIC_ENABLE_COPY_TRADING=true
+PUBLIC_ENABLE_CRYPTO_TRADING=false
 ```
 
-## Email System
+See `.env.example` for complete configuration.
 
-The platform uses a sophisticated email queue system:
+## Architecture
 
-### Architecture
-- **Queue Table**: `email_queue` with status tracking (pending, sent, failed)
-- **Rate Limiting**: 2 requests/second for Resend API compliance
-- **Retry Logic**: Automatic retry with exponential backoff (max 3 attempts)
-- **Template Support**: Resend templates for professional emails
-- **Monitoring**: Failed email tracking and admin dashboard
+### Frontend Architecture
+- **Framework**: Astro 5.15+ for static site generation with islands architecture
+- **UI Library**: React 19 with TypeScript for interactive components
+- **Styling**: Tailwind CSS v4 with custom design system
+- **State Management**: React hooks and context for local state
+- **Routing**: Astro file-based routing with dynamic routes
+- **Code Splitting**: Automatic code splitting via Astro islands
 
-### Email Categories
-- **Trading**: Order confirmations, execution alerts (via Resend)
-- **Auth**: Welcome emails, password resets (via Brevo)
-- **Support**: Customer support communications (via Brevo)
+### Backend Architecture
+- **Database**: Supabase PostgreSQL with Row Level Security (RLS)
+- **API Layer**: Supabase Edge Functions (Deno runtime)
+- **Authentication**: Supabase Auth with JWT tokens
+- **Real-time**: WebSocket connections for market data and events
+- **Caching**: Multi-layer caching (browser, service worker, API)
+- **Queue System**: Database-backed queue for email and background jobs
 
-### Processing
-- **Cron Job**: GitHub Actions workflow processes queue every 5 minutes
-- **Edge Function**: `email-queue` function handles batch processing
-- **Filtering**: Column comparison done in code (PostgREST limitation workaround)
+### Trading Infrastructure
+- **Broker Integration**: Alpaca Markets Broker API
+- **Market Data**: Alpaca Market Data API with WebSocket streaming
+- **Order Execution**: Trade execution engine with validation
+- **Copy Trading**: Event-driven copy trading system
+- **Risk Management**: Position limits and validation
 
-## Database Schema
+### Security Architecture
+- **Authentication**: JWT-based with secure httpOnly cookies
+- **Authorization**: Row Level Security on all database tables
+- **Encryption**: AES-256 encryption for sensitive data
+- **API Security**: Rate limiting, CORS, input validation
+- **Compliance**: KYC/CIP integration with Alpaca
 
-### Core Tables
-- **profiles**: User profiles with privacy settings
-- **alpaca_accounts**: Linked Alpaca brokerage accounts
-- **copy_trading_subscriptions**: Copy trading relationships and allocations
-- **leaderboard_stats**: Cached trader performance metrics
-- **email_queue**: Email queue with retry logic
-- **offline_trades**: Queued trades for offline sync
+### Data Flow
+1. **User Action** → React Component
+2. **Component** → API Service Layer (`apiService.ts`)
+3. **API Service** → Supabase Edge Function
+4. **Edge Function** → Alpaca Broker API
+5. **Response** → Edge Function → API Service → Component
+6. **Real-time Updates** → WebSocket → Component State
 
-### Key Features
-- **Row Level Security**: Enforced data access policies
-- **Triggers**: Automatic leaderboard updates on trade execution
-- **Functions**: `get_leaderboard_data()` for ranked trader list
-- **Indexes**: Optimized queries for real-time performance
+### Deployment Architecture
+- **Frontend**: Cloudflare Pages (CDN + Edge)
+- **Backend**: Supabase (managed PostgreSQL + Edge Functions)
+- **Assets**: Cloudflare CDN with aggressive caching
+- **Service Worker**: Offline-first PWA with background sync
 
 ## Security
 
-- **Authentication**: Supabase Auth with JWT tokens
-- **Authorization**: Row Level Security (RLS) policies
-- **API Keys**: Encrypted storage for sensitive credentials
-- **CORS**: Configured for production domains
-- **Rate Limiting**: API endpoint throttling
-- **Input Validation**: Zod schemas for all user inputs
-- **Audit Logging**: Comprehensive activity tracking
+### Authentication & Authorization
+- **JWT Tokens**: Secure token-based authentication via Supabase Auth
+- **Row Level Security**: PostgreSQL RLS policies on all tables
+- **Session Management**: Secure session handling with automatic refresh
+- **OAuth Integration**: Alpaca OAuth for account linking
+- **Account Ownership Validation**: Multi-table verification ensures users can only access their own accounts
+  - Edge Functions validate ownership via `alpaca_accounts` table
+  - Prevents unauthorized access to other users' trading accounts
+  - Applied to all account modification endpoints
 
-## Performance Optimizations
+### Data Protection
+- **Encryption at Rest**: AES-256 encryption for sensitive data (API keys, credentials)
+- **Encryption in Transit**: TLS 1.3 for all API communications
+- **PII Handling**: Secure handling of personally identifiable information
+- **Credential Storage**: Encrypted storage in Supabase with service role access only
 
-- **Code Splitting**: Manual chunks for vendor libraries
-- **Asset Optimization**: Terser minification with tree shaking
-- **Image Optimization**: Lazy loading and responsive images
-- **Service Worker**: Aggressive caching strategy
-- **Database Indexes**: Optimized query performance
-- **WebSocket Pooling**: Efficient real-time connections
-- **Edge Functions**: Global CDN distribution
-- **Mobile Performance**: 
-  - Responsive breakpoints (xs: 475px, sm: 640px, md: 768px, lg: 1024px)
-  - Conditional rendering for mobile vs desktop layouts
-  - Grid-based tab navigation with responsive columns for optimal mobile UX
-  - Touch-optimized UI elements (44px minimum height)
-  - Equal-width tabs prevent layout shifts and ensure consistent experience
+### API Security
+- **Rate Limiting**: Request throttling to prevent abuse
+- **CORS Configuration**: Strict CORS policies for API endpoints
+- **Input Validation**: Zod schema validation on all inputs
+- **SQL Injection Prevention**: Parameterized queries and ORM usage
+- **XSS Protection**: Content Security Policy and input sanitization
 
-## Browser Support
+### Compliance
+- **KYC/CIP**: Identity verification via Alpaca's compliance system
+- **Audit Logging**: Comprehensive audit trail for all transactions
+- **Data Privacy**: GDPR-compliant data handling
+- **Financial Regulations**: SEC and FINRA compliance via Alpaca
 
-- Chrome/Edge 90+
-- Firefox 88+
-- Safari 14+
-- Mobile browsers (iOS Safari, Chrome Mobile)
+### Best Practices
+- **Principle of Least Privilege**: Minimal permissions for all operations
+- **Secure Defaults**: Security-first configuration
+- **Regular Updates**: Dependency updates and security patches
+- **Error Handling**: Secure error messages without sensitive data exposure
 
 ## Contributing
 
-This is a proprietary project. For internal development:
+This is a proprietary project under the Fair Source License. For internal development:
 
+### Development Workflow
 1. Create feature branch from `main`
-2. Write tests for new features
-3. Ensure all tests pass: `npm run test:run`
-4. Submit PR with detailed description
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. Make changes and write tests
+   - Add unit tests for new functions
+   - Add integration tests for API endpoints
+   - Add component tests for UI changes
+
+3. Run test suite
+   ```bash
+   npm run test:run
+   ```
+
+4. Check for type errors
+   ```bash
+   npm run astro check
+   ```
+
+5. Build and verify
+   ```bash
+   npm run build
+   npm run preview
+   ```
+
+6. Submit PR with detailed description
+   - Describe the changes and motivation
+   - Include screenshots for UI changes
+   - Reference any related issues
+
+### Code Standards
+- **TypeScript**: Strict mode enabled, no `any` types
+- **React**: Functional components with hooks
+- **Styling**: Tailwind CSS utility classes
+- **Testing**: Vitest for unit/integration tests
+- **Linting**: Follow existing code style
+- **Comments**: Document complex logic and business rules
+
+### Commit Messages
+Follow conventional commits format:
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation changes
+- `style:` Code style changes (formatting)
+- `refactor:` Code refactoring
+- `test:` Test additions or changes
+- `chore:` Build process or tooling changes
+
+### Pull Request Guidelines
+- Keep PRs focused and reasonably sized
+- Update documentation for new features
+- Ensure all tests pass
+- Add migration scripts for database changes
+- Update environment variable documentation if needed
 
 ## License
 
 See LICENSE file for details
 
+## Recent Updates
+
+### Alpaca Account Data Fetching Enhancement (Latest)
+✅ Improved account data retrieval in `alpaca-account` Edge Function
+- Now fetches both account metadata (contact, identity) and trading account data (financial details) in parallel
+- Merges responses to provide complete account view with all relevant fields
+- Optimized performance with `Promise.all` for parallel API calls
+- Better separation of concerns: metadata from `/accounts/{id}` and financial data from `/trading/accounts/{id}`
+- Improved error handling with specific error messages for each API call
+- Benefits both UserSettings and EditProfilePanel components with richer account data
+- Maintains backward compatibility with existing API consumers
+
+### UserSettings Cache Control Enhancement
+✅ Added force refresh capability to UserSettings component
+- Enhanced `loadAlpacaAccount` function to support cache-busting via `forceRefresh` parameter
+- Allows manual refresh of account data when needed (e.g., after profile updates)
+- Improves data consistency between UI and backend
+- Maintains all existing functionality:
+  - Integrated Alpaca account profile editing (email, phone, address)
+  - Privacy controls (share trades, show portfolio values)
+  - Leaderboard stats management with manual update trigger
+  - Trusted contact management
+  - Real-time sync with Alpaca Broker API
+  - Form validation and error handling
+
+### Environment Variable Standardization
+✅ Standardized Alpaca API credentials across Edge Functions
+- Updated `alpaca-account-update` to use consistent environment variable names
+- Now uses `PUBLIC_ALPACA_BROKER_SANDBOX_API_KEY` and `PUBLIC_ALPACA_BROKER_SANDBOX_API_SECRET`
+- Aligns with other Edge Functions for consistent configuration
+- Improves maintainability and reduces configuration errors
+- All existing functionality maintained:
+  - Contact information updates (email, phone, address)
+  - Trusted contact management
+  - Account ownership validation
+  - Profile synchronization with Supabase Auth
+
+### UserSettings Enhanced Debugging
+✅ Improved debugging and error tracking in UserSettings component
+- Added comprehensive console logging for account update operations
+- Logs account ID, update payload, and API responses for troubleshooting
+- Enhanced error logging with full error context
+- Better visibility into profile update flow for debugging
+- Maintains all existing functionality:
+  - Integrated Alpaca account profile editing (email, phone, address)
+  - Privacy controls (share trades, show portfolio values)
+  - Leaderboard stats management with manual update trigger
+  - Trusted contact management
+  - Real-time sync with Alpaca Broker API
+  - Form validation and error handling
+
+### Account Update Error Handling Enhancement
+✅ Improved error diagnostics in `alpaca-account-update` Edge Function
+- Enhanced error logging for Alpaca account fetch failures
+- Detailed error context including status codes, URLs, and account IDs
+- Better error messages propagated to frontend for debugging
+- Improved troubleshooting capabilities for account update issues
+- All existing security and functionality maintained:
+  - Account ownership validation via `alpaca_accounts` table
+  - KYC status-aware field restrictions
+  - Contact information updates (email, phone, address)
+  - Trusted contact management
+  - Profile synchronization with Supabase Auth
+
+### EditProfilePanel Authentication Improvement
+✅ Enhanced authentication handling in EditProfilePanel component
+- Migrated from direct fetch calls to `edgeFunctionClient` for proper auth handling
+- Improved error message propagation from Edge Function responses
+- Better integration with Supabase authentication layer
+- Consistent API client usage across the application
+- All existing features maintained:
+  - Contact information updates (email, phone, address)
+  - Trusted contact management
+  - KYC status-aware restrictions
+  - Read-only identity fields display
+  - Form validation and error handling
+
+### Account Update Security Enhancement
+✅ Improved security validation in `alpaca-account-update` Edge Function
+- Enhanced account ownership verification using `alpaca_accounts` table
+- Validates user owns the specific Alpaca account before allowing updates
+- Prevents unauthorized access to accounts not belonging to the authenticated user
+- More robust security check compared to profile-based validation
+- Maintains all existing functionality:
+  - Contact information updates (email, phone, address)
+  - Trusted contact management
+  - KYC status-aware restrictions
+  - Profile synchronization with Supabase Auth
+
+### UserSettings Code Quality Improvements
+✅ Code cleanup and formatting improvements in UserSettings component
+- Removed trailing whitespace for cleaner code
+- Improved code consistency and readability
+- All existing features maintained:
+  - Integrated Alpaca account profile editing (email, phone, address)
+  - Privacy controls (share trades, show portfolio values)
+  - Leaderboard stats management with manual update trigger
+  - Trusted contact management
+  - Real-time sync with Alpaca Broker API
+  - Form validation and error handling
+  - Cancel/save functionality with state management
+- Standalone `EditProfilePanel` component available as alternative implementation
+
+### UserSettings Profile Editing Enhancement
+✅ Improved error handling and code quality in UserSettings component
+- Enhanced error messages from API responses for better debugging
+- Refactored authentication session handling for cleaner code
+- Improved error propagation from `alpaca-account-update` Edge Function
+- Better user feedback when profile updates fail
+
+### Settings Page Refinement
+✅ Streamlined settings page layout
+- Focused on core account management features
+- KYC verification status and submission
+- Document management and viewing
+- PDT status monitoring
+- User preferences and privacy controls
+
+### Enhanced 404 Page
+✅ Improved 404 error page with better UX
+- Clear error messaging
+- Quick navigation to home and dashboard
+- SEO-optimized meta tags
+- Responsive design
+
+### Account Management Features
+✅ Comprehensive account settings interface
+- KYC verification status tracking
+- Document upload and management
+- PDT status monitoring
+- Bank account linking
+- Transfer history tracking
+- Trading mode switching (paper/live)
+
+### Social Trading Features
+✅ Copy trading system with leaderboard
+- Real-time trader rankings
+- Customizable copy trading allocations
+- Privacy controls for traders
+- Performance metrics and analytics
+
+### Progressive Web App
+✅ Full PWA implementation
+- Offline support with service worker
+- Install prompts for mobile and desktop
+- Background sync for queued operations
+- Push notifications for trade alerts
+
 ## Support
 
-For issues or questions, contact the development team.
+For issues or questions, contact the development team at support@leadtrade.app

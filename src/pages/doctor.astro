@@ -8,1135 +8,954 @@ export const prerender = true;
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Saket Sharma - Resume</title>
+        <title>Saket Sharma — Resume</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" />
         <style>
-            /* Reset only for resume page */
-            html.resume-page,
-            html.resume-page * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
+            /* ── Reset ─────────────────────────────────────── */
+            *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+            /* ── Base ──────────────────────────────────────── */
+            html, body {
+                font-family: 'Inter', 'Calibri', system-ui, -apple-system, sans-serif;
+                font-size: 10pt;
+                line-height: 1.5;
+                color: #0f172a;
+                background: #e2e8f0;
+                min-height: 100vh;
+                -webkit-font-smoothing: antialiased;
+            }
+            a { color: inherit; text-decoration: none; }
+            a:hover { text-decoration: underline; }
+
+            /* ── Print button ──────────────────────────────── */
+            .print-btn {
+                position: fixed;
+                top: 18px;
+                right: 18px;
+                z-index: 1000;
+                padding: 9px 18px;
+                background: linear-gradient(135deg, #2563eb, #06b6d4);
+                color: white;
+                border: none;
+                border-radius: 10px;
+                font-family: inherit;
+                font-size: 12px;
+                font-weight: 600;
+                cursor: pointer;
+                box-shadow: 0 4px 14px rgba(37,99,235,0.45);
+                transition: all 0.25s ease;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .print-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(37,99,235,0.6);
+            }
+            .print-btn:active { transform: translateY(0); }
+
+            /* ── Page wrapper ──────────────────────────────── */
+            .resume {
+                max-width: 1020px;
+                margin: 36px auto;
+                background: white;
+                border-radius: 18px;
+                /* overflow: hidden removed — required for sticky header */
+                box-shadow: 0 12px 48px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.08);
             }
 
-            html.resume-page body {
-                font-family: "Calibri", "Arial", sans-serif !important;
-                font-size: 11pt !important;
-                line-height: 1.4 !important;
-                color: #000 !important;
-                background: #fff !important;
-                max-width: 8.5in !important;
-                margin: 0 auto !important;
-                padding: 0.5in !important;
+            /* ── Header ────────────────────────────────────── */
+            .resume-header {
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f172a 100%);
+                padding: 32px 36px;
+                display: flex;
+                align-items: center;
+                gap: 24px;
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                border-radius: 18px 18px 0 0;
+                box-shadow: 0 4px 24px rgba(0,0,0,0.35);
+                overflow: hidden;
+            }
+            /* Glow */
+            .resume-header::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: radial-gradient(ellipse 55% 90% at 75% 50%, rgba(37,99,235,0.18) 0%, transparent 70%);
+                pointer-events: none;
+            }
+            /* Rainbow accent bar */
+            .resume-header::after {
+                content: '';
+                position: absolute;
+                bottom: 0; left: 0; right: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #2563eb 0%, #06b6d4 40%, #8b5cf6 70%, #ec4899 100%);
             }
 
+            /* ── Avatar ─────────────────────────────────────── */
+            .avatar-wrap {
+                position: relative;
+                flex-shrink: 0;
+                width: 96px;
+                height: 96px;
+                z-index: 1;
+                cursor: pointer;
+                transition: transform 0.3s cubic-bezier(.34,1.56,.64,1), filter 0.3s ease;
+            }
+            .avatar-wrap::before {
+                content: '';
+                position: absolute;
+                inset: -3px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #2563eb, #06b6d4, #8b5cf6);
+                z-index: -1;
+            }
+            .avatar-wrap img {
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                object-fit: cover;
+                display: block;
+                border: 3px solid #0f172a;
+            }
+            .eye-svg {
+                position: absolute;
+                top: 0; left: 0;
+                width: 100%; height: 100%;
+                pointer-events: none;
+            }
+            .avatar-wrap:hover {
+                transform: scale(1.12) rotate(6deg);
+                filter: drop-shadow(0 0 18px rgba(37,99,235,0.75));
+            }
+            .avatar-wrap.scared {
+                transform: scale(0.78) translateY(12px) !important;
+                filter: drop-shadow(0 0 8px rgba(239,68,68,0.6)) !important;
+            }
+
+            /* ── Header text ────────────────────────────────── */
+            .header-info { flex: 1; z-index: 1; }
+
+            .header-name {
+                font-size: 21pt;
+                font-weight: 800;
+                color: white;
+                letter-spacing: -0.5pt;
+                line-height: 1.1;
+                margin-bottom: 2px;
+            }
+            .header-nickname {
+                font-size: 10pt;
+                font-weight: 400;
+                color: rgba(255,255,255,0.45);
+                letter-spacing: 0.5pt;
+            }
+            .header-title {
+                font-size: 10.5pt;
+                font-weight: 500;
+                color: #93c5fd;
+                margin: 6px 0 14px;
+                letter-spacing: 0.1pt;
+            }
+            .header-contact {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px 20px;
+            }
+            .contact-item {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                font-size: 8.5pt;
+                color: rgba(255,255,255,0.65);
+            }
+            .contact-icon { font-size: 10px; opacity: 0.8; }
+            .contact-item a { color: #93c5fd; font-weight: 500; }
+            .contact-item a:hover { color: #bfdbfe; }
+
+            /* ── Body ───────────────────────────────────────── */
+            .resume-body {
+                display: grid;
+                grid-template-columns: 230px 1fr;
+                border-radius: 0 0 18px 18px;
+                overflow: hidden;
+            }
+
+            /* ── Sidebar ────────────────────────────────────── */
+            .sidebar {
+                background: #0f172a;
+                padding: 24px 20px;
+                color: rgba(255,255,255,0.82);
+            }
+            .sidebar-section { margin-bottom: 22px; }
+            .sidebar-section:last-child { margin-bottom: 0; }
+
+            .sidebar-title {
+                font-size: 7pt;
+                font-weight: 700;
+                letter-spacing: 1.8pt;
+                text-transform: uppercase;
+                color: #60a5fa;
+                margin-bottom: 10px;
+                padding-bottom: 6px;
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+            }
+
+            /* Skill groups */
+            .skill-group { margin-bottom: 9px; }
+            .skill-group:last-child { margin-bottom: 0; }
+            .skill-group-label {
+                font-size: 7pt;
+                font-weight: 600;
+                color: rgba(255,255,255,0.45);
+                text-transform: uppercase;
+                letter-spacing: 0.6pt;
+                margin-bottom: 4px;
+            }
+            .skill-tags {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 3px;
+            }
+            .skill-tag {
+                background: rgba(37,99,235,0.22);
+                border: 1px solid rgba(96,165,250,0.3);
+                color: rgba(255,255,255,0.8);
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-size: 7.5pt;
+                line-height: 1.5;
+                transition: all 0.2s ease;
+            }
+            .skill-tag:hover {
+                background: rgba(37,99,235,0.42);
+                border-color: rgba(96,165,250,0.6);
+                color: white;
+            }
+
+            /* Education */
+            .edu-item { margin-bottom: 6px; }
+            .edu-degree {
+                font-size: 8.5pt;
+                font-weight: 600;
+                color: white;
+                line-height: 1.3;
+            }
+            .edu-school {
+                font-size: 8pt;
+                color: rgba(255,255,255,0.5);
+                margin-top: 2px;
+            }
+            .edu-year {
+                font-size: 7.5pt;
+                color: #60a5fa;
+                margin-top: 2px;
+                font-weight: 500;
+            }
+
+            /* Certs */
+            .cert-item {
+                font-size: 8.5pt;
+                color: rgba(255,255,255,0.8);
+                padding: 6px 8px 6px 12px;
+                background: rgba(255,255,255,0.04);
+                border-radius: 6px;
+                border-left: 2px solid #2563eb;
+                line-height: 1.4;
+                margin-bottom: 5px;
+            }
+
+            /* ── Main content ───────────────────────────────── */
+            .main-content {
+                padding: 24px 28px;
+                background: white;
+            }
+
+            .main-section { margin-bottom: 18px; }
+            .main-section:last-child { margin-bottom: 0; }
+
+            .section-title {
+                font-size: 7.5pt;
+                font-weight: 700;
+                letter-spacing: 1.5pt;
+                text-transform: uppercase;
+                color: #2563eb;
+                margin-bottom: 10px;
+                padding-bottom: 5px;
+                border-bottom: 1.5px solid #e2e8f0;
+                position: relative;
+                transition: color 0.2s;
+            }
+            .section-title::after {
+                content: '';
+                position: absolute;
+                bottom: -1.5px; left: 0;
+                width: 36px; height: 1.5px;
+                background: #2563eb;
+                border-radius: 2px;
+            }
+            .section-title:hover { color: #1d4ed8; }
+
+            /* Summary list */
+            .summary-list { list-style: none; padding: 0; }
+            .summary-list li {
+                padding-left: 14px;
+                margin-bottom: 4px;
+                font-size: 9pt;
+                line-height: 1.45;
+                position: relative;
+                color: #334155;
+            }
+            .summary-list li::before {
+                content: '▸';
+                position: absolute;
+                left: 0;
+                color: #2563eb;
+                font-size: 8pt;
+                top: 1px;
+            }
+
+            /* ── Job entry ──────────────────────────────────── */
+            .job { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #f1f5f9; }
+            .job:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+
+            .job-top {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                margin-bottom: 1px;
+            }
+            .job-company {
+                font-size: 10pt;
+                font-weight: 700;
+                color: #0f172a;
+                letter-spacing: 0.2pt;
+            }
+            .job-location {
+                font-size: 8pt;
+                color: #94a3b8;
+                font-weight: 400;
+            }
+            .job-sub {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                margin-bottom: 6px;
+            }
+            .job-title-text {
+                font-size: 9pt;
+                font-weight: 600;
+                color: #2563eb;
+            }
+            .job-date {
+                font-size: 8pt;
+                color: #64748b;
+                font-style: italic;
+            }
+            .job-bullets { list-style: none; padding: 0; }
+            .job-bullets li {
+                padding-left: 13px;
+                margin-bottom: 3px;
+                font-size: 8.5pt;
+                line-height: 1.4;
+                position: relative;
+                color: #334155;
+                transition: transform 0.15s ease;
+            }
+            .job-bullets li::before {
+                content: '·';
+                position: absolute;
+                left: 2px;
+                color: #93c5fd;
+                font-size: 14pt;
+                line-height: 0.8;
+                top: 2px;
+            }
+            .job-bullets li:hover { transform: translateX(3px); }
+
+            strong { font-weight: 600; color: #0f172a; }
+
+            /* ── Project cards ──────────────────────────────── */
+            .project-card {
+                margin-bottom: 14px;
+                padding: 12px 14px;
+                border-radius: 10px;
+                border: 1px solid #e2e8f0;
+                background: #f8fafc;
+                transition: box-shadow 0.2s ease, border-color 0.2s ease;
+            }
+            .project-card:last-child { margin-bottom: 0; }
+            .project-card:hover {
+                box-shadow: 0 2px 12px rgba(37,99,235,0.1);
+                border-color: #bfdbfe;
+            }
+            .project-header {
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 6px;
+                margin-bottom: 5px;
+            }
+            .project-name {
+                font-size: 10pt;
+                font-weight: 700;
+                color: #0f172a;
+            }
+            .project-name a {
+                color: inherit;
+            }
+            .project-name a:hover { color: #2563eb; text-decoration: none; }
+            .project-tagline {
+                font-size: 8.5pt;
+                color: #2563eb;
+                font-weight: 500;
+            }
+            .project-tech {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 3px;
+                margin-bottom: 7px;
+            }
+            .project-tech-tag {
+                background: #eff6ff;
+                border: 1px solid #bfdbfe;
+                color: #1d4ed8;
+                padding: 1px 6px;
+                border-radius: 4px;
+                font-size: 7pt;
+                font-weight: 500;
+                line-height: 1.6;
+            }
+            .project-bullets { list-style: none; padding: 0; }
+            .project-bullets li {
+                padding-left: 13px;
+                margin-bottom: 3px;
+                font-size: 8.5pt;
+                line-height: 1.4;
+                position: relative;
+                color: #334155;
+            }
+            .project-bullets li::before {
+                content: '▸';
+                position: absolute;
+                left: 0;
+                top: 1px;
+                color: #2563eb;
+                font-size: 8pt;
+            }
+
+            /* ── Achievements grid ──────────────────────────── */
+            .achievement-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            .achievement-item {
+                padding: 7px 10px 7px 24px;
+                background: #f8fafc;
+                border-radius: 7px;
+                font-size: 8.5pt;
+                line-height: 1.35;
+                color: #334155;
+                position: relative;
+                border-left: 2px solid #2563eb;
+            }
+            .achievement-item::before {
+                content: '↑';
+                position: absolute;
+                left: 7px;
+                top: 7px;
+                color: #2563eb;
+                font-weight: 700;
+                font-size: 9pt;
+            }
+
+            /* ── Animations ─────────────────────────────────── */
+            @keyframes fadeUp {
+                from { opacity: 0; transform: translateY(14px); }
+                to   { opacity: 1; transform: translateY(0); }
+            }
+            .anim-in {
+                opacity: 0;
+                animation: fadeUp 0.45s ease forwards;
+            }
+
+            /* ── Print ──────────────────────────────────────── */
             @media print {
-                html.resume-page body {
+                body { background: white; }
+                .print-btn { display: none !important; }
+                .avatar-wrap { display: none !important; }
+                .resume {
                     margin: 0;
-                    padding: 0;
+                    border-radius: 0;
+                    box-shadow: none;
+                    max-width: 100%;
                 }
-                html.resume-page .page-break {
-                    page-break-before: always;
+                .resume-header {
+                    position: static;
+                    border-radius: 0;
+                    box-shadow: none;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
                 }
-                html.resume-page .print-button {
-                    display: none !important;
+                .sidebar {
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
                 }
-                html.resume-page .no-print {
-                    display: none !important;
+                .achievement-item {
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
                 }
+                .job-bullets li:hover { transform: none; }
+                .job { page-break-inside: avoid; }
             }
 
-            html.resume-page h1 {
-                font-size: 24pt !important;
-                font-weight: bold !important;
-                margin-bottom: 4pt !important;
-                color: #1a1a1a !important;
-                text-transform: uppercase !important;
-                letter-spacing: 1pt !important;
+            /* ── Responsive ─────────────────────────────────── */
+            @media (max-width: 720px) {
+                .resume { margin: 0; border-radius: 0; }
+                .resume-body { grid-template-columns: 1fr; }
+                .resume-header { flex-direction: column; text-align: center; }
+                .header-contact { justify-content: center; }
+                .avatar-wrap { margin: 0 auto; }
+                .achievement-grid { grid-template-columns: 1fr; }
+                .print-btn { top: 10px; right: 10px; font-size: 11px; padding: 7px 13px; }
             }
 
-            html.resume-page .subtitle {
-                font-size: 12pt !important;
-                color: #2c3e50 !important;
-                margin-bottom: 8pt !important;
-                font-weight: 600 !important;
-            }
-
-            html.resume-page .contact {
-                font-size: 10pt !important;
-                margin-bottom: 12pt !important;
-                color: #333 !important;
-            }
-
-            html.resume-page h2 {
-                font-size: 13pt !important;
-                font-weight: bold !important;
-                margin-top: 14pt !important;
-                margin-bottom: 8pt !important;
-                padding-bottom: 2pt !important;
-                border-bottom: 2pt solid #2c3e50 !important;
-                color: #2c3e50 !important;
-                text-transform: uppercase !important;
-                letter-spacing: 0.5pt !important;
-            }
-
-            html.resume-page h3 {
-                font-size: 11pt !important;
-                font-weight: bold !important;
-                margin-top: 10pt !important;
-                margin-bottom: 2pt !important;
-                color: #1a1a1a !important;
-            }
-
-            html.resume-page .job-header {
-                display: flex !important;
-                justify-content: space-between !important;
-                align-items: baseline !important;
-                margin-bottom: 3pt !important;
-            }
-
-            html.resume-page .job-title {
-                font-size: 10.5pt !important;
-                font-weight: 600 !important;
-                color: #2c3e50 !important;
-            }
-
-            html.resume-page .date {
-                font-size: 10pt !important;
-                font-style: italic !important;
-                color: #555 !important;
-            }
-
-            html.resume-page ul {
-                margin-left: 20pt !important;
-                margin-top: 4pt !important;
-                margin-bottom: 8pt !important;
-            }
-
-            html.resume-page li {
-                margin-bottom: 3pt !important;
-                line-height: 1.35 !important;
-            }
-
-            html.resume-page .skills-section {
-                display: grid !important;
-                grid-template-columns: 1fr !important;
-                gap: 4pt !important;
-                margin-top: 6pt !important;
-            }
-
-            html.resume-page .skill-row {
-                display: flex !important;
-                gap: 8pt !important;
-            }
-
-            html.resume-page .skill-label {
-                font-weight: bold !important;
-                min-width: 140pt !important;
-                color: #2c3e50 !important;
-            }
-
-            html.resume-page .skill-content {
-                flex: 1 !important;
-            }
-
-            html.resume-page .summary-list {
-                margin-left: 15pt !important;
-                margin-top: 6pt !important;
-            }
-
-            html.resume-page .summary-list li {
-                margin-bottom: 4pt !important;
-            }
-
-            html.resume-page strong {
-                font-weight: 600 !important;
-                color: #1a1a1a !important;
-            }
-
-            html.resume-page .keywords {
-                font-size: 8pt !important;
-                color: #fff !important;
-                line-height: 1.2 !important;
-                margin-top: 12pt !important;
-                background: #fff !important;
-            }
-
-            /* Print Button Styles */
-            html.resume-page .print-button {
-                position: fixed !important;
-                top: 20px !important;
-                right: 20px !important;
-                padding: 12px 24px !important;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-                color: white !important;
-                border: none !important;
-                border-radius: 8px !important;
-                font-size: 14pt !important;
-                font-weight: 600 !important;
-                cursor: pointer !important;
-                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4) !important;
-                transition: all 0.3s ease !important;
-                z-index: 1000 !important;
-            }
-
-            html.resume-page .print-button:hover {
-                transform: translateY(-2px) !important;
-                box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6) !important;
-            }
-
-            html.resume-page .print-button:hover::after {
-                content: "print like comics" !important;
-                position: absolute !important;
-                top: 50% !important;
-                left: 50% !important;
-                transform: translate(-50%, -50%) !important;
-                font-size: 14pt !important;
-                font-weight: 700 !important;
-                color: white !important;
-                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3) !important;
-            }
-
-            html.resume-page .print-button:hover .button-text {
-                opacity: 0 !important;
-            }
-
-            html.resume-page .print-button:active {
-                transform: translateY(0) !important;
-            }
-
-            /* Random Animation Classes */
-            html.resume-page .fade-in {
-                animation: fadeIn 0.8s ease-in !important;
-            }
-
-            html.resume-page .slide-in-left {
-                animation: slideInLeft 0.6s ease-out !important;
-            }
-
-            html.resume-page .slide-in-right {
-                animation: slideInRight 0.6s ease-out !important;
-            }
-
-            html.resume-page .slide-in-up {
-                animation: slideInUp 0.7s ease-out !important;
-            }
-
-            html.resume-page .zoom-in {
-                animation: zoomIn 0.5s ease-out !important;
-            }
-
-            html.resume-page .bounce-in {
-                animation: bounceIn 0.8s ease-out !important;
-            }
-
-            html.resume-page .rotate-in {
-                animation: rotateIn 0.7s ease-out !important;
-            }
-
-            @keyframes fadeIn {
-                from {
-                    opacity: 0;
-                }
-                to {
-                    opacity: 1;
-                }
-            }
-
-            @keyframes slideInLeft {
-                from {
-                    opacity: 0;
-                    transform: translateX(-50px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateX(0);
-                }
-            }
-
-            @keyframes slideInRight {
-                from {
-                    opacity: 0;
-                    transform: translateX(50px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateX(0);
-                }
-            }
-
-            @keyframes slideInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(30px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            @keyframes zoomIn {
-                from {
-                    opacity: 0;
-                    transform: scale(0.8);
-                }
-                to {
-                    opacity: 1;
-                    transform: scale(1);
-                }
-            }
-
-            @keyframes bounceIn {
-                0% {
-                    opacity: 0;
-                    transform: scale(0.3);
-                }
-                50% {
-                    opacity: 1;
-                    transform: scale(1.05);
-                }
-                70% {
-                    transform: scale(0.9);
-                }
-                100% {
-                    transform: scale(1);
-                }
-            }
-
-            @keyframes rotateIn {
-                from {
-                    opacity: 0;
-                    transform: rotate(-10deg) scale(0.9);
-                }
-                to {
-                    opacity: 1;
-                    transform: rotate(0) scale(1);
-                }
-            }
-
-            /* Hover effects for sections */
-            html.resume-page h2 {
-                transition: all 0.3s ease !important;
-            }
-
-            html.resume-page h2:hover {
-                color: #667eea !important;
-                transform: translateX(5px) !important;
-            }
-
-            html.resume-page li {
-                transition: all 0.2s ease !important;
-            }
-
-            html.resume-page li:hover {
-                transform: translateX(3px) !important;
-                color: #667eea !important;
-            }
-
-            html.resume-page .skill-row {
-                transition: all 0.3s ease !important;
-            }
-
-            html.resume-page .skill-row:hover {
-                background: linear-gradient(
-                    90deg,
-                    rgba(102, 126, 234, 0.05) 0%,
-                    transparent 100%
-                ) !important;
-                padding-left: 8pt !important;
-                border-left: 3px solid #667eea !important;
-            }
-
-            /* Avatar with googly eyes */
-            html.resume-page .avatar-container {
-                position: fixed !important;
-                top: 20px !important;
-                right: 20px !important;
-                width: 150px !important;
-                height: 150px !important;
-                z-index: 999 !important;
-                transition: transform 0.3s ease !important;
-                cursor: pointer !important;
-            }
-
-            html.resume-page .avatar-container:hover {
-                transform: scale(1.15) rotate(5deg) !important;
-                filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.8)) !important;
-            }
-
-            html.resume-page .avatar-container.scared {
-                transform: scale(0.7) translateY(15px) !important;
-            }
-
-            @media print {
-                html.resume-page .avatar-container {
-                    display: none !important;
-                }
-            }
+            /* Hidden ATS keywords */
+            .ats { font-size: 0; line-height: 0; color: white; visibility: collapse; user-select: none; }
         </style>
     </head>
+
     <body>
-        <!-- Avatar with googly eyes that follow cursor -->
-        <div
-            class="avatar-container no-print"
-            onclick="window.print()"
-            title="Print"
-        >
-            <div style="position: relative; width: 100%; height: 100%;">
-                <!-- Your photo -->
-                <img
-                    src="/saket-photo.jpg"
-                    alt="Saket Sharma"
-                    style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: none;"
-                />
+        <!-- Print button -->
+        <button class="print-btn no-print" onclick="window.print()">
+            🖨 Print / PDF
+        </button>
 
-                <!-- Moving pupils overlay with white eye backgrounds -->
-                <svg
-                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"
-                    viewBox="0 0 200 200"
-                    xmlns="http://www.w3.org/2000/svg"
-                >
-                    <!-- Left eye with moving pupil -->
-                    <g transform="translate(78, 65)">
-                        <!-- White eye background (covers real pupil) -->
-                        <ellipse cx="0" cy="0" rx="16" ry="11" fill="white"
-                        ></ellipse>
-                        <!-- Moving pupil group -->
-                        <g id="leftPupilGroup">
-                            <!-- Dark pupil (bigger) -->
-                            <circle
-                                id="leftPupil"
-                                cx="0"
-                                cy="0"
-                                r="8"
-                                fill="#1a1a1a"></circle>
-                            <!-- Highlight for realism -->
-                            <circle
-                                cx="2"
-                                cy="-2"
-                                r="2.5"
-                                fill="white"
-                                opacity="0.8"></circle>
-                        </g>
-                    </g>
+        <div class="resume">
 
-                    <!-- Right eye with moving pupil -->
-                    <g transform="translate(122, 65)">
-                        <!-- White eye background (covers real pupil) -->
-                        <ellipse cx="0" cy="0" rx="16" ry="11" fill="white"
-                        ></ellipse>
-                        <!-- Moving pupil group -->
-                        <g id="rightPupilGroup">
-                            <!-- Dark pupil (bigger) -->
-                            <circle
-                                id="rightPupil"
-                                cx="0"
-                                cy="0"
-                                r="8"
-                                fill="#1a1a1a"></circle>
-                            <!-- Highlight for realism -->
-                            <circle
-                                cx="2"
-                                cy="-2"
-                                r="2.5"
-                                fill="white"
-                                opacity="0.8"></circle>
+            <!-- ── Header ──────────────────────────────────── -->
+            <header class="resume-header anim-in" style="animation-delay: 0ms;">
+                <!-- Avatar with googly eyes -->
+                <div class="avatar-wrap no-print" id="avatarWrap">
+                    <img src="/saket-photo.jpg" alt="Saket Sharma" />
+                    <svg class="eye-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <g transform="translate(78, 65)">
+                            <ellipse cx="0" cy="0" rx="14" ry="10" fill="white" opacity="0.9" />
+                            <g id="leftPupilGroup">
+                                <circle cx="0" cy="0" r="7" fill="#0f172a" />
+                                <circle cx="2" cy="-2" r="2" fill="white" opacity="0.85" />
+                            </g>
                         </g>
-                    </g>
-                </svg>
+                        <g transform="translate(122, 65)">
+                            <ellipse cx="0" cy="0" rx="14" ry="10" fill="white" opacity="0.9" />
+                            <g id="rightPupilGroup">
+                                <circle cx="0" cy="0" r="7" fill="#0f172a" />
+                                <circle cx="2" cy="-2" r="2" fill="white" opacity="0.85" />
+                            </g>
+                        </g>
+                    </svg>
+                </div>
+
+                <!-- Name + contact -->
+                <div class="header-info">
+                    <h1 class="header-name">
+                        SAKET SHARMA
+                        <span class="header-nickname"> — "CLIFF WATERS"</span>
+                    </h1>
+                    <div class="header-title">Senior Full Stack Software Engineer · 8+ Years</div>
+                    <div class="header-contact">
+                        <span class="contact-item">
+                            <span class="contact-icon">✉</span>
+                            saket87@live.com
+                        </span>
+                        <span class="contact-item">
+                            <span class="contact-icon">⌨</span>
+                            <a href="https://github.com/doctor69" target="_blank" rel="noopener noreferrer">
+                                github.com/doctor69
+                            </a>
+                        </span>
+                        <span class="contact-item">
+                            <span class="contact-icon">📍</span>
+                            United States
+                        </span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- ── Body ────────────────────────────────────── -->
+            <div class="resume-body">
+
+                <!-- ── Sidebar ──────────────────────────────── -->
+                <aside class="sidebar">
+
+                    <div class="sidebar-section anim-in" style="animation-delay:80ms">
+                        <div class="sidebar-title">Technical Skills</div>
+
+                        <div class="skill-group">
+                            <div class="skill-group-label">Languages</div>
+                            <div class="skill-tags">
+                                <span class="skill-tag">Java 8–21</span>
+                                <span class="skill-tag">TypeScript</span>
+                                <span class="skill-tag">JavaScript</span>
+                                <span class="skill-tag">Python</span>
+                                <span class="skill-tag">C#</span>
+                                <span class="skill-tag">SQL / PL/SQL</span>
+                            </div>
+                        </div>
+
+                        <div class="skill-group">
+                            <div class="skill-group-label">Backend</div>
+                            <div class="skill-tags">
+                                <span class="skill-tag">Spring Boot 3.x</span>
+                                <span class="skill-tag">Spring Cloud</span>
+                                <span class="skill-tag">Spring Security</span>
+                                <span class="skill-tag">Spring WebFlux</span>
+                                <span class="skill-tag">Hibernate / JPA</span>
+                                <span class="skill-tag">Node.js</span>
+                                <span class="skill-tag">.NET Core</span>
+                            </div>
+                        </div>
+
+                        <div class="skill-group">
+                            <div class="skill-group-label">Frontend</div>
+                            <div class="skill-tags">
+                                <span class="skill-tag">React 18</span>
+                                <span class="skill-tag">Next.js 14</span>
+                                <span class="skill-tag">Redux</span>
+                                <span class="skill-tag">Tailwind CSS</span>
+                                <span class="skill-tag">Material-UI</span>
+                            </div>
+                        </div>
+
+                        <div class="skill-group">
+                            <div class="skill-group-label">APIs & Messaging</div>
+                            <div class="skill-tags">
+                                <span class="skill-tag">REST / GraphQL</span>
+                                <span class="skill-tag">gRPC</span>
+                                <span class="skill-tag">Apache Kafka</span>
+                                <span class="skill-tag">RabbitMQ</span>
+                                <span class="skill-tag">JMS / IBM MQ</span>
+                                <span class="skill-tag">OAuth2 / JWT</span>
+                                <span class="skill-tag">OpenAPI / Swagger</span>
+                            </div>
+                        </div>
+
+                        <div class="skill-group">
+                            <div class="skill-group-label">Databases</div>
+                            <div class="skill-tags">
+                                <span class="skill-tag">Oracle 19c</span>
+                                <span class="skill-tag">PostgreSQL</span>
+                                <span class="skill-tag">MongoDB</span>
+                                <span class="skill-tag">Redis</span>
+                                <span class="skill-tag">IBM DB2</span>
+                                <span class="skill-tag">MySQL</span>
+                                <span class="skill-tag">DynamoDB</span>
+                            </div>
+                        </div>
+
+                        <div class="skill-group">
+                            <div class="skill-group-label">Cloud & DevOps</div>
+                            <div class="skill-tags">
+                                <span class="skill-tag">AWS EC2/S3/Lambda</span>
+                                <span class="skill-tag">AWS ECS/RDS</span>
+                                <span class="skill-tag">Docker</span>
+                                <span class="skill-tag">Kubernetes</span>
+                                <span class="skill-tag">Terraform</span>
+                                <span class="skill-tag">Jenkins</span>
+                                <span class="skill-tag">GitHub Actions</span>
+                                <span class="skill-tag">Cloudflare Pages</span>
+                            </div>
+                        </div>
+
+                        <div class="skill-group">
+                            <div class="skill-group-label">AI & Modern Stack</div>
+                            <div class="skill-tags">
+                                <span class="skill-tag">Anthropic Claude API</span>
+                                <span class="skill-tag">Astro</span>
+                                <span class="skill-tag">Supabase</span>
+                                <span class="skill-tag">Alpaca Markets</span>
+                                <span class="skill-tag">Prompt Engineering</span>
+                            </div>
+                        </div>
+
+                        <div class="skill-group">
+                            <div class="skill-group-label">Testing & Quality</div>
+                            <div class="skill-tags">
+                                <span class="skill-tag">JUnit 5</span>
+                                <span class="skill-tag">Mockito</span>
+                                <span class="skill-tag">TestContainers</span>
+                                <span class="skill-tag">Jest</span>
+                                <span class="skill-tag">Selenium</span>
+                                <span class="skill-tag">SonarQube</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section anim-in" style="animation-delay:140ms">
+                        <div class="sidebar-title">Education</div>
+                        <div class="edu-item">
+                            <div class="edu-degree">Associate Degree<br/>Computer Science</div>
+                            <div class="edu-school">Quincy College · Quincy, MA</div>
+                            <div class="edu-year">2010</div>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section anim-in" style="animation-delay:180ms">
+                        <div class="sidebar-title">Certifications</div>
+                        <div class="cert-item">FAA Certified Pilot<br/>Part 107 — UAVs</div>
+                    </div>
+
+                    <div class="sidebar-section anim-in" style="animation-delay:220ms">
+                        <div class="sidebar-title">Methodologies</div>
+                        <div class="skill-tags">
+                            <span class="skill-tag">Agile / Scrum</span>
+                            <span class="skill-tag">TDD / BDD</span>
+                            <span class="skill-tag">CI/CD</span>
+                            <span class="skill-tag">Microservices</span>
+                            <span class="skill-tag">DDD</span>
+                            <span class="skill-tag">Design Patterns</span>
+                            <span class="skill-tag">SOLID</span>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section anim-in" style="animation-delay:260ms">
+                        <div class="sidebar-title">Tools</div>
+                        <div class="skill-tags">
+                            <span class="skill-tag">IntelliJ IDEA</span>
+                            <span class="skill-tag">VS Code</span>
+                            <span class="skill-tag">Git / GitFlow</span>
+                            <span class="skill-tag">Maven / Gradle</span>
+                            <span class="skill-tag">Jira / Confluence</span>
+                            <span class="skill-tag">Datadog</span>
+                            <span class="skill-tag">Splunk</span>
+                        </div>
+                    </div>
+
+                </aside>
+
+                <!-- ── Main content ──────────────────────────── -->
+                <main class="main-content">
+
+                    <!-- Summary -->
+                    <section class="main-section anim-in" style="animation-delay:100ms">
+                        <div class="section-title">Professional Summary</div>
+                        <ul class="summary-list">
+                            <li>Senior Software Engineer with <strong>8+ years</strong> designing enterprise applications using <strong>Java, Spring Boot, Microservices, React, and AWS</strong></li>
+                            <li>Architected and delivered <strong>50+ RESTful APIs and GraphQL services</strong> handling millions of transactions with 99.9% uptime</li>
+                            <li>Successfully migrated monolithic applications to containerized microservices using <strong>Docker, Kubernetes, and AWS ECS</strong> — reducing infrastructure costs by 35%</li>
+                            <li>Expert in <strong>event-driven architectures</strong> with Apache Kafka, RabbitMQ, and JMS for real-time data processing at scale</li>
+                            <li>Strong database design and optimization background across Oracle, PostgreSQL, DB2, MySQL, MongoDB, and Redis</li>
+                            <li>Proven leadership mentoring engineering teams, conducting code reviews, and championing secure, scalable development practices</li>
+                        </ul>
+                    </section>
+
+                    <!-- Experience -->
+                    <section class="main-section anim-in" style="animation-delay:160ms">
+                        <div class="section-title">Professional Experience</div>
+
+                        <!-- Mastercard -->
+                        <div class="job">
+                            <div class="job-top">
+                                <span class="job-company">MASTERCARD</span>
+                                <span class="job-location">St. Louis, MO</span>
+                            </div>
+                            <div class="job-sub">
+                                <span class="job-title-text">Senior Software Developer</span>
+                                <span class="job-date">Dec 2023 – Present</span>
+                            </div>
+                            <ul class="job-bullets">
+                                <li>Architected <strong>high-performance RESTful APIs</strong> using Spring Boot 3.x and Java 21, processing <strong>2M+ daily transactions</strong> with sub-100ms response times and 99.95% uptime</li>
+                                <li>Designed <strong>microservices architecture</strong> with API Gateway (Spring Cloud Gateway), rate limiting, circuit breakers (Resilience4j), and OAuth2/JWT authentication</li>
+                                <li>Led <strong>Java 8 → Java 21 migration</strong> across 15+ enterprise applications; leveraged records, pattern matching, and virtual threads for 30% performance improvement and 25% code reduction</li>
+                                <li>Developed <strong>GraphQL APIs</strong> using Spring for GraphQL, reducing over-fetching and improving mobile performance by 45% via optimized query resolvers and DataLoader</li>
+                                <li>Implemented <strong>event-driven architecture</strong> with Apache Kafka for real-time payment processing — 500K+ events/hour with exactly-once semantics and dead-letter queue handling</li>
+                                <li>Built <strong>Redis caching layer</strong> (cache-aside + TTL policies), cutting database load by 60% and API response times from 500ms to 80ms</li>
+                                <li>Established <strong>CI/CD pipelines</strong> with Jenkins achieving 50+ zero-downtime production releases/month with automated unit, integration, and security scans (SonarQube, OWASP)</li>
+                                <li>Mentored 4 junior developers on Spring Boot best practices, Java 21 features, and microservices patterns through code reviews and pair programming</li>
+                            </ul>
+                        </div>
+
+                        <!-- Visa -->
+                        <div class="job">
+                            <div class="job-top">
+                                <span class="job-company">VISA</span>
+                                <span class="job-location">Austin, TX</span>
+                            </div>
+                            <div class="job-sub">
+                                <span class="job-title-text">Java Full Stack Software Developer</span>
+                                <span class="job-date">Sep 2022 – Nov 2023</span>
+                            </div>
+                            <ul class="job-bullets">
+                                <li>Spearheaded <strong>legacy modernization</strong> — migrated 8 monolithic J2EE apps to Spring Boot microservices, reducing deployment time from 4 hours to 15 minutes</li>
+                                <li>Developed <strong>20+ RESTful APIs</strong> with comprehensive error handling, validation, and Springdoc-OpenAPI documentation</li>
+                                <li>Implemented <strong>containerization strategy</strong> — Docker images and Kubernetes manifests for 12 microservices with health checks and auto-scaling</li>
+                                <li>Built <strong>secure auth framework</strong> with SSO, LDAP, OAuth2, and MFA supporting 50K+ concurrent users; managed SSL/TLS automation for PCI-DSS compliance</li>
+                                <li>Developed <strong>async processing</strong> with Spring @Async, CompletableFuture, and message queues for payment workflows — 60% throughput improvement</li>
+                                <li>Achieved <strong>85%+ code coverage</strong> with JUnit 5, Mockito, and contract tests; reduced technical debt by 40% through SonarQube-driven refactoring</li>
+                            </ul>
+                        </div>
+
+                        <!-- State Street -->
+                        <div class="job">
+                            <div class="job-top">
+                                <span class="job-company">STATE STREET CORPORATION</span>
+                                <span class="job-location">Quincy, MA</span>
+                            </div>
+                            <div class="job-sub">
+                                <span class="job-title-text">Java Full Stack Software Developer</span>
+                                <span class="job-date">Nov 2017 – Feb 2022</span>
+                            </div>
+                            <ul class="job-bullets">
+                                <li>Designed <strong>enterprise REST APIs</strong> using Spring MVC and Spring Boot serving 100K+ daily active users across multiple time zones</li>
+                                <li>Led <strong>UI modernization</strong> — migrated legacy Adobe Flex to React 18 with TypeScript, Redux, and Material-UI; improved page load times by 65% and user satisfaction by 40%</li>
+                                <li>Built <strong>reactive APIs</strong> using Spring WebFlux for non-blocking async processing, improving concurrent request capacity by 200%</li>
+                                <li>Created <strong>reusable component library</strong> with 50+ Storybook-documented components — reduced development time by 30% across teams</li>
+                                <li>Implemented <strong>real-time features</strong> using WebSockets and SSE for live financial data, trade notifications, and market alerts</li>
+                                <li>Integrated <strong>JMS/IBM MQ</strong> for async service communication with request-reply pattern, timeout handling, and retry logic</li>
+                                <li>Established <strong>Jenkins CI/CD</strong> with Maven builds, automated testing, and blue-green deployments; migrated SVN to Git with GitFlow</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- Key Achievements -->
+                    <section class="main-section anim-in" style="animation-delay:220ms">
+                        <div class="section-title">Key Achievements</div>
+                        <div class="achievement-grid">
+                            <div class="achievement-item">Reduced API response times by <strong>70%</strong> via Redis caching and database query tuning</div>
+                            <div class="achievement-item">Led Java 8→21 migration: <strong>30% perf gain</strong> and reduced memory footprint</div>
+                            <div class="achievement-item">Architected platform processing <strong>2M+ daily transactions</strong> at 99.95% uptime</div>
+                            <div class="achievement-item">Scaled deployment from monthly to <strong>50+ releases/month</strong> via CI/CD automation</div>
+                            <div class="achievement-item">Reduced production incidents by <strong>40%</strong> through testing and observability</div>
+                            <div class="achievement-item">Cut infrastructure costs by <strong>35%</strong> via microservices containerization</div>
+                        </div>
+                    </section>
+
+                    <!-- Personal Projects -->
+                    <section class="main-section anim-in" style="animation-delay:270ms">
+                        <div class="section-title">Personal Projects</div>
+
+                        <!-- LEADTRADE -->
+                        <div class="project-card">
+                            <div class="project-header">
+                                <span class="project-name">LEADTRADE</span>
+                                <span class="project-tagline">Social Mirror-Trading Platform</span>
+                            </div>
+                            <div class="project-tech">
+                                <span class="project-tech-tag">Astro</span>
+                                <span class="project-tech-tag">React</span>
+                                <span class="project-tech-tag">TypeScript</span>
+                                <span class="project-tech-tag">Tailwind CSS</span>
+                                <span class="project-tech-tag">Supabase</span>
+                                <span class="project-tech-tag">Alpaca Markets API</span>
+                                <span class="project-tech-tag">Cloudflare Pages</span>
+                                <span class="project-tech-tag">PWA</span>
+                            </div>
+                            <ul class="project-bullets">
+                                <li>Built an institutional-grade trading platform enabling users to mirror elite traders' portfolios in real time via the Alpaca Markets brokerage API</li>
+                                <li>Designed a global leaderboard engine with live rankings, win-rate analytics, and performance attribution dashboards</li>
+                                <li>Implemented row-level security in Supabase and OAuth2 auth with zero-trust API access from Cloudflare edge workers</li>
+                                <li>Shipped as a progressive web app with offline caching, achieving sub-2s initial load on mobile via Astro's island architecture</li>
+                            </ul>
+                        </div>
+
+                        <!-- JobHunt.ai -->
+                        <div class="project-card">
+                            <div class="project-header">
+                                <span class="project-name">JobHunt.ai</span>
+                                <span class="project-tagline">AI-Powered Job Application Assistant</span>
+                            </div>
+                            <div class="project-tech">
+                                <span class="project-tech-tag">Anthropic Claude API</span>
+                                <span class="project-tech-tag">React</span>
+                                <span class="project-tech-tag">TypeScript</span>
+                                <span class="project-tech-tag">Supabase</span>
+                                <span class="project-tech-tag">Tailwind CSS</span>
+                            </div>
+                            <ul class="project-bullets">
+                                <li>Engineered an AI assistant that tailors resumes and cover letters to specific job descriptions using Claude API with structured prompt chaining</li>
+                                <li>Built keyword-match scoring to benchmark resume alignment against ATS requirements, increasing interview callback rates for users</li>
+                                <li>Persisted application history and AI-generated drafts in Supabase with per-user RLS, supporting multi-device access</li>
+                            </ul>
+                        </div>
+
+                        <!-- Cinecraft -->
+                        <div class="project-card">
+                            <div class="project-header">
+                                <span class="project-name">Cinecraft</span>
+                                <span class="project-tagline">AI Cinematic Content Creation Tool</span>
+                            </div>
+                            <div class="project-tech">
+                                <span class="project-tech-tag">Anthropic Claude API</span>
+                                <span class="project-tech-tag">React</span>
+                                <span class="project-tech-tag">TypeScript</span>
+                                <span class="project-tech-tag">Tailwind CSS</span>
+                            </div>
+                            <ul class="project-bullets">
+                                <li>Created an AI-driven screenwriting tool that generates scene breakdowns, shot lists, and dialogue using Claude API with cinematic style presets</li>
+                                <li>Implemented multi-turn conversation flow to iteratively refine scripts, supporting genre-specific tone, pacing, and character voice</li>
+                                <li>Built an export pipeline generating industry-standard Final Draft-compatible screenplay format from AI-generated content</li>
+                            </ul>
+                        </div>
+
+                        <!-- Predix -->
+                        <div class="project-card">
+                            <div class="project-header">
+                                <span class="project-name">Predix</span>
+                                <span class="project-tagline">AI Prediction & Analytics Platform</span>
+                            </div>
+                            <div class="project-tech">
+                                <span class="project-tech-tag">React</span>
+                                <span class="project-tech-tag">TypeScript</span>
+                                <span class="project-tech-tag">AI/ML APIs</span>
+                                <span class="project-tech-tag">Supabase</span>
+                                <span class="project-tech-tag">Tailwind CSS</span>
+                            </div>
+                            <ul class="project-bullets">
+                                <li>Developed a predictive analytics dashboard surfacing AI-generated forecasts across user-defined data sets with confidence scoring</li>
+                                <li>Integrated multiple AI/ML model APIs with a unified adapter layer, enabling model-agnostic predictions and A/B comparison views</li>
+                                <li>Built real-time data pipelines with Supabase Realtime subscriptions for live prediction updates and alert notifications</li>
+                            </ul>
+                        </div>
+
+                    </section>
+
+                </main>
             </div>
+        </div>
 
-            <script is:inline>
-                // Googly eyes that follow cursor
-                document.addEventListener("DOMContentLoaded", function () {
-                    const leftPupilGroup =
-                        document.getElementById("leftPupilGroup");
-                    const rightPupilGroup =
-                        document.getElementById("rightPupilGroup");
-                    const avatar = document.querySelector(".avatar-container");
+        <!-- Hidden ATS keywords -->
+        <div class="ats" aria-hidden="true">Java Developer Senior Java Developer Full Stack Developer Spring Boot Microservices REST API GraphQL AWS Docker Kubernetes React TypeScript Apache Kafka PostgreSQL Oracle Redis CI/CD Jenkins OAuth2 JWT JUnit Mockito Agile Scrum TDD Spring Cloud Spring Security Hibernate JPA WebFlux Node.js Terraform GitHub Actions IBM DB2 RabbitMQ JMS TestContainers SonarQube WebSockets OpenAPI Swagger Spring MVC Spring Boot 3 Java 21 Virtual Threads Pattern Matching Records</div>
 
-                    if (leftPupilGroup && rightPupilGroup && avatar) {
-                        document.addEventListener("mousemove", function (e) {
-                            const avatarRect = avatar.getBoundingClientRect();
+        <script is:inline>
+            document.addEventListener('DOMContentLoaded', function () {
+                const leftGroup  = document.getElementById('leftPupilGroup');
+                const rightGroup = document.getElementById('rightPupilGroup');
+                const avatar     = document.getElementById('avatarWrap');
+                if (!leftGroup || !rightGroup || !avatar) return;
 
-                            // Eye positions (34% and 66% horizontally, 36% vertically - moved up)
-                            const leftEyeX =
-                                avatarRect.left + avatarRect.width * 0.39;
-                            const leftEyeY =
-                                avatarRect.top + avatarRect.height * 0.34;
+                document.addEventListener('mousemove', function (e) {
+                    const r = avatar.getBoundingClientRect();
+                    const lx = r.left + r.width * 0.39, ly = r.top + r.height * 0.34;
+                    const rx = r.left + r.width * 0.61, ry = r.top + r.height * 0.34;
+                    const la = Math.atan2(e.clientY - ly, e.clientX - lx);
+                    const ra = Math.atan2(e.clientY - ry, e.clientX - rx);
+                    const m = 4;
+                    leftGroup.setAttribute('transform',  `translate(${Math.cos(la)*m},${Math.sin(la)*m})`);
+                    rightGroup.setAttribute('transform', `translate(${Math.cos(ra)*m},${Math.sin(ra)*m})`);
 
-                            const rightEyeX =
-                                avatarRect.left + avatarRect.width * 0.61;
-                            const rightEyeY =
-                                avatarRect.top + avatarRect.height * 0.34;
-
-                            // Calculate angles to cursor
-                            const leftAngle = Math.atan2(
-                                e.clientY - leftEyeY,
-                                e.clientX - leftEyeX,
-                            );
-                            const rightAngle = Math.atan2(
-                                e.clientY - rightEyeY,
-                                e.clientX - rightEyeX,
-                            );
-
-                            // Maximum pupil movement (realistic eye movement)
-                            // Smaller movement for natural look with real eyes
-                            const maxMove = 5;
-
-                            // Calculate pupil positions
-                            const leftMoveX = Math.cos(leftAngle) * maxMove;
-                            const leftMoveY = Math.sin(leftAngle) * maxMove;
-
-                            const rightMoveX = Math.cos(rightAngle) * maxMove;
-                            const rightMoveY = Math.sin(rightAngle) * maxMove;
-
-                            // Update pupil groups (moves the entire pupil+highlight together)
-                            leftPupilGroup.setAttribute(
-                                "transform",
-                                `translate(${leftMoveX}, ${leftMoveY})`,
-                            );
-                            rightPupilGroup.setAttribute(
-                                "transform",
-                                `translate(${rightMoveX}, ${rightMoveY})`,
-                            );
-                        });
-                    }
+                    // Scared when cursor gets too close
+                    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+                    const dist = Math.sqrt((e.clientX - cx) ** 2 + (e.clientY - cy) ** 2);
+                    avatar.classList.toggle('scared', dist < 55);
                 });
-            </script>
-            <!-- Background circle -->
-            <circle
-                cx="100"
-                cy="100"
-                r="95"
-                fill="#f0f0f0"
-                stroke="#667eea"
-                stroke-width="4"></circle>
-
-            <!-- Face -->
-            <circle cx="100" cy="100" r="85" fill="#e8b89a"></circle>
-
-            <!-- Hair -->
-            <ellipse cx="100" cy="50" rx="75" ry="45" fill="#2d2d2d"></ellipse>
-            <ellipse cx="70" cy="60" rx="25" ry="30" fill="#2d2d2d"></ellipse>
-            <ellipse cx="130" cy="60" rx="25" ry="30" fill="#2d2d2d"></ellipse>
-
-            <!-- Ears -->
-            <ellipse
-                cx="30"
-                cy="100"
-                rx="15"
-                ry="20"
-                fill="#e8b89a"
-                stroke="#d4a574"
-                stroke-width="2"></ellipse>
-            <ellipse
-                cx="170"
-                cy="100"
-                rx="15"
-                ry="20"
-                fill="#e8b89a"
-                stroke="#d4a574"
-                stroke-width="2"></ellipse>
-
-            <!-- Eyebrows -->
-            <path
-                d="M 55 80 Q 70 75, 85 80"
-                stroke="#2d2d2d"
-                stroke-width="5"
-                fill="none"
-                stroke-linecap="round"></path>
-            <path
-                d="M 115 80 Q 130 75, 145 80"
-                stroke="#2d2d2d"
-                stroke-width="5"
-                fill="none"
-                stroke-linecap="round"></path>
-
-            <!-- Eye sockets (googly eyes background) -->
-            <circle
-                cx="70"
-                cy="95"
-                r="22"
-                fill="white"
-                stroke="#333"
-                stroke-width="3"></circle>
-            <circle
-                cx="130"
-                cy="95"
-                r="22"
-                fill="white"
-                stroke="#333"
-                stroke-width="3"></circle>
-
-            <!-- Pupils (will move with cursor) -->
-            <circle id="leftPupil" cx="70" cy="95" r="10" fill="#1a1a1a"
-            ></circle>
-            <circle id="rightPupil" cx="130" cy="95" r="10" fill="#1a1a1a"
-            ></circle>
-
-            <!-- Eye highlights -->
-            <circle cx="73" cy="92" r="4" fill="white" opacity="0.9"></circle>
-            <circle cx="133" cy="92" r="4" fill="white" opacity="0.9"></circle>
-
-            <!-- Nose -->
-            <ellipse cx="100" cy="115" rx="10" ry="15" fill="#d4a574"></ellipse>
-            <ellipse cx="95" cy="115" rx="3" ry="5" fill="#b88a5a"></ellipse>
-            <ellipse cx="105" cy="115" rx="3" ry="5" fill="#b88a5a"></ellipse>
-
-            <!-- Beard -->
-            <ellipse cx="100" cy="150" rx="50" ry="40" fill="#1a1a1a"></ellipse>
-            <path d="M 55 135 Q 100 165, 145 135" fill="#1a1a1a"></path>
-
-            <!-- Mouth -->
-            <path
-                d="M 75 140 Q 100 148, 125 140"
-                stroke="#8b6f47"
-                stroke-width="3"
-                fill="none"
-                stroke-linecap="round"></path>
-
-            <!-- T-shirt -->
-            <path
-                d="M 30 185 Q 100 195, 170 185 L 170 200 L 30 200 Z"
-                fill="#2d2d2d"></path>
-        </div>
+            });
+        </script>
     </body>
-
-    <script is:inline>
-        // Googly eyes that follow cursor
-        document.addEventListener("DOMContentLoaded", function () {
-            const leftPupil = document.getElementById("leftPupil");
-            const rightPupil = document.getElementById("rightPupil");
-        });
-    </script>
-    <h1>SAKET "CLIFF WATERS" SHARMA</h1>
-    <div class="subtitle">Senior Full Stack Software Engineer</div>
-    <div class="contact">
-         saket87@live.com | <a
-            href="https://github.com/doctor69"
-            target="_blank"
-            rel="noopener noreferrer"
-            style="color: #2c3e50; text-decoration: none; font-weight: 600;"
-            >GitHub</a
-        >
-    </div>
-
-    <h2>PROFESSIONAL SUMMARY</h2>
-    <ul class="summary-list">
-        <li>
-            Senior Software Engineer with <strong>8+ years</strong> of expertise
-            in designing and developing enterprise-level applications using <strong
-                >Java, Spring Boot, Microservices, React, and AWS Cloud
-                technologies</strong
-            >
-        </li>
-        <li>
-            Proven track record in <strong
-                >API development and integration</strong
-            >, having architected and delivered <strong
-                >50+ RESTful APIs and GraphQL services</strong
-            > handling millions of transactions with 99.9% uptime
-        </li>
-        <li>
-            Expert in <strong>microservices architecture</strong>, successfully
-            migrating monolithic applications to containerized microservices
-            using <strong>Docker, Kubernetes, and AWS ECS</strong>, reducing
-            infrastructure costs by 35%
-        </li>
-        <li>
-            Proficient in full software development lifecycle (SDLC) with strong
-            expertise in <strong
-                >Agile/Scrum methodologies, CI/CD pipelines, and DevOps
-                practices</strong
-            >
-        </li>
-        <li>
-            Extensive experience with <strong>event-driven architectures</strong
-            > using Apache Kafka, RabbitMQ, and JMS for real-time data processing
-            and asynchronous messaging
-        </li>
-        <li>
-            Strong background in <strong
-                >database design and optimization</strong
-            > across Oracle, PostgreSQL, DB2, MySQL, and NoSQL databases (MongoDB,
-            Redis)
-        </li>
-        <li>
-            Demonstrated leadership in mentoring development teams, conducting
-            code reviews, and implementing best practices for secure, scalable
-            applications
-        </li>
-    </ul>
-
-    <h2>PROFESSIONAL EXPERIENCE</h2>
-
-    <h3>MASTERCARD | St Louis, MO</h3>
-    <div class="job-header">
-        <div class="job-title">Senior Software Developer</div>
-        <div class="date">Dec 2023 – Present</div>
-    </div>
-    <ul>
-        <li>
-            Architected and developed <strong
-                >high-performance RESTful APIs</strong
-            >
-            using <strong>Spring Boot 3.x</strong> and Java 21, processing
-            <strong>2M+ daily transactions</strong> with sub-100ms response times
-            and 99.95% uptime
-        </li>
-        <li>
-            Designed and implemented <strong>microservices architecture</strong>
-            with API Gateway pattern using Spring Cloud Gateway, implementing rate
-            limiting, circuit breakers (Resilience4j), and OAuth2/JWT authentication
-            for secure API access
-        </li>
-        <li>
-            Led <strong>Java 8 to Java 21 migration initiative</strong> for 15+ enterprise
-            applications, leveraging modern features (records, pattern matching,
-            virtual threads) resulting in 30% performance improvement and 25% code
-            reduction
-        </li>
-        <li>
-            Developed <strong>GraphQL APIs</strong> using Spring for GraphQL, reducing
-            over-fetching and improving mobile application performance by 45% through
-            optimized query resolvers and DataLoader implementations
-        </li>
-        <li>
-            Implemented <strong>event-driven architecture</strong> using Apache Kafka
-            for real-time payment processing, handling 500K+ events per hour with
-            exactly-once semantics and dead letter queue error handling
-        </li>
-        <li>
-            Designed comprehensive <strong>API documentation</strong> using OpenAPI
-            3.0/Swagger and implemented API versioning strategy (URI and header-based)
-            ensuring backward compatibility for legacy clients
-        </li>
-        <li>
-            Built <strong>Redis caching layer</strong> with TTL policies and cache-aside
-            pattern, reducing database load by 60% and improving API response times
-            from 500ms to 80ms for frequently accessed data
-        </li>
-        <li>
-            Established <strong>CI/CD pipelines</strong> using Jenkins with automated
-            unit tests, integration tests, security scans (SonarQube, OWASP), and
-            blue-green deployments achieving 50+ production releases per month with
-            zero downtime
-        </li>
-        <li>
-            Implemented <strong>database optimization strategies</strong> including
-            connection pooling (HikariCP), query optimization, and proper indexing
-            in Oracle and Redis, improving query performance by 70%
-        </li>
-        <li>
-            Integrated <strong>monitoring and observability</strong> using Spring
-            Boot Actuator, Micrometer, and distributed tracing with correlation IDs
-            for API request tracking across microservices
-        </li>
-        <li>
-            Provided <strong>Level 3 production support</strong>,
-            troubleshooting critical issues, performing root cause analysis, and
-            implementing fixes reducing MTTR by 40%
-        </li>
-        <li>
-            Mentored 4 junior developers on Spring Boot best practices, API
-            design principles, Java 21 features, and microservices patterns
-            through code reviews and pair programming sessions
-        </li>
-    </ul>
-
-    <h3>VISA | Austin, TX</h3>
-    <div class="job-header">
-        <div class="job-title">Java Full Stack Software Developer</div>
-        <div class="date">Sep 2022 – Nov 2023</div>
-    </div>
-    <ul>
-        <li>
-            Spearheaded <strong>legacy system modernization</strong>, migrating
-            8 monolithic J2EE applications to Spring Boot microservices
-            architecture, reducing deployment time from 4 hours to 15 minutes
-            and improving scalability
-        </li>
-        <li>
-            Developed <strong>20+ RESTful APIs</strong> using Spring Boot, Spring
-            Web, and Spring Data JPA with comprehensive error handling, validation,
-            and API documentation using Springdoc-OpenAPI
-        </li>
-        <li>
-            Implemented <strong>containerization strategy</strong> creating Docker
-            images and Kubernetes deployment manifests (Deployments, Services, ConfigMaps,
-            Secrets) for 12 microservices with health checks and auto-scaling policies
-        </li>
-        <li>
-            Designed and built <strong
-                >secure authentication and authorization</strong
-            > framework integrating SSO, LDAP, OAuth2, and multi-factor authentication
-            (MFA) supporting 50K+ concurrent users
-        </li>
-        <li>
-            Created <strong>SSL/TLS certificate management</strong> automation using
-            internal PKI tools, securing API endpoints and ensuring compliance with
-            PCI-DSS security standards
-        </li>
-        <li>
-            Developed <strong>asynchronous processing</strong> capabilities using
-            Spring's @Async, CompletableFuture, and message queues for long-running
-            payment authorization workflows, improving throughput by 60%
-        </li>
-        <li>
-            Implemented <strong>API gateway</strong> with request routing, load balancing,
-            and API composition patterns, consolidating 15 backend services into
-            unified API interface for frontend applications
-        </li>
-        <li>
-            Built <strong>comprehensive test suites</strong> with JUnit 5, Mockito,
-            and Spring Boot Test achieving 85%+ code coverage including unit tests,
-            integration tests, and contract tests
-        </li>
-        <li>
-            Integrated with <strong>IBM DB2 database</strong> using Spring Data JDBC
-            and JPA, implementing optimistic locking, audit trails, and complex SQL
-            queries with stored procedures
-        </li>
-        <li>
-            Performed <strong>impact analysis and code refactoring</strong> using
-            SonarQube for code quality metrics, reducing technical debt by 40% and
-            improving maintainability score to A rating
-        </li>
-        <li>
-            Participated in <strong>Agile ceremonies</strong> including sprint planning,
-            daily standups, and retrospectives, consistently delivering 95% of committed
-            story points per sprint
-        </li>
-    </ul>
-
-    <h3>STATE STREET CORPORATION | Quincy, MA</h3>
-    <div class="job-header">
-        <div class="job-title">Java Full Stack Software Developer</div>
-        <div class="date">Nov 2017 – Feb 2022</div>
-    </div>
-    <ul>
-        <li>
-            Designed and developed <strong>enterprise-level REST APIs</strong> using
-            Spring MVC and Spring Boot serving financial services platform with 100K+
-            daily active users across multiple time zones
-        </li>
-        <li>
-            Implemented <strong>API middleware layer</strong> using Spring AOP for
-            cross-cutting concerns including authentication, authorization, request/response
-            logging, correlation ID propagation, and distributed tracing
-        </li>
-        <li>
-            Built <strong>reactive APIs</strong> using Spring WebFlux for non-blocking,
-            asynchronous data processing improving concurrent request handling capacity
-            by 200%
-        </li>
-        <li>
-            Led <strong>UI modernization project</strong>, migrating legacy
-            Adobe Flex application to modern React 18 with TypeScript, Redux,
-            and Material-UI, improving page load times by 65% and user
-            satisfaction scores by 40%
-        </li>
-        <li>
-            Developed <strong>single-page application (SPA)</strong> using React
-            Router, React Query for server state management, and Axios for API integration
-            with optimistic updates and error boundary handling
-        </li>
-        <li>
-            Implemented <strong>real-time features</strong> using WebSockets and
-            Server-Sent Events (SSE) for live financial data updates, trade notifications,
-            and market alerts in dashboard applications
-        </li>
-        <li>
-            Created <strong>reusable component library</strong> with 50+ components
-            documented in Storybook, reducing development time by 30% and ensuring
-            consistent UI/UX across applications
-        </li>
-        <li>
-            Configured <strong>Hibernate ORM</strong> with second-level caching (Ehcache),
-            lazy loading strategies, and criteria queries for complex data retrieval
-            reducing database queries by 45%
-        </li>
-        <li>
-            Integrated <strong>JMS messaging</strong> with IBM MQ for asynchronous
-            communication between services, implementing request-reply pattern with
-            timeout handling and retry logic
-        </li>
-        <li>
-            Developed <strong>scheduled jobs</strong> using Quartz Scheduler for
-            automated batch processing, report generation, and data synchronization
-            tasks running nightly with error notifications
-        </li>
-        <li>
-            Established <strong>Jenkins CI/CD pipeline</strong> with Maven builds,
-            automated testing, code quality gates, and deployment to WebLogic Application
-            Server with rollback capabilities
-        </li>
-        <li>
-            Implemented <strong>database layer</strong> using Oracle with JDBC, creating
-            stored procedures, triggers, and optimized SQL queries with proper indexing
-            improving query performance by 50%
-        </li>
-        <li>
-            Migrated <strong>version control from SVN to Git</strong>,
-            implementing GitFlow branching strategy with pull request workflows
-            and code review process improving team collaboration
-        </li>
-        <li>
-            Created comprehensive <strong>exception handling framework</strong> with
-            custom exception classes and centralized error handling using @ControllerAdvice
-            ensuring consistent API error responses
-        </li>
-        <li>
-            Developed <strong>unit and integration tests</strong> using JUnit, Mockito,
-            and Spring Test with TestContainers for database integration tests achieving
-            80%+ code coverage
-        </li>
-    </ul>
-
-    <h2>EDUCATION</h2>
-    <div style="margin-top: 6pt;">
-        <strong>Associate Degree in Computer Science</strong> | 2010<br />
-        Quincy College, Quincy, MA
-    </div>
-
-    <h2>TECHNICAL SKILLS</h2>
-    <div class="skills-section">
-        <div class="skill-row">
-            <div class="skill-label">Languages:</div>
-            <div class="skill-content">
-                Java (8, 11, 17, 21), JavaScript (ES6+), TypeScript, C#, Python,
-                SQL, PL/SQL, T-SQL
-            </div>
-        </div>
-        <div class="skill-row">
-            <div class="skill-label">Backend Frameworks:</div>
-            <div class="skill-content">
-                Spring Boot 3.x, Spring MVC, Spring Cloud, Spring Security,
-                Spring Data JPA, Spring WebFlux, Hibernate, JPA, Node.js,
-                Express, .NET Core, Entity Framework
-            </div>
-        </div>
-        <div class="skill-row">
-            <div class="skill-label">Frontend Technologies:</div>
-            <div class="skill-content">
-                ReactJS 18, Next.js 14, Redux, Redux Toolkit, TypeScript, HTML5,
-                CSS3, SASS, Tailwind CSS, Bootstrap, Material-UI, jQuery, AJAX
-            </div>
-        </div>
-        <div class="skill-row">
-            <div class="skill-label">API Technologies:</div>
-            <div class="skill-content">
-                REST API, RESTful Web Services, GraphQL, OpenAPI/Swagger,
-                Postman, API Gateway, gRPC, WebSockets, Server-Sent Events,
-                SOAP, WSDL, JAX-WS, JAX-RS, OAuth2.0, JWT, SAML
-            </div>
-        </div>
-        <div class="skill-row">
-            <div class="skill-label">Databases:</div>
-            <div class="skill-content">
-                Oracle 19c, PostgreSQL, MySQL, IBM DB2, SQL Server, MongoDB,
-                Redis, DynamoDB, H2, Cassandra
-            </div>
-        </div>
-        <div class="skill-row">
-            <div class="skill-label">Cloud & DevOps:</div>
-            <div class="skill-content">
-                AWS (EC2, S3, Lambda, ECS, RDS, CloudWatch, API Gateway, IAM,
-                VPC, SNS, SQS), Docker, Kubernetes, Terraform, Jenkins, GitHub
-                Actions, GitLab CI/CD, Azure DevOps
-            </div>
-        </div>
-        <div class="skill-row">
-            <div class="skill-label">Messaging & Streaming:</div>
-            <div class="skill-content">
-                Apache Kafka, RabbitMQ, AWS SQS/SNS, JMS, IBM MQ Series,
-                ActiveMQ, Redis Pub/Sub
-            </div>
-        </div>
-        <div class="skill-row">
-            <div class="skill-label">Testing & Quality:</div>
-            <div class="skill-content">
-                JUnit 5, Mockito, Jest, React Testing Library, Selenium,
-                TestContainers, JMeter, Postman, SonarQube, OWASP ZAP
-            </div>
-        </div>
-        <div class="skill-row">
-            <div class="skill-label">Tools & IDEs:</div>
-            <div class="skill-content">
-                IntelliJ IDEA, VS Code, Eclipse, Visual Studio, Git, Maven,
-                Gradle, Ant, Jira, Confluence, Postman, Swagger, npm, Webpack
-            </div>
-        </div>
-        <div class="skill-row">
-            <div class="skill-label">Application Servers:</div>
-            <div class="skill-content">
-                Tomcat, WebLogic, WebSphere, JBoss, Nginx, Apache HTTP Server
-            </div>
-        </div>
-        <div class="skill-row">
-            <div class="skill-label">Methodologies:</div>
-            <div class="skill-content">
-                Agile/Scrum, Kanban, Test-Driven Development (TDD),
-                Behavior-Driven Development (BDD), CI/CD, Microservices
-                Architecture, Domain-Driven Design (DDD), Design Patterns
-            </div>
-        </div>
-        <div class="skill-row">
-            <div class="skill-label">Other Technologies:</div>
-            <div class="skill-content">
-                Log4j, SLF4J, Logback, XML, JSON, YAML, XSLT, XPath, JAXB,
-                Jackson, Lombok, MapStruct, Quartz Scheduler, Chef, Splunk,
-                Datadog, New Relic
-            </div>
-        </div>
-    </div>
-
-    <h2>CERTIFICATIONS</h2>
-    <ul style="margin-top: 6pt;">
-        <li>FAA Certified Pilot Part 107 for UAVs</li>
-    </ul>
-
-    <h2>KEY ACHIEVEMENTS</h2>
-    <ul style="margin-top: 6pt;">
-        <li>
-            Reduced API response times by 70% through Redis caching optimization
-            and database query tuning
-        </li>
-        <li>
-            Led Java 8 to Java 21 migration improving application performance by
-            30% and reducing memory footprint
-        </li>
-        <li>
-            Architected microservices platform processing 2M+ daily transactions
-            with 99.95% uptime
-        </li>
-        <li>
-            Improved deployment frequency from monthly to 50+ times per month
-            through CI/CD automation
-        </li>
-        <li>
-            Reduced production incidents by 40% through comprehensive testing
-            and monitoring implementations
-        </li>
-    </ul>
-
-    <script is:inline>
-        // Random animation assignment
-        const animations = [
-            "fade-in",
-            "slide-in-left",
-            "slide-in-right",
-            "slide-in-up",
-            "zoom-in",
-            "bounce-in",
-            "rotate-in",
-        ];
-
-        function getRandomAnimation() {
-            return animations[Math.floor(Math.random() * animations.length)];
-        }
-
-        // Apply random animations to sections on page load
-        document.addEventListener("DOMContentLoaded", function () {
-            // Animate header
-            const header = document.querySelector("h1");
-            if (header) header.classList.add(getRandomAnimation());
-
-            // Animate each h2 section with different animations
-            const sections = document.querySelectorAll("h2");
-            sections.forEach((section) => {
-                section.classList.add(getRandomAnimation());
-            });
-
-            // Animate job sections
-            const jobs = document.querySelectorAll("h3");
-            jobs.forEach((job) => {
-                job.classList.add(getRandomAnimation());
-            });
-
-            // Animate skill rows with staggered delay
-            const skillRows = document.querySelectorAll(".skill-row");
-            skillRows.forEach((row, index) => {
-                setTimeout(() => {
-                    row.classList.add(getRandomAnimation());
-                }, index * 50);
-            });
-        });
-    </script>
-
-    <!-- Hidden keywords for ATS optimization -->
-    <div class="keywords" style="visibility: collapse;">
-        Java Developer | Senior Java Developer | Full Stack Developer | Full
-        Stack Engineer | Spring Boot Developer | Microservices Developer |
-        Backend Developer | API Developer | Software Engineer | Senior Software
-        Engineer | Cloud Engineer | DevOps Engineer | REST API Developer | Web
-        Services Developer | Enterprise Java Developer | J2EE Developer | React
-        Developer | Frontend Developer | Database Developer | Java Architect |
-        Solutions Architect | Technical Lead | Team Lead | Agile Developer |
-        Scrum Developer | Java Spring Developer | Spring Framework | Spring MVC
-        | Spring Boot | Spring Cloud | Spring Security | Spring Data | Spring
-        WebFlux | Hibernate Developer | JPA | ORM | Microservices Architecture |
-        RESTful APIs | RESTful Web Services | API Design | API Development | API
-        Integration | GraphQL | GraphQL API | SOAP Web Services | Web Services |
-        Service-Oriented Architecture | SOA | Event-Driven Architecture |
-        Message-Driven Architecture | Asynchronous Processing | Real-Time
-        Processing | ReactJS | React | Redux | TypeScript | JavaScript | ES6 |
-        Next.js | Node.js | HTML5 | CSS3 | SASS | Responsive Design | Single
-        Page Application | SPA | Progressive Web App | PWA | Java 8 | Java 11 |
-        Java 17 | Java 21 | Core Java | Advanced Java | Multithreading |
-        Concurrency | Collections Framework | Lambda Expressions | Streams API |
-        Functional Programming | Design Patterns | Singleton Pattern | Factory
-        Pattern | MVC Pattern | DAO Pattern | Repository Pattern | PostgreSQL |
-        MySQL | Oracle | Oracle Database | IBM DB2 | SQL Server | MongoDB |
-        NoSQL | Redis | Caching | Database Design | Database Optimization |
-        Query Optimization | Stored Procedures | Triggers | Transactions | ACID
-        | SQL | PL/SQL | T-SQL | JDBC | Connection Pooling | HikariCP | Docker |
-        Kubernetes | Container Orchestration | Containerization | Microservices
-        Deployment | AWS | Amazon Web Services | Cloud Computing | Cloud
-        Architecture | Cloud Migration | AWS EC2 | AWS S3 | AWS Lambda |
-        Serverless | AWS RDS | AWS ECS | AWS API Gateway | AWS CloudWatch | AWS
-        IAM | AWS SNS | AWS SQS | Infrastructure as Code | IaC | Terraform |
-        CloudFormation | CI/CD | Continuous Integration | Continuous Deployment
-        | Jenkins | GitHub Actions | GitLab CI | Azure DevOps | Build Automation
-        | Deployment Automation | Blue-Green Deployment | Canary Deployment |
-        Apache Kafka | Kafka | Message Queue | Event Streaming | Real-Time Data
-        Processing | RabbitMQ | JMS | IBM MQ | ActiveMQ | Pub/Sub | Message
-        Broker | JUnit | JUnit 5 | Mockito | Unit Testing | Integration Testing
-        | Test-Driven Development | TDD | Behavior-Driven Development | BDD |
-        TestContainers | End-to-End Testing | API Testing | Performance Testing
-        | Load Testing | JMeter | Selenium | Jest | React Testing Library | Code
-        Coverage | Git | Version Control | Source Control | GitHub | GitLab |
-        Bitbucket | SVN | Maven | Gradle | Ant | Build Tools | Dependency
-        Management | IntelliJ IDEA | Eclipse | Visual Studio Code | VS Code |
-        Agile | Scrum | Scrum Master | Kanban | Sprint Planning | Daily Standup
-        | Sprint Retrospective | User Stories | Story Points | Backlog Grooming
-        | Jira | Confluence | Project Management | OAuth2 | JWT | Authentication
-        | Authorization | Security | Application Security | API Security |
-        SSL/TLS | Encryption | LDAP | SSO | Single Sign-On | Multi-Factor
-        Authentication | MFA | SAML | OpenAPI | Swagger | API Documentation |
-        API Gateway Pattern | Circuit Breaker | Resilience4j | Rate Limiting |
-        Load Balancing | Service Discovery | Eureka | Consul | API Versioning |
-        Error Handling | Exception Handling | Logging | Log4j | SLF4J |
-        Monitoring | Observability | Distributed Tracing | Micrometer |
-        Prometheus | Grafana | Splunk | Datadog | New Relic | Code Review | Peer
-        Review | Pull Request | Merge Request | Code Quality | SonarQube |
-        Static Code Analysis | Refactoring | Technical Debt | Best Practices |
-        Clean Code | SOLID Principles | Pair Programming | Mentoring | Team
-        Collaboration | Cross-Functional Team | Stakeholder Management |
-        Requirements Gathering | Technical Documentation | System Design | High
-        Availability | Scalability | Performance Optimization | Memory
-        Management | Garbage Collection | Production Support | Troubleshooting |
-        Debugging | Root Cause Analysis | Incident Management | Problem Solving
-        | Analytical Skills | Communication Skills | Leadership | Tomcat |
-        WebLogic | WebSphere | Application Server | Web Server | Nginx | XML |
-        JSON | YAML | XSLT | XPath | JAXB | Jackson | Data Serialization | ETL |
-        Data Migration | Schema Design | Normalization | Indexing | Quartz
-        Scheduler | Batch Processing | Scheduled Jobs | Cron Jobs | Enterprise
-        Applications | Financial Services | Payment Processing | E-Commerce |
-        Healthcare | Banking | Insurance | Retail | Telecommunications |
-        Migration | Legacy System Modernization | System Integration |
-        Third-Party Integration | Vendor Integration | Compliance | PCI-DSS |
-        HIPAA | GDPR | Audit | Governance
-    </div>
 </html>

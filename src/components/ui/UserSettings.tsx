@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
 import { Switch } from './switch';
 import { Button } from './button';
-import { AlertCircle, User, Shield, TrendingUp, RefreshCw } from 'lucide-react';
+import { Input } from './input';
+import { Label } from './label';
+import { AlertCircle, User, Shield, TrendingUp, RefreshCw, Edit, Save, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { apiService } from '@/lib/apiService';
 
@@ -15,12 +17,38 @@ interface UserProfile {
   show_asset_amounts: boolean;
 }
 
+interface AlpacaAccountData {
+  id: string;
+  status: string;
+  contact?: {
+    email_address?: string;
+    phone_number?: string;
+    street_address?: string[];
+    city?: string;
+    state?: string;
+    postal_code?: string;
+  };
+  identity?: {
+    given_name?: string;
+    family_name?: string;
+    date_of_birth?: string;
+    tax_id?: string;
+    country_of_citizenship?: string;
+  };
+  trusted_contact?: {
+    given_name?: string;
+    family_name?: string;
+    email_address?: string;
+  };
+}
+
 interface UserSettingsProps {
   userId?: string;
+  accountId?: string | null;
   onSettingsChange?: (settings: Partial<UserProfile>) => void;
 }
 
-export default function UserSettings({ userId, onSettingsChange }: UserSettingsProps) {
+export default function UserSettings({ userId, accountId, onSettingsChange }: UserSettingsProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -28,11 +56,53 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
   const [updatingStats, setUpdatingStats] = useState(false);
   const [statsMessage, setStatsMessage] = useState<string | null>(null);
   const [settingsChanged, setSettingsChanged] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+
+  // Alpaca account data
+  const [alpacaAccount, setAlpacaAccount] = useState<AlpacaAccountData | null>(null);
+
+  // Edit form state
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editStreet, setEditStreet] = useState('');
+  const [editCity, setEditCity] = useState('');
+  const [editState, setEditState] = useState('');
+  const [editZip, setEditZip] = useState('');
 
   // Load user profile
   useEffect(() => {
     loadUserProfile();
-  }, [userId]);
+    if (accountId) {
+      loadAlpacaAccount();
+    }
+  }, [userId, accountId]);
+
+  const loadAlpacaAccount = async (forceRefresh = false) => {
+    if (!accountId) return;
+
+    try {
+      const result = await apiService.getAccount(forceRefresh);
+
+      if (result.success && result.data) {
+        const data = result.data as unknown as AlpacaAccountData;
+        setAlpacaAccount(data);
+        // Populate edit form with loaded data
+        populateEditForm(data);
+      }
+    } catch (err) {
+      // Silent fail - account will show as not loaded
+    }
+  };
+
+  const populateEditForm = (data: AlpacaAccountData) => {
+    setEditEmail(data.contact?.email_address || '');
+    setEditPhone(data.contact?.phone_number || '');
+    const street = data.contact?.street_address || [];
+    setEditStreet(street[0] || '');
+    setEditCity(data.contact?.city || '');
+    setEditState(data.contact?.state || '');
+    setEditZip(data.contact?.postal_code || '');
+  };
 
   const loadUserProfile = async () => {
     try {
@@ -101,13 +171,70 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
     setSettingsChanged(true);
   };
 
+  const handleSaveProfile = async () => {
+    if (!alpacaAccount?.id) {
+      setError('No account ID available');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      const updates = {
+        contact: {
+          email_address: editEmail,
+          phone_number: editPhone,
+          street_address: [editStreet].filter(Boolean),
+          city: editCity,
+          state: editState,
+          postal_code: editZip,
+        },
+      };
+
+      console.log('Updating account with ID:', alpacaAccount.id);
+      console.log('Updates:', updates);
+
+      // Use edgeFunctionClient for proper auth handling
+      const { edgeFunctionClient } = await import('@/lib/edgeFunctionClient');
+      const response = await edgeFunctionClient.patch('alpaca-account-update', {
+        account_id: alpacaAccount.id,
+        updates,
+      });
+
+      console.log('Update response:', response);
+
+      if (!response.success) {
+        throw new Error(response.error?.message || 'Failed to update profile');
+      }
+
+      // Force refresh to get updated data from API
+      await loadAlpacaAccount(true);
+      setIsEditingProfile(false);
+    } catch (err) {
+      console.error('Update error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingProfile(false);
+    setError(null);
+    // Reset form to current values
+    if (alpacaAccount) {
+      populateEditForm(alpacaAccount);
+    }
+  };
+
   const handleUpdateLeaderboardStats = async () => {
     try {
       setUpdatingStats(true);
       setStatsMessage(null);
-      
+
       const result = await apiService.updateLeaderboardStats();
-      
+
       if (result.success) {
         setStatsMessage('Leaderboard stats updated successfully!');
         setSettingsChanged(false); // Reset the changed state
@@ -165,29 +292,150 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
       {/* Account Information */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Account Information
-          </CardTitle>
-          <CardDescription>
-            Your basic account details and profile information
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Account Information
+              </CardTitle>
+              <CardDescription>
+                Your basic account details and profile information
+              </CardDescription>
+            </div>
+            {accountId && alpacaAccount && !isEditingProfile && (
+              <Button variant="outline" size="sm" onClick={() => {
+                // Populate form with current values when entering edit mode
+                populateEditForm(alpacaAccount);
+                setIsEditingProfile(true);
+              }}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+            )}
+            {!accountId && !isEditingProfile && (
+              <p className="text-xs text-muted-foreground">Link Alpaca account to edit profile</p>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">Email</label>
-              <div className="text-sm font-medium">{profile?.email}</div>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">Username</label>
-              <div className="text-sm font-medium">{profile?.username || 'Not set'}</div>
-            </div>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-muted-foreground">Full Name</label>
-            <div className="text-sm font-medium">{profile?.full_name || 'Not set'}</div>
-          </div>
+          {!isEditingProfile ? (
+            // Read-only view
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Email</label>
+                  <div className="text-sm font-medium">{alpacaAccount?.contact?.email_address || profile?.email || 'Not set'}</div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Phone</label>
+                  <div className="text-sm font-medium">{alpacaAccount?.contact?.phone_number || 'Not set'}</div>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Full Name</label>
+                <div className="text-sm font-medium">
+                  {alpacaAccount?.identity?.given_name && alpacaAccount?.identity?.family_name
+                    ? `${alpacaAccount.identity.given_name} ${alpacaAccount.identity.family_name}`
+                    : profile?.full_name || 'Not set'}
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Address</label>
+                <div className="text-sm font-medium">
+                  {alpacaAccount?.contact?.street_address?.[0] || 'Not set'}
+                  {alpacaAccount?.contact?.city && alpacaAccount?.contact?.street_address?.[0] && <br />}
+                  {alpacaAccount?.contact?.city && `${alpacaAccount.contact.city}, `}
+                  {alpacaAccount?.contact?.state && `${alpacaAccount.contact.state} `}
+                  {alpacaAccount?.contact?.postal_code && alpacaAccount.contact.postal_code}
+                </div>
+              </div>
+            </>
+          ) : (
+            // Edit mode
+            <>
+              {alpacaAccount?.status === 'ACTIVE' && (
+                <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    <strong>Note:</strong> Name and identity information cannot be changed after KYC verification. Contact support if you need to update these fields.
+                  </p>
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email">Email</Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-phone">Phone</Label>
+                  <Input
+                    id="edit-phone"
+                    type="tel"
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-street">Street Address</Label>
+                <Input
+                  id="edit-street"
+                  value={editStreet}
+                  onChange={(e) => setEditStreet(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-city">City</Label>
+                  <Input
+                    id="edit-city"
+                    value={editCity}
+                    onChange={(e) => setEditCity(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-state">State</Label>
+                  <Input
+                    id="edit-state"
+                    value={editState}
+                    onChange={(e) => setEditState(e.target.value)}
+                    maxLength={2}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-zip">ZIP Code</Label>
+                  <Input
+                    id="edit-zip"
+                    value={editZip}
+                    onChange={(e) => setEditZip(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={handleCancelEdit} disabled={saving}>
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveProfile} disabled={saving}>
+                  {saving ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Changes
+                    </>
+                  )}
+                </Button>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -239,7 +487,7 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
 
           <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <div className="text-sm text-blue-800 dark:text-blue-200">
-              <strong>Privacy Note:</strong> When sharing is enabled, other users can see your trading activity and performance. 
+              <strong>Privacy Note:</strong> When sharing is enabled, other users can see your trading activity and performance.
               You can disable portfolio value visibility while still allowing trade copying.
             </div>
           </div>
@@ -277,11 +525,10 @@ export default function UserSettings({ userId, onSettingsChange }: UserSettingsP
                 </Button>
               </div>
               {statsMessage && (
-                <div className={`mt-3 text-sm p-2 rounded ${
-                  statsMessage.includes('success') 
-                    ? 'bg-green-50 dark:bg-green-950 text-green-800 dark:text-green-200' 
-                    : 'bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-200'
-                }`}>
+                <div className={`mt-3 text-sm p-2 rounded ${statsMessage.includes('success')
+                  ? 'bg-green-50 dark:bg-green-950 text-green-800 dark:text-green-200'
+                  : 'bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-200'
+                  }`}>
                   {statsMessage}
                 </div>
               )}
