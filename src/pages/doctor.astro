@@ -1,6 +1,118 @@
 ---
-// No authentication required - public page
+// Public résumé page — no authentication required.
+//
+// Three renderings share one source of truth (src/data/resume.ts):
+//   1. The on-screen UI below.
+//   2. The print stylesheet, which linearizes to a single column for PDF export
+//      so applicant tracking systems parse it cleanly.
+//   3. The schema.org JSON-LD + <details> profile block at the end of the
+//      document, which is what AI crawlers and LLM agents read.
 export const prerender = true;
+
+import {
+  achievements,
+  certifications,
+  contactChannels,
+  coreCompetencies,
+  domains,
+  education,
+  experience,
+  metrics,
+  profile,
+  projects,
+  skillGroups,
+  spokenLanguages,
+  summary,
+  toPlainText,
+} from '../data/resume';
+
+const siteUrl = 'https://leadtrade.app';
+const pageUrl = profile.resumeUrl;
+const lastUpdated = new Date().toISOString();
+
+const metaDescription = `${profile.name} — ${profile.headline} with ${profile.yearsExperience} years building enterprise payment systems in Java, Spring Boot, microservices, React, and AWS. 50+ production APIs, 2M+ daily transactions, 99.95% uptime.`;
+
+const allSkills = skillGroups.flatMap((group) => group.items);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfilePage',
+  '@id': `${pageUrl}#profilepage`,
+  url: pageUrl,
+  name: `${profile.name} — ${profile.headline} Resume`,
+  description: metaDescription,
+  dateModified: lastUpdated,
+  inLanguage: 'en-US',
+  primaryImageOfPage: `${siteUrl}${profile.photo}`,
+  mainEntity: {
+    '@type': 'Person',
+    '@id': `${pageUrl}#person`,
+    name: profile.name,
+    alternateName: profile.nickname,
+    jobTitle: profile.headline,
+    description: metaDescription,
+    email: `mailto:${profile.email}`,
+    url: pageUrl,
+    image: `${siteUrl}${profile.photo}`,
+    sameAs: [profile.github, siteUrl, 'https://predix.vip'],
+    address: {
+      '@type': 'PostalAddress',
+      addressCountry: profile.locationCountry,
+    },
+    knowsAbout: [...coreCompetencies, ...allSkills],
+    knowsLanguage: [{ '@type': 'Language', name: 'English' }],
+    worksFor: {
+      '@type': 'Organization',
+      name: experience[0].company,
+      location: experience[0].location,
+    },
+    hasOccupation: experience.map((job) => ({
+      '@type': 'Occupation',
+      name: job.title,
+      occupationalCategory: '15-1252.00 Software Developers',
+      description: `${toPlainText(job.scope)} ${job.bullets.map(toPlainText).join(' ')}`,
+      occupationLocation: { '@type': 'Place', name: job.location },
+      hiringOrganization: { '@type': 'Organization', name: job.company },
+      startDate: job.startDate,
+      ...(job.endDate ? { endDate: job.endDate } : {}),
+      skills: allSkills.join(', '),
+    })),
+    alumniOf: education.map((entry) => ({
+      '@type': 'EducationalOrganization',
+      name: entry.school,
+      location: entry.location,
+    })),
+    hasCredential: [
+      ...education.map((entry) => ({
+        '@type': 'EducationalOccupationalCredential',
+        credentialCategory: 'degree',
+        name: `${entry.degree}, ${entry.field}`,
+        educationalLevel: 'Associate Degree',
+        recognizedBy: { '@type': 'EducationalOrganization', name: entry.school },
+      })),
+      ...certifications.map((cert) => ({
+        '@type': 'EducationalOccupationalCredential',
+        credentialCategory: 'certification',
+        name: cert.name,
+        description: cert.detail,
+        recognizedBy: { '@type': 'Organization', name: cert.issuer },
+      })),
+    ],
+    seeks: {
+      '@type': 'Demand',
+      name: `${profile.targetTitles.join(', ')} roles`,
+      availableAtOrFrom: { '@type': 'Place', address: { '@type': 'PostalAddress', addressCountry: profile.locationCountry } },
+    },
+    subjectOf: projects.map((project) => ({
+      '@type': 'CreativeWork',
+      name: project.name,
+      headline: project.tagline,
+      ...(project.url ? { url: project.url } : {}),
+      abstract: project.bullets.map(toPlainText).join(' '),
+      keywords: project.tech.join(', '),
+    })),
+  },
+};
 ---
 
 <!doctype html>
@@ -8,101 +120,165 @@ export const prerender = true;
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Saket Sharma — Resume</title>
+        <title>{profile.name} — {profile.headline} | Resume</title>
+
+        <!-- ── Discovery & AI-crawler metadata ─────────────── -->
+        <meta name="description" content={metaDescription} />
+        <meta name="author" content={profile.name} />
+        <link rel="canonical" href={pageUrl} />
+        <meta
+            name="robots"
+            content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"
+        />
+        <!-- Plain-text rendering for LLM agents and ATS parsers that don't execute CSS. -->
+        <link
+            rel="alternate"
+            type="text/plain"
+            href="/doctor/resume.txt"
+            title="Plain-text resume for AI agents and applicant tracking systems"
+        />
+
+        <meta property="og:type" content="profile" />
+        <meta property="og:title" content={`${profile.name} — ${profile.headline}`} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:image" content={`${siteUrl}${profile.photo}`} />
+        <meta property="profile:first_name" content="Saket" />
+        <meta property="profile:last_name" content="Sharma" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={`${profile.name} — ${profile.headline}`} />
+        <meta name="twitter:description" content={metaDescription} />
+
+        <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} is:inline />
+
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" />
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap"
+        />
+
         <style>
-            /* ── Reset ─────────────────────────────────────── */
+            /* ── Design tokens ──────────────────────────────── */
+            :root {
+                --ink:        #0f172a;
+                --ink-soft:   #334155;
+                --ink-muted:  #64748b;
+                --ink-faint:  #94a3b8;
+                --paper:      #ffffff;
+                --paper-alt:  #f8fafc;
+                --line:       #e2e8f0;
+                --line-soft:  #f1f5f9;
+                --navy:       #0b1220;
+                --navy-2:     #16233b;
+                --accent:     #2563eb;
+                --accent-dk:  #1d4ed8;
+                --accent-lt:  #93c5fd;
+                --accent-bg:  #eff6ff;
+                --backdrop:   #dfe5ee;
+                --backdrop-2: #eef2f7;
+                --shadow:     0 24px 60px rgba(15,23,42,0.14), 0 2px 8px rgba(15,23,42,0.07);
+            }
+
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --backdrop:   #070b14;
+                    --backdrop-2: #0d1526;
+                    --shadow:     0 24px 70px rgba(0,0,0,0.6), 0 0 0 1px rgba(148,163,184,0.09);
+                }
+            }
+
+            /* ── Reset ──────────────────────────────────────── */
             *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-            /* ── Base ──────────────────────────────────────── */
             html, body {
                 font-family: 'Inter', 'Calibri', system-ui, -apple-system, sans-serif;
                 font-size: 10pt;
                 line-height: 1.5;
-                color: #0f172a;
-                background: #e2e8f0;
+                color: var(--ink);
+                background:
+                    radial-gradient(1200px 600px at 50% -10%, var(--backdrop-2), transparent 70%),
+                    var(--backdrop);
                 min-height: 100vh;
                 -webkit-font-smoothing: antialiased;
+                text-rendering: optimizeLegibility;
             }
             a { color: inherit; text-decoration: none; }
             a:hover { text-decoration: underline; }
+            :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
 
-            /* ── Print button ──────────────────────────────── */
-            .print-btn {
+            /* ── Toolbar ────────────────────────────────────── */
+            .toolbar {
                 position: fixed;
-                top: 18px;
-                right: 18px;
+                top: 16px;
+                right: 16px;
                 z-index: 1000;
-                padding: 9px 18px;
-                background: linear-gradient(135deg, #2563eb, #06b6d4);
-                color: white;
-                border: none;
-                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .tool-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                padding: 9px 16px;
+                border: 1px solid rgba(255,255,255,0.16);
+                border-radius: 999px;
                 font-family: inherit;
-                font-size: 12px;
+                font-size: 11.5px;
                 font-weight: 600;
+                letter-spacing: 0.2px;
                 cursor: pointer;
-                box-shadow: 0 4px 14px rgba(37,99,235,0.45);
-                transition: all 0.25s ease;
-                display: flex;
-                align-items: center;
-                gap: 6px;
+                transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+                background: linear-gradient(135deg, var(--accent), #0ea5e9);
+                color: #fff;
+                box-shadow: 0 6px 18px rgba(37,99,235,0.35);
             }
-            .print-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(37,99,235,0.6);
+            .tool-btn.secondary {
+                background: rgba(15,23,42,0.86);
+                color: rgba(255,255,255,0.88);
+                box-shadow: 0 6px 18px rgba(15,23,42,0.22);
+                backdrop-filter: blur(6px);
             }
-            .print-btn:active { transform: translateY(0); }
+            .tool-btn:hover { transform: translateY(-2px); text-decoration: none; }
+            .tool-btn:active { transform: translateY(0); }
 
-            /* ── Page wrapper ──────────────────────────────── */
+            /* ── Paper ──────────────────────────────────────── */
             .resume {
-                max-width: 1020px;
-                margin: 36px auto;
-                background: white;
-                border-radius: 18px;
-                /* overflow: hidden removed — required for sticky header */
-                box-shadow: 0 12px 48px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.08);
+                max-width: 1040px;
+                margin: 40px auto;
+                background: var(--paper);
+                border-radius: 20px;
+                box-shadow: var(--shadow);
             }
 
-            /* ── Header ────────────────────────────────────── */
+            /* ── Header ─────────────────────────────────────── */
             .resume-header {
-                background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f172a 100%);
-                padding: 32px 36px;
+                position: relative;
+                background:
+                    radial-gradient(ellipse 60% 120% at 82% 50%, rgba(37,99,235,0.28) 0%, transparent 66%),
+                    linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 55%, var(--navy) 100%);
+                padding: 34px 38px 30px;
                 display: flex;
                 align-items: center;
-                gap: 24px;
-                position: sticky;
-                top: 0;
-                z-index: 10;
-                border-radius: 18px 18px 0 0;
-                box-shadow: 0 4px 24px rgba(0,0,0,0.35);
+                gap: 26px;
+                border-radius: 20px 20px 0 0;
                 overflow: hidden;
             }
-            /* Glow */
-            .resume-header::before {
-                content: '';
-                position: absolute;
-                inset: 0;
-                background: radial-gradient(ellipse 55% 90% at 75% 50%, rgba(37,99,235,0.18) 0%, transparent 70%);
-                pointer-events: none;
-            }
-            /* Rainbow accent bar */
             .resume-header::after {
                 content: '';
                 position: absolute;
                 bottom: 0; left: 0; right: 0;
                 height: 3px;
-                background: linear-gradient(90deg, #2563eb 0%, #06b6d4 40%, #8b5cf6 70%, #ec4899 100%);
+                background: linear-gradient(90deg, var(--accent) 0%, #06b6d4 42%, #8b5cf6 72%, #ec4899 100%);
             }
 
             /* ── Avatar ─────────────────────────────────────── */
             .avatar-wrap {
                 position: relative;
                 flex-shrink: 0;
-                width: 96px;
-                height: 96px;
+                width: 104px;
+                height: 104px;
                 z-index: 1;
                 cursor: pointer;
                 transition: transform 0.3s cubic-bezier(.34,1.56,.64,1), filter 0.3s ease;
@@ -112,7 +288,7 @@ export const prerender = true;
                 position: absolute;
                 inset: -3px;
                 border-radius: 50%;
-                background: linear-gradient(135deg, #2563eb, #06b6d4, #8b5cf6);
+                background: linear-gradient(135deg, var(--accent), #06b6d4, #8b5cf6);
                 z-index: -1;
             }
             .avatar-wrap img {
@@ -121,17 +297,12 @@ export const prerender = true;
                 border-radius: 50%;
                 object-fit: cover;
                 display: block;
-                border: 3px solid #0f172a;
+                border: 3px solid var(--navy);
             }
-            .eye-svg {
-                position: absolute;
-                top: 0; left: 0;
-                width: 100%; height: 100%;
-                pointer-events: none;
-            }
+            .eye-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
             .avatar-wrap:hover {
-                transform: scale(1.12) rotate(6deg);
-                filter: drop-shadow(0 0 18px rgba(37,99,235,0.75));
+                transform: scale(1.1) rotate(5deg);
+                filter: drop-shadow(0 0 20px rgba(37,99,235,0.7));
             }
             .avatar-wrap.scared {
                 transform: scale(0.78) translateY(12px) !important;
@@ -139,412 +310,582 @@ export const prerender = true;
             }
 
             /* ── Header text ────────────────────────────────── */
-            .header-info { flex: 1; z-index: 1; }
+            .header-info { flex: 1; min-width: 0; position: relative; z-index: 1; }
 
             .header-name {
-                font-size: 21pt;
+                font-size: 25pt;
                 font-weight: 800;
-                color: white;
-                letter-spacing: -0.5pt;
-                line-height: 1.1;
-                margin-bottom: 2px;
+                color: #fff;
+                letter-spacing: -0.7pt;
+                line-height: 1.05;
             }
             .header-nickname {
-                font-size: 10pt;
+                font-size: 9.5pt;
                 font-weight: 400;
-                color: rgba(255,255,255,0.45);
-                letter-spacing: 0.5pt;
+                color: rgba(255,255,255,0.4);
+                letter-spacing: 0.6pt;
+                white-space: nowrap;
             }
             .header-title {
-                font-size: 10.5pt;
-                font-weight: 500;
-                color: #93c5fd;
-                margin: 6px 0 14px;
+                font-size: 11pt;
+                font-weight: 600;
+                color: var(--accent-lt);
+                margin-top: 6px;
                 letter-spacing: 0.1pt;
             }
+            .header-specialty {
+                font-family: 'Newsreader', Georgia, serif;
+                font-style: italic;
+                font-size: 9.5pt;
+                color: rgba(255,255,255,0.55);
+                margin-top: 3px;
+            }
+
+            /* Metric strip */
+            .metric-strip {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin: 14px 0 13px;
+            }
+            .metric {
+                display: flex;
+                align-items: baseline;
+                gap: 5px;
+                padding: 4px 11px;
+                border-radius: 999px;
+                background: rgba(255,255,255,0.055);
+                border: 1px solid rgba(147,197,253,0.2);
+            }
+            .metric-value {
+                font-size: 10.5pt;
+                font-weight: 700;
+                color: #fff;
+                letter-spacing: -0.2pt;
+            }
+            .metric-label {
+                font-size: 7pt;
+                font-weight: 600;
+                letter-spacing: 0.9pt;
+                text-transform: uppercase;
+                color: rgba(147,197,253,0.78);
+            }
+
             .header-contact {
                 display: flex;
                 flex-wrap: wrap;
-                gap: 12px 20px;
+                gap: 8px 20px;
             }
             .contact-item {
-                display: flex;
+                display: inline-flex;
                 align-items: center;
-                gap: 5px;
+                gap: 6px;
                 font-size: 8.5pt;
-                color: rgba(255,255,255,0.65);
+                color: rgba(255,255,255,0.62);
             }
-            .contact-icon { font-size: 10px; opacity: 0.8; }
-            .contact-item a { color: #93c5fd; font-weight: 500; }
-            .contact-item a:hover { color: #bfdbfe; }
+            .contact-icon { font-size: 10px; opacity: 0.75; }
+            .contact-item a { color: var(--accent-lt); font-weight: 500; }
+            .contact-item a:hover { color: #dbeafe; }
 
-            /* ── Body ───────────────────────────────────────── */
+            /* ── Body grid ──────────────────────────────────── */
+            /* DOM order is main → aside so that print and screen-reader order stay
+               linear (summary first); the grid places the aside on the left. */
             .resume-body {
                 display: grid;
-                grid-template-columns: 230px 1fr;
-                border-radius: 0 0 18px 18px;
+                grid-template-columns: 238px 1fr;
+                border-radius: 0 0 20px 20px;
                 overflow: hidden;
             }
+            .main-content { grid-column: 2; grid-row: 1; padding: 26px 30px 30px; background: var(--paper); }
+            .sidebar      { grid-column: 1; grid-row: 1; }
 
             /* ── Sidebar ────────────────────────────────────── */
             .sidebar {
-                background: #0f172a;
-                padding: 24px 20px;
+                background: linear-gradient(180deg, var(--navy) 0%, #0e1729 100%);
+                padding: 26px 20px 30px;
                 color: rgba(255,255,255,0.82);
             }
-            .sidebar-section { margin-bottom: 22px; }
+            .sidebar-section { margin-bottom: 24px; }
             .sidebar-section:last-child { margin-bottom: 0; }
 
             .sidebar-title {
                 font-size: 7pt;
                 font-weight: 700;
-                letter-spacing: 1.8pt;
+                letter-spacing: 1.9pt;
                 text-transform: uppercase;
                 color: #60a5fa;
-                margin-bottom: 10px;
-                padding-bottom: 6px;
-                border-bottom: 1px solid rgba(255,255,255,0.08);
+                margin-bottom: 12px;
+                padding-bottom: 7px;
+                border-bottom: 1px solid rgba(255,255,255,0.09);
             }
 
-            /* Skill groups */
-            .skill-group { margin-bottom: 9px; }
+            .skill-group { margin-bottom: 11px; }
             .skill-group:last-child { margin-bottom: 0; }
             .skill-group-label {
-                font-size: 7pt;
+                font-size: 6.8pt;
                 font-weight: 600;
-                color: rgba(255,255,255,0.45);
+                color: rgba(255,255,255,0.42);
                 text-transform: uppercase;
-                letter-spacing: 0.6pt;
-                margin-bottom: 4px;
+                letter-spacing: 0.7pt;
+                margin-bottom: 5px;
             }
-            .skill-tags {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 3px;
-            }
+            .skill-tags { display: flex; flex-wrap: wrap; gap: 3px; }
             .skill-tag {
-                background: rgba(37,99,235,0.22);
-                border: 1px solid rgba(96,165,250,0.3);
-                color: rgba(255,255,255,0.8);
-                padding: 2px 6px;
-                border-radius: 4px;
-                font-size: 7.5pt;
-                line-height: 1.5;
-                transition: all 0.2s ease;
+                background: rgba(37,99,235,0.2);
+                border: 1px solid rgba(96,165,250,0.28);
+                color: rgba(255,255,255,0.82);
+                padding: 2px 7px;
+                border-radius: 5px;
+                font-size: 7.4pt;
+                line-height: 1.55;
+                transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
             }
             .skill-tag:hover {
                 background: rgba(37,99,235,0.42);
                 border-color: rgba(96,165,250,0.6);
-                color: white;
+                color: #fff;
             }
 
-            /* Education */
-            .edu-item { margin-bottom: 6px; }
-            .edu-degree {
-                font-size: 8.5pt;
-                font-weight: 600;
-                color: white;
-                line-height: 1.3;
-            }
-            .edu-school {
-                font-size: 8pt;
-                color: rgba(255,255,255,0.5);
-                margin-top: 2px;
-            }
-            .edu-year {
-                font-size: 7.5pt;
-                color: #60a5fa;
-                margin-top: 2px;
-                font-weight: 500;
-            }
+            .edu-item, .cert-item { line-height: 1.4; }
+            .edu-degree { font-size: 8.5pt; font-weight: 600; color: #fff; }
+            .edu-school { font-size: 8pt; color: rgba(255,255,255,0.5); margin-top: 2px; }
+            .edu-year   { font-size: 7.5pt; color: #60a5fa; font-weight: 500; margin-top: 2px; }
 
-            /* Certs */
             .cert-item {
-                font-size: 8.5pt;
+                font-size: 8.4pt;
                 color: rgba(255,255,255,0.8);
-                padding: 6px 8px 6px 12px;
+                padding: 7px 9px 7px 12px;
                 background: rgba(255,255,255,0.04);
-                border-radius: 6px;
-                border-left: 2px solid #2563eb;
-                line-height: 1.4;
-                margin-bottom: 5px;
+                border-radius: 7px;
+                border-left: 2px solid var(--accent);
             }
+            .cert-issuer { display: block; font-size: 7.2pt; color: rgba(255,255,255,0.42); margin-top: 3px; }
 
-            /* ── Main content ───────────────────────────────── */
-            .main-content {
-                padding: 24px 28px;
-                background: white;
-            }
-
-            .main-section { margin-bottom: 18px; }
+            /* ── Sections ───────────────────────────────────── */
+            .main-section { margin-bottom: 20px; }
             .main-section:last-child { margin-bottom: 0; }
 
             .section-title {
-                font-size: 7.5pt;
-                font-weight: 700;
-                letter-spacing: 1.5pt;
-                text-transform: uppercase;
-                color: #2563eb;
-                margin-bottom: 10px;
-                padding-bottom: 5px;
-                border-bottom: 1.5px solid #e2e8f0;
                 position: relative;
-                transition: color 0.2s;
+                font-size: 7.6pt;
+                font-weight: 700;
+                letter-spacing: 1.6pt;
+                text-transform: uppercase;
+                color: var(--accent);
+                margin-bottom: 11px;
+                padding-bottom: 6px;
+                border-bottom: 1.5px solid var(--line);
             }
             .section-title::after {
                 content: '';
                 position: absolute;
                 bottom: -1.5px; left: 0;
-                width: 36px; height: 1.5px;
-                background: #2563eb;
+                width: 38px; height: 1.5px;
+                background: var(--accent);
                 border-radius: 2px;
             }
-            .section-title:hover { color: #1d4ed8; }
 
-            /* Summary list */
-            .summary-list { list-style: none; padding: 0; }
+            /* ── Summary ────────────────────────────────────── */
+            .summary-list { list-style: none; }
             .summary-list li {
-                padding-left: 14px;
-                margin-bottom: 4px;
-                font-size: 9pt;
-                line-height: 1.45;
                 position: relative;
-                color: #334155;
+                padding-left: 15px;
+                margin-bottom: 5px;
+                font-size: 9pt;
+                line-height: 1.5;
+                color: var(--ink-soft);
             }
             .summary-list li::before {
-                content: '▸';
+                content: '\2022';
                 position: absolute;
-                left: 0;
-                color: #2563eb;
+                left: 0; top: 1px;
+                color: var(--accent);
                 font-size: 8pt;
-                top: 1px;
             }
 
-            /* ── Job entry ──────────────────────────────────── */
-            .job { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #f1f5f9; }
+            /* ── Core competencies ──────────────────────────── */
+            .competency-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 4px 10px;
+            }
+            .competency {
+                position: relative;
+                padding-left: 14px;
+                font-size: 8.2pt;
+                line-height: 1.45;
+                color: var(--ink-soft);
+            }
+            .competency::before {
+                content: '';
+                position: absolute;
+                left: 2px; top: 6px;
+                width: 4px; height: 4px;
+                border-radius: 50%;
+                background: var(--accent);
+            }
+
+            /* ── Experience ─────────────────────────────────── */
+            .job { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--line-soft); }
             .job:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
 
-            .job-top {
+            .job-top, .job-sub {
                 display: flex;
                 justify-content: space-between;
                 align-items: baseline;
-                margin-bottom: 1px;
+                gap: 12px;
             }
             .job-company {
-                font-size: 10pt;
+                font-size: 10.5pt;
                 font-weight: 700;
-                color: #0f172a;
-                letter-spacing: 0.2pt;
+                color: var(--ink);
+                letter-spacing: 0.1pt;
+                text-transform: uppercase;
             }
-            .job-location {
-                font-size: 8pt;
-                color: #94a3b8;
-                font-weight: 400;
-            }
-            .job-sub {
-                display: flex;
-                justify-content: space-between;
-                align-items: baseline;
-                margin-bottom: 6px;
-            }
-            .job-title-text {
-                font-size: 9pt;
-                font-weight: 600;
-                color: #2563eb;
-            }
-            .job-date {
-                font-size: 8pt;
-                color: #64748b;
+            .job-location { font-size: 8pt; color: var(--ink-faint); white-space: nowrap; }
+            .job-sub { margin: 1px 0 5px; }
+            .job-title-text { font-size: 9.2pt; font-weight: 600; color: var(--accent); }
+            .job-date { font-size: 8pt; color: var(--ink-muted); font-style: italic; white-space: nowrap; }
+
+            .job-scope {
+                font-family: 'Newsreader', Georgia, serif;
+                font-size: 8.8pt;
                 font-style: italic;
+                line-height: 1.45;
+                color: var(--ink-muted);
+                padding: 6px 0 8px 11px;
+                border-left: 2px solid var(--line);
+                margin-bottom: 7px;
             }
-            .job-bullets { list-style: none; padding: 0; }
-            .job-bullets li {
-                padding-left: 13px;
-                margin-bottom: 3px;
-                font-size: 8.5pt;
-                line-height: 1.4;
+
+            .job-bullets, .project-bullets { list-style: none; }
+            .job-bullets li, .project-bullets li {
                 position: relative;
-                color: #334155;
-                transition: transform 0.15s ease;
+                padding-left: 14px;
+                margin-bottom: 4px;
+                font-size: 8.5pt;
+                line-height: 1.45;
+                color: var(--ink-soft);
             }
             .job-bullets li::before {
-                content: '·';
+                content: '';
                 position: absolute;
-                left: 2px;
-                color: #93c5fd;
-                font-size: 14pt;
-                line-height: 0.8;
-                top: 2px;
+                left: 3px; top: 6px;
+                width: 4px; height: 4px;
+                border-radius: 50%;
+                background: var(--accent-lt);
             }
-            .job-bullets li:hover { transform: translateX(3px); }
+            .project-bullets li::before {
+                content: '\2022';
+                position: absolute;
+                left: 0; top: 0;
+                color: var(--accent);
+                font-size: 8pt;
+            }
 
-            strong { font-weight: 600; color: #0f172a; }
+            strong { font-weight: 600; color: var(--ink); }
+            code {
+                font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+                font-size: 0.92em;
+                background: var(--accent-bg);
+                border-radius: 3px;
+                padding: 0 3px;
+            }
 
-            /* ── Project cards ──────────────────────────────── */
+            /* ── Achievements ───────────────────────────────── */
+            .achievement-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+            .achievement-item {
+                position: relative;
+                padding: 8px 11px 8px 26px;
+                background: var(--paper-alt);
+                border-radius: 8px;
+                border-left: 2px solid var(--accent);
+                font-size: 8.4pt;
+                line-height: 1.4;
+                color: var(--ink-soft);
+            }
+            .achievement-item::before {
+                content: '↑';
+                position: absolute;
+                left: 9px; top: 8px;
+                color: var(--accent);
+                font-weight: 700;
+                font-size: 9pt;
+            }
+
+            /* ── Projects ───────────────────────────────────── */
             .project-card {
-                margin-bottom: 14px;
-                padding: 12px 14px;
-                border-radius: 10px;
-                border: 1px solid #e2e8f0;
-                background: #f8fafc;
+                margin-bottom: 12px;
+                padding: 13px 15px;
+                border-radius: 11px;
+                border: 1px solid var(--line);
+                background: var(--paper-alt);
                 transition: box-shadow 0.2s ease, border-color 0.2s ease;
             }
             .project-card:last-child { margin-bottom: 0; }
-            .project-card:hover {
-                box-shadow: 0 2px 12px rgba(37,99,235,0.1);
-                border-color: #bfdbfe;
-            }
+            .project-card:hover { box-shadow: 0 3px 14px rgba(37,99,235,0.1); border-color: #bfdbfe; }
+
             .project-header {
                 display: flex;
                 align-items: baseline;
                 justify-content: space-between;
                 flex-wrap: wrap;
                 gap: 6px;
-                margin-bottom: 5px;
+                margin-bottom: 6px;
             }
-            .project-name {
-                font-size: 10pt;
-                font-weight: 700;
-                color: #0f172a;
-            }
-            .project-name a {
-                color: inherit;
-            }
-            .project-name a:hover { color: #2563eb; text-decoration: none; }
-            .project-tagline {
-                font-size: 8.5pt;
-                color: #2563eb;
-                font-weight: 500;
-            }
-            .project-tech {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 3px;
-                margin-bottom: 7px;
-            }
+            .project-name { font-size: 10pt; font-weight: 700; color: var(--ink); }
+            .project-name a:hover { color: var(--accent); text-decoration: none; }
+            .project-tagline { font-size: 8.4pt; color: var(--accent); font-weight: 500; }
+
+            .project-tech { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 8px; }
             .project-tech-tag {
-                background: #eff6ff;
+                background: var(--accent-bg);
                 border: 1px solid #bfdbfe;
-                color: #1d4ed8;
-                padding: 1px 6px;
-                border-radius: 4px;
+                color: var(--accent-dk);
+                padding: 1px 7px;
+                border-radius: 5px;
                 font-size: 7pt;
                 font-weight: 500;
-                line-height: 1.6;
-            }
-            .project-bullets { list-style: none; padding: 0; }
-            .project-bullets li {
-                padding-left: 13px;
-                margin-bottom: 3px;
-                font-size: 8.5pt;
-                line-height: 1.4;
-                position: relative;
-                color: #334155;
-            }
-            .project-bullets li::before {
-                content: '▸';
-                position: absolute;
-                left: 0;
-                top: 1px;
-                color: #2563eb;
-                font-size: 8pt;
+                line-height: 1.65;
             }
 
-            /* ── Achievements grid ──────────────────────────── */
-            .achievement-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 6px;
+            /* ── Machine-readable profile (AI crawlers) ─────── */
+            .machine-block {
+                margin: 0 30px 26px;
+                border: 1px solid var(--line);
+                border-radius: 11px;
+                background: var(--paper-alt);
+                overflow: hidden;
             }
-            .achievement-item {
-                padding: 7px 10px 7px 24px;
-                background: #f8fafc;
-                border-radius: 7px;
-                font-size: 8.5pt;
-                line-height: 1.35;
-                color: #334155;
-                position: relative;
-                border-left: 2px solid #2563eb;
-            }
-            .achievement-item::before {
-                content: '↑';
-                position: absolute;
-                left: 7px;
-                top: 7px;
-                color: #2563eb;
+            .machine-block > summary {
+                cursor: pointer;
+                list-style: none;
+                padding: 11px 15px;
+                font-size: 7.6pt;
                 font-weight: 700;
-                font-size: 9pt;
+                letter-spacing: 1.4pt;
+                text-transform: uppercase;
+                color: var(--ink-muted);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .machine-block > summary::-webkit-details-marker { display: none; }
+            .machine-block > summary::before { content: '⌗'; color: var(--accent); font-size: 11pt; }
+            .machine-block > summary:hover { color: var(--accent); }
+            .machine-body { padding: 0 15px 15px; }
+            .machine-body dl {
+                display: grid;
+                grid-template-columns: 150px 1fr;
+                gap: 4px 12px;
+                font-size: 8.2pt;
+                line-height: 1.5;
+            }
+            .machine-body dt { font-weight: 600; color: var(--ink-muted); }
+            .machine-body dd { color: var(--ink-soft); }
+            .machine-note {
+                margin-top: 11px;
+                padding-top: 10px;
+                border-top: 1px solid var(--line);
+                font-size: 7.8pt;
+                color: var(--ink-muted);
+                line-height: 1.5;
             }
 
-            /* ── Animations ─────────────────────────────────── */
+            /* ── Entry animation ────────────────────────────── */
             @keyframes fadeUp {
                 from { opacity: 0; transform: translateY(14px); }
                 to   { opacity: 1; transform: translateY(0); }
             }
-            .anim-in {
-                opacity: 0;
-                animation: fadeUp 0.45s ease forwards;
+            .anim-in { opacity: 0; animation: fadeUp 0.45s ease forwards; }
+            @media (prefers-reduced-motion: reduce) {
+                .anim-in { opacity: 1; animation: none; }
+                *, *::before, *::after { transition-duration: 0.01ms !important; }
             }
 
-            /* ── Print ──────────────────────────────────────── */
+            /* Screen/print swaps */
+            .print-only { display: none; }
+
+            /* ── Print / PDF ────────────────────────────────── */
+            /* The PDF is what gets uploaded to job applications, so it drops to a
+               single linear column: one text flow, standard section headings, and
+               no colour-dependent content — the shape ATS parsers read reliably. */
+            @page { size: Letter; margin: 0.45in 0.5in; }
+
             @media print {
-                body { background: white; }
-                .print-btn { display: none !important; }
-                .avatar-wrap { display: none !important; }
-                .resume {
-                    margin: 0;
-                    border-radius: 0;
-                    box-shadow: none;
-                    max-width: 100%;
+                :root {
+                    --backdrop: #fff;
+                    --backdrop-2: #fff;
+                    --shadow: none;
                 }
+                html, body {
+                    background: #fff;
+                    font-size: 9.2pt;
+                    line-height: 1.32;
+                }
+                .toolbar, .avatar-wrap, .machine-block { display: none !important; }
+                .print-only { display: block; }
+
+                .resume { max-width: 100%; margin: 0; border-radius: 0; box-shadow: none; }
+
                 .resume-header {
                     position: static;
+                    display: block;
+                    padding: 0 0 8px;
                     border-radius: 0;
-                    box-shadow: none;
-                    -webkit-print-color-adjust: exact;
-                    print-color-adjust: exact;
+                    background: #fff !important;
+                    border-bottom: 2px solid var(--ink);
                 }
+                .resume-header::after { display: none; }
+                .header-name { font-size: 20pt; color: var(--ink); letter-spacing: -0.4pt; }
+                .header-nickname { color: var(--ink-muted); }
+                .header-title { font-size: 10.5pt; color: var(--ink); font-weight: 700; margin-top: 2px; }
+                .header-specialty { color: var(--ink-muted); }
+                .metric-strip { gap: 0 14px; margin: 7px 0 6px; }
+                .metric { background: none; border: none; padding: 0; }
+                .metric-value { color: var(--ink); font-size: 9.5pt; }
+                .metric-label { color: var(--ink-muted); }
+                .contact-item { color: var(--ink-soft); font-size: 8.6pt; }
+                .contact-item a { color: var(--ink-soft); }
+
+                /* Single linear column: main content, then skills/education. */
+                .resume-body { display: block; border-radius: 0; }
+                .main-content { padding: 12px 0 0; }
                 .sidebar {
-                    -webkit-print-color-adjust: exact;
-                    print-color-adjust: exact;
+                    background: #fff !important;
+                    color: var(--ink-soft);
+                    padding: 0;
+                    margin-top: 4px;
                 }
-                .achievement-item {
-                    -webkit-print-color-adjust: exact;
-                    print-color-adjust: exact;
+                .sidebar-title, .section-title {
+                    color: var(--ink);
+                    font-size: 8pt;
+                    border-bottom: 1px solid var(--ink-faint);
+                    margin-bottom: 7px;
                 }
-                .job-bullets li:hover { transform: none; }
-                .job { page-break-inside: avoid; }
+                /* Letter-spacing makes PDF text extract as "S U M M A R Y", which
+                   defeats ATS section detection and keyword matching. Headings stay
+                   uppercase and bold, but at normal tracking, in print only. */
+                .section-title, .sidebar-title, .metric-label,
+                .job-company, .skill-group-label {
+                    letter-spacing: normal;
+                }
+                .contact-icon { display: none; }
+                .header-contact { gap: 4px 16px; }
+                .section-title::after { background: var(--ink); }
+                .skill-tags, .project-tech { display: none; }
+                .skill-group-label { display: none; }
+                .print-skill-line { font-size: 8.2pt; line-height: 1.42; color: var(--ink-soft); margin-bottom: 2px; }
+
+                /* Typographic scale for paper. Inter's large x-height keeps these
+                   sizes readable while fitting the full resume in three pages —
+                   a fourth page holding only the tail sections reads as padding. */
+                .summary-list li { font-size: 8.4pt; }
+                .job-bullets li, .project-bullets li { font-size: 8.2pt; }
+                .job-scope { font-size: 8.3pt; }
+                .achievement-item { font-size: 8.1pt; }
+                .competency { font-size: 8pt; }
+                .print-skill-line strong { color: var(--ink); }
+                .edu-degree, .edu-school, .edu-year, .cert-item { color: var(--ink-soft); }
+                .edu-degree { color: var(--ink); }
+                .cert-item { background: none; border-left: 2px solid var(--ink-faint); padding: 2px 0 2px 9px; }
+                .cert-issuer { color: var(--ink-muted); }
+
+                .job-scope { color: var(--ink-muted); border-left-color: var(--ink-faint); padding: 3px 0 3px 9px; }
+                .job-title-text, .project-tagline, .project-name a { color: var(--ink); }
+                .job-bullets li::before, .competency::before { background: var(--ink-soft); }
+                .summary-list li::before, .project-bullets li::before { color: var(--ink-soft); }
+                .achievement-item, .project-card {
+                    background: none;
+                    border: none;
+                    border-left: 2px solid var(--ink-faint);
+                    border-radius: 0;
+                    padding: 1px 0 1px 9px;
+                }
+                .project-card { border-left: none; padding-left: 0; margin-bottom: 8px; }
+                .achievement-item::before { color: var(--ink-soft); }
+                .competency-grid { gap: 2px 10px; }
+
+                /* Expand links so a printed page keeps its references. */
+                .project-name a::after {
+                    content: ' — ' attr(href);
+                    font-weight: 400;
+                    font-size: 7.6pt;
+                    color: var(--ink-muted);
+                }
+
+                /* Let long roles split across pages — forcing whole jobs to stay
+                   together stranded ~1.3 pages of whitespace. Instead, keep each
+                   heading glued to the text that follows it. */
+                .job { break-inside: auto; }
+                .job-bullets li, .summary-list li, .project-bullets li,
+                .project-card, .achievement-item, .edu-item, .cert-item,
+                .print-skill-line { break-inside: avoid; }
+                .section-title, .sidebar-title, .job-top, .job-sub,
+                .job-scope, .project-header, .skill-group-label { break-after: avoid; }
+                .main-section, .sidebar-section { break-inside: auto; }
+
+                /* Vertical rhythm, tightened for paper: the same content at screen
+                   spacing ran to four pages, with the last holding only the tail
+                   sections. */
+                .main-section { margin-bottom: 9px; }
+                .sidebar-section { margin-bottom: 8px; }
+                .section-title, .sidebar-title { margin-bottom: 5px; padding-bottom: 3px; }
+                .job { margin-bottom: 9px; padding-bottom: 9px; }
+                .job-scope { margin-bottom: 4px; }
+                .job-bullets li, .summary-list li, .project-bullets li,
+                .competency { margin-bottom: 2px; }
+                .achievement-grid { gap: 3px 10px; }
+                .project-card { margin-bottom: 7px; }
+                .skill-group { margin-bottom: 0; }
+                .edu-item { margin-bottom: 3px; }
+                /* These three print as "Label: values", so the section heading above
+                   them is a duplicate that costs two lines each. */
+                .sidebar-compact > .sidebar-title { display: none; }
+                .sidebar-compact { margin-bottom: 2px; }
+
+                a { text-decoration: none; }
             }
 
             /* ── Responsive ─────────────────────────────────── */
-            @media (max-width: 720px) {
-                .resume { margin: 0; border-radius: 0; }
-                .resume-body { grid-template-columns: 1fr; }
-                .resume-header { flex-direction: column; text-align: center; }
-                .header-contact { justify-content: center; }
-                .avatar-wrap { margin: 0 auto; }
-                .achievement-grid { grid-template-columns: 1fr; }
-                .print-btn { top: 10px; right: 10px; font-size: 11px; padding: 7px 13px; }
+            @media (max-width: 860px) {
+                .competency-grid { grid-template-columns: repeat(2, 1fr); }
             }
-
-            /* Hidden ATS keywords */
-            .ats { font-size: 0; line-height: 0; color: white; visibility: collapse; user-select: none; }
+            @media (max-width: 740px) {
+                .resume { margin: 0; border-radius: 0; }
+                .resume-header { border-radius: 0; flex-direction: column; text-align: center; padding: 28px 20px 24px; }
+                .header-name { font-size: 21pt; }
+                .metric-strip, .header-contact { justify-content: center; }
+                .avatar-wrap { margin: 0 auto; }
+                .resume-body { display: block; border-radius: 0; }
+                .main-content { padding: 22px 20px; }
+                .sidebar { padding: 24px 20px 28px; }
+                .achievement-grid, .competency-grid { grid-template-columns: 1fr; }
+                .machine-block { margin: 0 20px 22px; }
+                .machine-body dl { grid-template-columns: 1fr; gap: 0 0; }
+                .machine-body dt { margin-top: 7px; }
+                .toolbar { top: 10px; right: 10px; gap: 6px; }
+                .tool-btn { font-size: 10.5px; padding: 7px 13px; }
+            }
         </style>
     </head>
 
     <body>
-        <!-- Print button -->
-        <button class="print-btn no-print" onclick="window.print()">
-            🖨 Print / PDF
-        </button>
+        <nav class="toolbar" aria-label="Resume actions">
+            <a
+                class="tool-btn secondary"
+                href="/doctor/resume.txt"
+                title="Plain-text version for AI agents and ATS"
+            >⌗ Plain text</a>
+            <button class="tool-btn" type="button" id="printBtn">🖨 Print / PDF</button>
+        </nav>
 
-        <div class="resume">
+        <article class="resume" itemscope itemtype="https://schema.org/Person">
 
             <!-- ── Header ──────────────────────────────────── -->
             <header class="resume-header anim-in" style="animation-delay: 0ms;">
-                <!-- Avatar with googly eyes -->
-                <div class="avatar-wrap no-print" id="avatarWrap">
-                    <img src="/saket-photo.jpg" alt="Saket Sharma" />
+                <div class="avatar-wrap" id="avatarWrap" aria-hidden="true">
+                    <img src={profile.photo} alt={profile.name} itemprop="image" />
                     <svg class="eye-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
                         <g transform="translate(78, 65)">
                             <ellipse cx="0" cy="0" rx="14" ry="10" fill="white" opacity="0.9" />
@@ -563,396 +904,277 @@ export const prerender = true;
                     </svg>
                 </div>
 
-                <!-- Name + contact -->
                 <div class="header-info">
-                    <h1 class="header-name">
-                        SAKET SHARMA
-                        <span class="header-nickname"> — "CLIFF WATERS"</span>
+                    <h1 class="header-name" itemprop="name">
+                        {profile.name.toUpperCase()}
+                        <span class="header-nickname">— &ldquo;{profile.nickname.toUpperCase()}&rdquo;</span>
                     </h1>
-                    <div class="header-title">Senior Full Stack Software Engineer · 8+ Years</div>
-                    <div class="header-contact">
-                        <span class="contact-item">
-                            <span class="contact-icon">✉</span>
-                            saket87@live.com
-                        </span>
-                        <span class="contact-item">
-                            <span class="contact-icon">⌨</span>
-                            <a href="https://github.com/doctor69" target="_blank" rel="noopener noreferrer">
-                                github.com/doctor69
-                            </a>
-                        </span>
-                        <span class="contact-item">
-                            <span class="contact-icon">📍</span>
-                            United States
-                        </span>
+                    <p class="header-title" itemprop="jobTitle">
+                        {profile.headline} · {profile.yearsExperience} Years
+                    </p>
+                    <p class="header-specialty">{profile.specialty}</p>
+
+                    <div class="metric-strip">
+                        {metrics.map((metric) => (
+                            <span class="metric">
+                                <span class="metric-value">{metric.value}</span>
+                                <span class="metric-label">{metric.label}</span>
+                            </span>
+                        ))}
                     </div>
+
+                    <address class="header-contact">
+                        {contactChannels.map((channel) => (
+                            <span class="contact-item">
+                                <span class="contact-icon" aria-hidden="true">{channel.icon}</span>
+                                {channel.href ? (
+                                    <a
+                                        href={channel.href}
+                                        rel={channel.href.startsWith('http') ? 'noopener noreferrer me' : undefined}
+                                        target={channel.href.startsWith('http') ? '_blank' : undefined}
+                                    >{channel.value}</a>
+                                ) : (
+                                    <span>{channel.value}</span>
+                                )}
+                            </span>
+                        ))}
+                    </address>
                 </div>
             </header>
 
             <!-- ── Body ────────────────────────────────────── -->
             <div class="resume-body">
 
-                <!-- ── Sidebar ──────────────────────────────── -->
-                <aside class="sidebar">
-
-                    <div class="sidebar-section anim-in" style="animation-delay:80ms">
-                        <div class="sidebar-title">Technical Skills</div>
-
-                        <div class="skill-group">
-                            <div class="skill-group-label">Languages</div>
-                            <div class="skill-tags">
-                                <span class="skill-tag">Java 8–21</span>
-                                <span class="skill-tag">TypeScript</span>
-                                <span class="skill-tag">JavaScript</span>
-                                <span class="skill-tag">Python</span>
-                                <span class="skill-tag">C#</span>
-                                <span class="skill-tag">SQL / PL/SQL</span>
-                            </div>
-                        </div>
-
-                        <div class="skill-group">
-                            <div class="skill-group-label">Backend</div>
-                            <div class="skill-tags">
-                                <span class="skill-tag">Spring Boot 3.x</span>
-                                <span class="skill-tag">Spring Cloud</span>
-                                <span class="skill-tag">Spring Security</span>
-                                <span class="skill-tag">Spring WebFlux</span>
-                                <span class="skill-tag">Hibernate / JPA</span>
-                                <span class="skill-tag">Node.js</span>
-                                <span class="skill-tag">.NET Core</span>
-                            </div>
-                        </div>
-
-                        <div class="skill-group">
-                            <div class="skill-group-label">Frontend</div>
-                            <div class="skill-tags">
-                                <span class="skill-tag">React 18</span>
-                                <span class="skill-tag">Next.js 14</span>
-                                <span class="skill-tag">Redux</span>
-                                <span class="skill-tag">Tailwind CSS</span>
-                                <span class="skill-tag">Material-UI</span>
-                            </div>
-                        </div>
-
-                        <div class="skill-group">
-                            <div class="skill-group-label">APIs & Messaging</div>
-                            <div class="skill-tags">
-                                <span class="skill-tag">REST / GraphQL</span>
-                                <span class="skill-tag">gRPC</span>
-                                <span class="skill-tag">Apache Kafka</span>
-                                <span class="skill-tag">RabbitMQ</span>
-                                <span class="skill-tag">JMS / IBM MQ</span>
-                                <span class="skill-tag">OAuth2 / JWT</span>
-                                <span class="skill-tag">OpenAPI / Swagger</span>
-                            </div>
-                        </div>
-
-                        <div class="skill-group">
-                            <div class="skill-group-label">Databases</div>
-                            <div class="skill-tags">
-                                <span class="skill-tag">Oracle 19c</span>
-                                <span class="skill-tag">PostgreSQL</span>
-                                <span class="skill-tag">MongoDB</span>
-                                <span class="skill-tag">Redis</span>
-                                <span class="skill-tag">IBM DB2</span>
-                                <span class="skill-tag">MySQL</span>
-                                <span class="skill-tag">DynamoDB</span>
-                            </div>
-                        </div>
-
-                        <div class="skill-group">
-                            <div class="skill-group-label">Cloud & DevOps</div>
-                            <div class="skill-tags">
-                                <span class="skill-tag">AWS EC2/S3/Lambda</span>
-                                <span class="skill-tag">AWS ECS/RDS</span>
-                                <span class="skill-tag">Docker</span>
-                                <span class="skill-tag">Kubernetes</span>
-                                <span class="skill-tag">Terraform</span>
-                                <span class="skill-tag">Jenkins</span>
-                                <span class="skill-tag">GitHub Actions</span>
-                                <span class="skill-tag">Cloudflare Pages</span>
-                            </div>
-                        </div>
-
-                        <div class="skill-group">
-                            <div class="skill-group-label">AI & Modern Stack</div>
-                            <div class="skill-tags">
-                                <span class="skill-tag">Anthropic Claude API</span>
-                                <span class="skill-tag">Astro</span>
-                                <span class="skill-tag">Supabase</span>
-                                <span class="skill-tag">Alpaca Markets</span>
-                                <span class="skill-tag">Prompt Engineering</span>
-                            </div>
-                        </div>
-
-                        <div class="skill-group">
-                            <div class="skill-group-label">Testing & Quality</div>
-                            <div class="skill-tags">
-                                <span class="skill-tag">JUnit 5</span>
-                                <span class="skill-tag">Mockito</span>
-                                <span class="skill-tag">TestContainers</span>
-                                <span class="skill-tag">Jest</span>
-                                <span class="skill-tag">Selenium</span>
-                                <span class="skill-tag">SonarQube</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="sidebar-section anim-in" style="animation-delay:140ms">
-                        <div class="sidebar-title">Education</div>
-                        <div class="edu-item">
-                            <div class="edu-degree">Associate Degree<br/>Computer Science</div>
-                            <div class="edu-school">Quincy College · Quincy, MA</div>
-                            <div class="edu-year">2010</div>
-                        </div>
-                    </div>
-
-                    <div class="sidebar-section anim-in" style="animation-delay:180ms">
-                        <div class="sidebar-title">Certifications</div>
-                        <div class="cert-item">FAA Certified Pilot<br/>Part 107 — UAVs</div>
-                    </div>
-
-                    <div class="sidebar-section anim-in" style="animation-delay:220ms">
-                        <div class="sidebar-title">Methodologies</div>
-                        <div class="skill-tags">
-                            <span class="skill-tag">Agile / Scrum</span>
-                            <span class="skill-tag">TDD / BDD</span>
-                            <span class="skill-tag">CI/CD</span>
-                            <span class="skill-tag">Microservices</span>
-                            <span class="skill-tag">DDD</span>
-                            <span class="skill-tag">Design Patterns</span>
-                            <span class="skill-tag">SOLID</span>
-                        </div>
-                    </div>
-
-                    <div class="sidebar-section anim-in" style="animation-delay:260ms">
-                        <div class="sidebar-title">Tools</div>
-                        <div class="skill-tags">
-                            <span class="skill-tag">IntelliJ IDEA</span>
-                            <span class="skill-tag">VS Code</span>
-                            <span class="skill-tag">Git / GitFlow</span>
-                            <span class="skill-tag">Maven / Gradle</span>
-                            <span class="skill-tag">Jira / Confluence</span>
-                            <span class="skill-tag">Datadog</span>
-                            <span class="skill-tag">Splunk</span>
-                        </div>
-                    </div>
-
-                </aside>
-
-                <!-- ── Main content ──────────────────────────── -->
+                <!-- Main column (first in DOM → first in print & reading order) -->
                 <main class="main-content">
 
-                    <!-- Summary -->
                     <section class="main-section anim-in" style="animation-delay:100ms">
-                        <div class="section-title">Professional Summary</div>
+                        <h2 class="section-title">Professional Summary</h2>
                         <ul class="summary-list">
-                            <li>Senior Software Engineer with <strong>8+ years</strong> designing enterprise applications using <strong>Java, Spring Boot, Microservices, React, and AWS</strong></li>
-                            <li>Architected and delivered <strong>50+ RESTful APIs and GraphQL services</strong> handling millions of transactions with 99.9% uptime</li>
-                            <li>Successfully migrated monolithic applications to containerized microservices using <strong>Docker, Kubernetes, and AWS ECS</strong> — reducing infrastructure costs by 35%</li>
-                            <li>Expert in <strong>event-driven architectures</strong> with Apache Kafka, RabbitMQ, and JMS for real-time data processing at scale</li>
-                            <li>Strong database design and optimization background across Oracle, PostgreSQL, DB2, MySQL, MongoDB, and Redis</li>
-                            <li>Proven leadership mentoring engineering teams, conducting code reviews, and championing secure, scalable development practices</li>
+                            {summary.map((line) => <li set:html={line} />)}
                         </ul>
                     </section>
 
-                    <!-- Experience -->
-                    <section class="main-section anim-in" style="animation-delay:160ms">
-                        <div class="section-title">Professional Experience</div>
-
-                        <!-- Mastercard -->
-                        <div class="job">
-                            <div class="job-top">
-                                <span class="job-company">MASTERCARD</span>
-                                <span class="job-location">St. Louis, MO</span>
-                            </div>
-                            <div class="job-sub">
-                                <span class="job-title-text">Senior Software Developer</span>
-                                <span class="job-date">Dec 2023 – Present</span>
-                            </div>
-                            <ul class="job-bullets">
-                                <li>Architected <strong>high-performance RESTful APIs</strong> using Spring Boot 3.x and Java 21, processing <strong>2M+ daily transactions</strong> with sub-100ms response times and 99.95% uptime</li>
-                                <li>Designed <strong>microservices architecture</strong> with API Gateway (Spring Cloud Gateway), rate limiting, circuit breakers (Resilience4j), and OAuth2/JWT authentication</li>
-                                <li>Led <strong>Java 8 → Java 21 migration</strong> across 15+ enterprise applications; leveraged records, pattern matching, and virtual threads for 30% performance improvement and 25% code reduction</li>
-                                <li>Developed <strong>GraphQL APIs</strong> using Spring for GraphQL, reducing over-fetching and improving mobile performance by 45% via optimized query resolvers and DataLoader</li>
-                                <li>Implemented <strong>event-driven architecture</strong> with Apache Kafka for real-time payment processing — 500K+ events/hour with exactly-once semantics and dead-letter queue handling</li>
-                                <li>Built <strong>Redis caching layer</strong> (cache-aside + TTL policies), cutting database load by 60% and API response times from 500ms to 80ms</li>
-                                <li>Established <strong>CI/CD pipelines</strong> with Jenkins achieving 50+ zero-downtime production releases/month with automated unit, integration, and security scans (SonarQube, OWASP)</li>
-                                <li>Mentored 4 junior developers on Spring Boot best practices, Java 21 features, and microservices patterns through code reviews and pair programming</li>
-                            </ul>
-                        </div>
-
-                        <!-- Visa -->
-                        <div class="job">
-                            <div class="job-top">
-                                <span class="job-company">VISA</span>
-                                <span class="job-location">Austin, TX</span>
-                            </div>
-                            <div class="job-sub">
-                                <span class="job-title-text">Java Full Stack Software Developer</span>
-                                <span class="job-date">Sep 2022 – Nov 2023</span>
-                            </div>
-                            <ul class="job-bullets">
-                                <li>Spearheaded <strong>legacy modernization</strong> — migrated 8 monolithic J2EE apps to Spring Boot microservices, reducing deployment time from 4 hours to 15 minutes</li>
-                                <li>Developed <strong>20+ RESTful APIs</strong> with comprehensive error handling, validation, and Springdoc-OpenAPI documentation</li>
-                                <li>Implemented <strong>containerization strategy</strong> — Docker images and Kubernetes manifests for 12 microservices with health checks and auto-scaling</li>
-                                <li>Built <strong>secure auth framework</strong> with SSO, LDAP, OAuth2, and MFA supporting 50K+ concurrent users; managed SSL/TLS automation for PCI-DSS compliance</li>
-                                <li>Developed <strong>async processing</strong> with Spring @Async, CompletableFuture, and message queues for payment workflows — 60% throughput improvement</li>
-                                <li>Achieved <strong>85%+ code coverage</strong> with JUnit 5, Mockito, and contract tests; reduced technical debt by 40% through SonarQube-driven refactoring</li>
-                            </ul>
-                        </div>
-
-                        <!-- State Street -->
-                        <div class="job">
-                            <div class="job-top">
-                                <span class="job-company">STATE STREET CORPORATION</span>
-                                <span class="job-location">Quincy, MA</span>
-                            </div>
-                            <div class="job-sub">
-                                <span class="job-title-text">Java Full Stack Software Developer</span>
-                                <span class="job-date">Nov 2017 – Feb 2022</span>
-                            </div>
-                            <ul class="job-bullets">
-                                <li>Designed <strong>enterprise REST APIs</strong> using Spring MVC and Spring Boot serving 100K+ daily active users across multiple time zones</li>
-                                <li>Led <strong>UI modernization</strong> — migrated legacy Adobe Flex to React 18 with TypeScript, Redux, and Material-UI; improved page load times by 65% and user satisfaction by 40%</li>
-                                <li>Built <strong>reactive APIs</strong> using Spring WebFlux for non-blocking async processing, improving concurrent request capacity by 200%</li>
-                                <li>Created <strong>reusable component library</strong> with 50+ Storybook-documented components — reduced development time by 30% across teams</li>
-                                <li>Implemented <strong>real-time features</strong> using WebSockets and SSE for live financial data, trade notifications, and market alerts</li>
-                                <li>Integrated <strong>JMS/IBM MQ</strong> for async service communication with request-reply pattern, timeout handling, and retry logic</li>
-                                <li>Established <strong>Jenkins CI/CD</strong> with Maven builds, automated testing, and blue-green deployments; migrated SVN to Git with GitFlow</li>
-                            </ul>
+                    <section class="main-section anim-in" style="animation-delay:130ms">
+                        <h2 class="section-title">Core Competencies</h2>
+                        <div class="competency-grid">
+                            {coreCompetencies.map((item) => <span class="competency">{item}</span>)}
                         </div>
                     </section>
 
-                    <!-- Key Achievements -->
+                    <section class="main-section anim-in" style="animation-delay:170ms">
+                        <h2 class="section-title">Professional Experience</h2>
+                        {experience.map((job) => (
+                            <div class="job">
+                                <div class="job-top">
+                                    <h3 class="job-company">{job.company}</h3>
+                                    <span class="job-location">{job.location}</span>
+                                </div>
+                                <div class="job-sub">
+                                    <span class="job-title-text">{job.title}</span>
+                                    <span class="job-date">
+                                        <time datetime={job.startDate}>{job.period.split('–')[0].trim()}</time>
+                                        {' – '}
+                                        {job.endDate
+                                            ? <time datetime={job.endDate}>{job.period.split('–')[1].trim()}</time>
+                                            : <span>Present</span>}
+                                    </span>
+                                </div>
+                                <p class="job-scope">{job.scope}</p>
+                                <ul class="job-bullets">
+                                    {job.bullets.map((bullet) => <li set:html={bullet} />)}
+                                </ul>
+                            </div>
+                        ))}
+                    </section>
+
                     <section class="main-section anim-in" style="animation-delay:220ms">
-                        <div class="section-title">Key Achievements</div>
+                        <h2 class="section-title">Key Achievements</h2>
                         <div class="achievement-grid">
-                            <div class="achievement-item">Reduced API response times by <strong>70%</strong> via Redis caching and database query tuning</div>
-                            <div class="achievement-item">Led Java 8→21 migration: <strong>30% perf gain</strong> and reduced memory footprint</div>
-                            <div class="achievement-item">Architected platform processing <strong>2M+ daily transactions</strong> at 99.95% uptime</div>
-                            <div class="achievement-item">Scaled deployment from monthly to <strong>50+ releases/month</strong> via CI/CD automation</div>
-                            <div class="achievement-item">Reduced production incidents by <strong>40%</strong> through testing and observability</div>
-                            <div class="achievement-item">Cut infrastructure costs by <strong>35%</strong> via microservices containerization</div>
+                            {achievements.map((item) => <div class="achievement-item" set:html={item} />)}
                         </div>
                     </section>
 
-                    <!-- Personal Projects -->
-                    <section class="main-section anim-in" style="animation-delay:270ms">
-                        <div class="section-title">Personal Projects</div>
-
-                        <!-- LEADTRADE -->
-                        <div class="project-card">
-                            <div class="project-header">
-                                <span class="project-name"><a href="https://leadtrade.app" target="_blank" rel="noopener noreferrer">LEADTRADE ↗</a></span>
-                                <span class="project-tagline">Social Mirror-Trading Platform</span>
+                    <section class="main-section anim-in" style="animation-delay:260ms">
+                        <h2 class="section-title">Projects</h2>
+                        {projects.map((project) => (
+                            <div class="project-card">
+                                <div class="project-header">
+                                    <h3 class="project-name">
+                                        {project.url
+                                            ? <a href={project.url} target="_blank" rel="noopener noreferrer">{project.name} ↗</a>
+                                            : project.name}
+                                    </h3>
+                                    <span class="project-tagline">{project.tagline}</span>
+                                </div>
+                                <div class="project-tech">
+                                    {project.tech.map((tech) => <span class="project-tech-tag">{tech}</span>)}
+                                </div>
+                                <p class="print-only print-skill-line"><strong>Tech:</strong> {project.tech.join(' · ')}</p>
+                                <ul class="project-bullets">
+                                    {project.bullets.map((bullet) => <li set:html={bullet} />)}
+                                </ul>
                             </div>
-                            <div class="project-tech">
-                                <span class="project-tech-tag">Astro</span>
-                                <span class="project-tech-tag">React</span>
-                                <span class="project-tech-tag">TypeScript</span>
-                                <span class="project-tech-tag">Tailwind CSS</span>
-                                <span class="project-tech-tag">Supabase</span>
-                                <span class="project-tech-tag">Alpaca Markets API</span>
-                                <span class="project-tech-tag">Cloudflare Pages</span>
-                                <span class="project-tech-tag">PWA</span>
-                            </div>
-                            <ul class="project-bullets">
-                                <li>Built an institutional-grade trading platform enabling users to mirror elite traders' portfolios in real time via the Alpaca Markets brokerage API</li>
-                                <li>Designed a global leaderboard engine with live rankings, win-rate analytics, and performance attribution dashboards</li>
-                                <li>Implemented row-level security in Supabase and OAuth2 auth with zero-trust API access from Cloudflare edge workers</li>
-                                <li>Shipped as a progressive web app with offline caching, achieving sub-2s initial load on mobile via Astro's island architecture</li>
-                            </ul>
-                        </div>
-
-                        <!-- JobHunt.ai -->
-                        <div class="project-card">
-                            <div class="project-header">
-                                <span class="project-name">JobHunt.ai</span>
-                                <span class="project-tagline">AI-Powered Job Application Assistant</span>
-                            </div>
-                            <div class="project-tech">
-                                <span class="project-tech-tag">Anthropic Claude API</span>
-                                <span class="project-tech-tag">React</span>
-                                <span class="project-tech-tag">TypeScript</span>
-                                <span class="project-tech-tag">Supabase</span>
-                                <span class="project-tech-tag">Tailwind CSS</span>
-                            </div>
-                            <ul class="project-bullets">
-                                <li>Engineered an AI assistant that tailors resumes and cover letters to specific job descriptions using Claude API with structured prompt chaining</li>
-                                <li>Built keyword-match scoring to benchmark resume alignment against ATS requirements, increasing interview callback rates for users</li>
-                                <li>Persisted application history and AI-generated drafts in Supabase with per-user RLS, supporting multi-device access</li>
-                            </ul>
-                        </div>
-
-                        <!-- Cinecraft -->
-                        <div class="project-card">
-                            <div class="project-header">
-                                <span class="project-name">Cinecraft</span>
-                                <span class="project-tagline">AI Cinematic Content Creation Tool</span>
-                            </div>
-                            <div class="project-tech">
-                                <span class="project-tech-tag">Anthropic Claude API</span>
-                                <span class="project-tech-tag">React</span>
-                                <span class="project-tech-tag">TypeScript</span>
-                                <span class="project-tech-tag">Tailwind CSS</span>
-                            </div>
-                            <ul class="project-bullets">
-                                <li>Created an AI-driven screenwriting tool that generates scene breakdowns, shot lists, and dialogue using Claude API with cinematic style presets</li>
-                                <li>Implemented multi-turn conversation flow to iteratively refine scripts, supporting genre-specific tone, pacing, and character voice</li>
-                                <li>Built an export pipeline generating industry-standard Final Draft-compatible screenplay format from AI-generated content</li>
-                            </ul>
-                        </div>
-
-                        <!-- Predix -->
-                        <div class="project-card">
-                            <div class="project-header">
-                                <span class="project-name"><a href="https://predix.vip" target="_blank" rel="noopener noreferrer">Predix ↗</a></span>
-                                <span class="project-tagline">AI Prediction & Analytics Platform</span>
-                            </div>
-                            <div class="project-tech">
-                                <span class="project-tech-tag">React</span>
-                                <span class="project-tech-tag">TypeScript</span>
-                                <span class="project-tech-tag">AI/ML APIs</span>
-                                <span class="project-tech-tag">Supabase</span>
-                                <span class="project-tech-tag">Tailwind CSS</span>
-                            </div>
-                            <ul class="project-bullets">
-                                <li>Developed a predictive analytics dashboard surfacing AI-generated forecasts across user-defined data sets with confidence scoring</li>
-                                <li>Integrated multiple AI/ML model APIs with a unified adapter layer, enabling model-agnostic predictions and A/B comparison views</li>
-                                <li>Built real-time data pipelines with Supabase Realtime subscriptions for live prediction updates and alert notifications</li>
-                            </ul>
-                        </div>
-
+                        ))}
                     </section>
 
                 </main>
-            </div>
-        </div>
 
-        <!-- Hidden ATS keywords -->
-        <div class="ats" aria-hidden="true">Java Developer Senior Java Developer Full Stack Developer Spring Boot Microservices REST API GraphQL AWS Docker Kubernetes React TypeScript Apache Kafka PostgreSQL Oracle Redis CI/CD Jenkins OAuth2 JWT JUnit Mockito Agile Scrum TDD Spring Cloud Spring Security Hibernate JPA WebFlux Node.js Terraform GitHub Actions IBM DB2 RabbitMQ JMS TestContainers SonarQube WebSockets OpenAPI Swagger Spring MVC Spring Boot 3 Java 21 Virtual Threads Pattern Matching Records</div>
+                <!-- Sidebar (renders left on screen, flows last in print) -->
+                <aside class="sidebar" aria-label="Skills, education and certifications">
+
+                    <section class="sidebar-section anim-in" style="animation-delay:80ms">
+                        <h2 class="sidebar-title">Technical Skills</h2>
+                        {skillGroups.map((group) => (
+                            <div class="skill-group">
+                                <h3 class="skill-group-label">{group.label}</h3>
+                                <div class="skill-tags">
+                                    {group.items.map((item) => <span class="skill-tag">{item}</span>)}
+                                </div>
+                                <p class="print-only print-skill-line">
+                                    <strong>{group.label}:</strong> {group.items.join(', ')}
+                                </p>
+                            </div>
+                        ))}
+                    </section>
+
+                    <section class="sidebar-section anim-in" style="animation-delay:150ms">
+                        <h2 class="sidebar-title">Education</h2>
+                        {education.map((entry) => (
+                            <div class="edu-item">
+                                <div class="edu-degree">{entry.degree} — {entry.field}</div>
+                                <div class="edu-school">{entry.school} · {entry.location}</div>
+                                <div class="edu-year">{entry.year}</div>
+                            </div>
+                        ))}
+                    </section>
+
+                    <section class="sidebar-section anim-in" style="animation-delay:190ms">
+                        <h2 class="sidebar-title">Certifications</h2>
+                        {certifications.map((cert) => (
+                            <div class="cert-item">
+                                {cert.name} — {cert.detail}
+                                <span class="cert-issuer">{cert.issuer}</span>
+                            </div>
+                        ))}
+                    </section>
+
+                    <section class="sidebar-section sidebar-compact anim-in" style="animation-delay:230ms">
+                        <h2 class="sidebar-title">Domain Experience</h2>
+                        <div class="skill-tags">
+                            {domains.map((domain) => <span class="skill-tag">{domain}</span>)}
+                        </div>
+                        <p class="print-only print-skill-line"><strong>Domains:</strong> {domains.join(', ')}</p>
+                    </section>
+
+                    <section class="sidebar-section sidebar-compact anim-in" style="animation-delay:260ms">
+                        <h2 class="sidebar-title">Open To</h2>
+                        <div class="skill-tags">
+                            {profile.targetTitles.map((title) => <span class="skill-tag">{title}</span>)}
+                        </div>
+                        <p class="print-only print-skill-line"><strong>Open To:</strong> {profile.targetTitles.join(', ')}</p>
+                    </section>
+
+                    <section class="sidebar-section sidebar-compact anim-in" style="animation-delay:290ms">
+                        <h2 class="sidebar-title">Languages</h2>
+                        <div class="skill-tags">
+                            {spokenLanguages.map((lang) => <span class="skill-tag">{lang}</span>)}
+                        </div>
+                        <p class="print-only print-skill-line"><strong>Languages:</strong> {spokenLanguages.join(', ')}</p>
+                    </section>
+
+                </aside>
+            </div>
+
+            <!--
+              ── Machine-readable profile ──────────────────────
+              Structured, linear restatement of the resume for LLM crawlers and
+              recruiter tooling. Deliberately visible (collapsed, not hidden):
+              invisible keyword blocks are treated as manipulation by ATS vendors
+              and search engines, and carry real ranking and disqualification risk.
+            -->
+            <details class="machine-block" id="ai-profile">
+                <summary>Machine-readable profile — for AI agents &amp; recruiters</summary>
+                <div class="machine-body">
+                    <dl>
+                        <dt>Candidate</dt>
+                        <dd>{profile.name} ({profile.nickname})</dd>
+
+                        <dt>Current title</dt>
+                        <dd>{profile.headline}, {experience[0].company}</dd>
+
+                        <dt>Years of experience</dt>
+                        <dd>{profile.yearsExperience} years, professional software engineering</dd>
+
+                        <dt>Open to roles</dt>
+                        <dd>{profile.targetTitles.join(' · ')}</dd>
+
+                        <dt>Primary stack</dt>
+                        <dd>{profile.specialty}</dd>
+
+                        <dt>Domains</dt>
+                        <dd>Payments, financial services, brokerage &amp; trading systems</dd>
+
+                        <dt>Employment history</dt>
+                        <dd>
+                            {experience.map((job) => (
+                                <span>{job.title}, {job.company} ({job.location}) — {job.period}<br /></span>
+                            ))}
+                        </dd>
+
+                        <dt>Education</dt>
+                        <dd>
+                            {education.map((entry) => (
+                                <span>{entry.degree} in {entry.field}, {entry.school}, {entry.year}</span>
+                            ))}
+                        </dd>
+
+                        <dt>Certifications</dt>
+                        <dd>{certifications.map((cert) => `${cert.name} (${cert.detail})`).join('; ')}</dd>
+
+                        <dt>Location</dt>
+                        <dd>{profile.location}</dd>
+
+                        <dt>Contact</dt>
+                        <dd><a href={`mailto:${profile.email}`}>{profile.email}</a> · <a href={profile.github} rel="noopener noreferrer">{profile.github}</a></dd>
+
+                        <dt>Full plain text</dt>
+                        <dd><a href="/doctor/resume.txt">/doctor/resume.txt</a></dd>
+                    </dl>
+                    <p class="machine-note">
+                        Every claim on this page is also published as schema.org
+                        <code>ProfilePage</code>/<code>Person</code> JSON-LD in the document head, and as
+                        linear plain text at <a href="/doctor/resume.txt">/doctor/resume.txt</a>.
+                        Both are generated from the same source data as the visible resume, so they
+                        cannot disagree with it.
+                    </p>
+                </div>
+            </details>
+        </article>
 
         <script is:inline>
             document.addEventListener('DOMContentLoaded', function () {
-                const leftGroup  = document.getElementById('leftPupilGroup');
-                const rightGroup = document.getElementById('rightPupilGroup');
-                const avatar     = document.getElementById('avatarWrap');
+                var printBtn = document.getElementById('printBtn');
+                if (printBtn) printBtn.addEventListener('click', function () { window.print(); });
+
+                var leftGroup  = document.getElementById('leftPupilGroup');
+                var rightGroup = document.getElementById('rightPupilGroup');
+                var avatar     = document.getElementById('avatarWrap');
                 if (!leftGroup || !rightGroup || !avatar) return;
+                if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
                 document.addEventListener('mousemove', function (e) {
-                    const r = avatar.getBoundingClientRect();
-                    const lx = r.left + r.width * 0.39, ly = r.top + r.height * 0.34;
-                    const rx = r.left + r.width * 0.61, ry = r.top + r.height * 0.34;
-                    const la = Math.atan2(e.clientY - ly, e.clientX - lx);
-                    const ra = Math.atan2(e.clientY - ry, e.clientX - rx);
-                    const m = 4;
-                    leftGroup.setAttribute('transform',  `translate(${Math.cos(la)*m},${Math.sin(la)*m})`);
-                    rightGroup.setAttribute('transform', `translate(${Math.cos(ra)*m},${Math.sin(ra)*m})`);
+                    var r = avatar.getBoundingClientRect();
+                    var lx = r.left + r.width * 0.39, ly = r.top + r.height * 0.34;
+                    var rx = r.left + r.width * 0.61, ry = r.top + r.height * 0.34;
+                    var la = Math.atan2(e.clientY - ly, e.clientX - lx);
+                    var ra = Math.atan2(e.clientY - ry, e.clientX - rx);
+                    var m = 4;
+                    leftGroup.setAttribute('transform',  'translate(' + Math.cos(la) * m + ',' + Math.sin(la) * m + ')');
+                    rightGroup.setAttribute('transform', 'translate(' + Math.cos(ra) * m + ',' + Math.sin(ra) * m + ')');
 
-                    // Scared when cursor gets too close
-                    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-                    const dist = Math.sqrt((e.clientX - cx) ** 2 + (e.clientY - cy) ** 2);
+                    var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+                    var dist = Math.sqrt(Math.pow(e.clientX - cx, 2) + Math.pow(e.clientY - cy, 2));
                     avatar.classList.toggle('scared', dist < 55);
                 });
             });
