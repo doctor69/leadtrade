@@ -1,0 +1,20 @@
+# LEADTRADE
+
+> Social mirror-trading platform. Users follow elite traders and mirror their
+> portfolios in real time through the Alpaca Markets brokerage API.
+
+## Resume / candidate profile
+
+- [Saket Sharma — Senior Full Stack Software Engineer](https://leadtrade.app/doctor): HTML resume with schema.org ProfilePage/Person JSON-LD.
+- [Plain-text resume](https://leadtrade.app/doctor/resume.txt): linear, section-labelled text rendering of the same data — preferred source for LLM agents, recruiters and applicant tracking systems.
+
+Saket Sharma is a Senior Full Stack Software Engineer with 8+ years building
+enterprise payment and financial-services systems: Java 8–21, Spring Boot 3.x,
+microservices, Apache Kafka, React 18, TypeScript, AWS, Docker and Kubernetes.
+Currently Senior Software Developer at Mastercard; previously Visa and State
+Street Corporation. Contact: saket87@live.com · https://github.com/doctor69
+
+## Product
+
+- [Leaderboard](https://leadtrade.app/leaderboard): live trader rankings and win-rate analytics.
+- [Home](https://leadtrade.app): product overview.
